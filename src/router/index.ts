@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import Login from '../views/Login.vue'
 import { ROUTES, STORAGE_KEYS } from '../utils/constants'
+import { tokenManager } from '../utils/tokenManager'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -66,22 +67,10 @@ const router = createRouter({
 
 // 路由守卫
 router.beforeEach(async (to, from, next) => {
-  console.log('🛡️ 路由守卫自动执行:', {
+  console.log('🛡️ 路由守卫执行:', {
     from: from.path,
     to: to.path,
     requiresAuth: to.matched.some(record => record.meta?.requiresAuth)
-  })
-  
-  const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)
-  const userId = localStorage.getItem(STORAGE_KEYS.USER_ID)
-  
-  console.log('🔍 认证状态检查:', {
-    token: token ? token.substring(0, 20) + '...' : null,
-    userId,
-    storageKeys: {
-      ACCESS_TOKEN: STORAGE_KEYS.ACCESS_TOKEN,
-      USER_ID: STORAGE_KEYS.USER_ID
-    }
   })
   
   const requiresAuth = to.matched.some(record => record.meta?.requiresAuth)
@@ -89,23 +78,51 @@ router.beforeEach(async (to, from, next) => {
   // 设置页面标题
   document.title = (to.meta?.title as string) || '密码笔记'
   
-  // 验证token有效性（简单检查）
-  const isValidToken = token && userId && token.length > 0
+  // 使用token管理器进行安全的认证检查
+  const hasValidToken = tokenManager.hasValidToken()
+  const isTokenExpired = tokenManager.isTokenExpired()
   
-  if (requiresAuth && !isValidToken) {
-    // 情况1: 需要登录但未登录 → 跳转登录页
-    // 需要登录但未登录或token无效，清除本地存储并跳转到登录页
-    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN)
-    localStorage.removeItem(STORAGE_KEYS.USER_ID)
-    localStorage.removeItem(STORAGE_KEYS.USERNAME)
-    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
-    next(ROUTES.LOGIN)
-  } else if (!requiresAuth && isValidToken && (to.path === ROUTES.LOGIN || to.path === ROUTES.REGISTER)) {
-    // 已登录用户访问登录或注册页，跳转到控制台
-    // 情况2: 已登录访问登录页 → 跳转主页
-    next(ROUTES.DASHBOARD)
+  console.log('🔍 安全认证检查:', {
+    hasValidToken,
+    isTokenExpired,
+    requiresAuth,
+    targetPath: to.path
+  })
+  
+  if (requiresAuth) {
+    // 需要认证的路由
+    if (!hasValidToken) {
+      console.log('🚫 无有效token，跳转登录页')
+      tokenManager.clearTokens()
+      next(ROUTES.LOGIN)
+      return
+    }
+    
+    if (isTokenExpired) {
+      console.log('⏰ Token已过期，尝试刷新')
+      try {
+        await tokenManager.refreshToken()
+        console.log('✅ Token刷新成功，继续访问')
+        next()
+      } catch (error) {
+        console.error('❌ Token刷新失败，跳转登录页:', error)
+        tokenManager.clearTokens()
+        next(ROUTES.LOGIN)
+      }
+      return
+    }
+    
+    // Token有效，允许访问
+    next()
   } else {
-    // 情况3: 正常访问
+    // 不需要认证的路由
+    if (hasValidToken && !isTokenExpired && (to.path === ROUTES.LOGIN || to.path === ROUTES.REGISTER)) {
+      console.log('🔄 已登录用户访问登录/注册页，跳转控制台')
+      next(ROUTES.DASHBOARD)
+      return
+    }
+    
+    // 正常访问
     next()
   }
 })

@@ -1,18 +1,19 @@
 <template>
   <div id="app">
     <router-view />
+    
+    <!-- 开发环境安全状态监控 -->
+    <SecurityStatus />
   </div>
 </template>
 
 <script>
-import { useAuthStore } from './store/auth'
+import SecurityStatus from './components/SecurityStatus.vue'
 
 export default {
   name: 'App',
-  async created() {
-    // 应用启动时检查认证状态
-    const authStore = useAuthStore()
-    await authStore.checkAuth()
+  components: {
+    SecurityStatus
   }
 }
 </script>

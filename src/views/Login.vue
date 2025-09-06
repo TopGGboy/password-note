@@ -152,7 +152,7 @@
 import { defineComponent } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
-import { authAPI, captchaAPI } from '../services/api'
+import { userAPI, captchaAPI } from '../services/api'
 import { ROUTES } from '../utils/constants'
 import type { LoginRequest } from '../types/api'
 
@@ -241,8 +241,6 @@ export default defineComponent({
           return
         }
 
-      
-
         // 调用认证store登录
         const result = await this.authStore.login({
           username: this.loginForm.username,
@@ -256,7 +254,6 @@ export default defineComponent({
         if (result.success) {
           console.log('登录成功，接下来检验是否需要双因素认证')
           console.log('登录结果：', result.twoFactorEnabled)
-          
           
           if ((result as any).twoFactorEnabled) {
             // 需要双因素认证，发送验证码
@@ -375,23 +372,23 @@ export default defineComponent({
       }
     },
     
-    
     // 刷新验证码
     async refreshCaptcha() {
       try {
         // 调用API建立session并获取sessionId
         const response = await captchaAPI.preloadCaptcha()
         
-        // 从响应头获取sessionId
-        const sessionId = response.headers['x-session-id'] || response.headers['X-Session-Id']
+        // 从响应头获取sessionId，尝试多种可能的header名称
+        const sessionId = response.headers['x-session-id'] || 
+                         response.headers['X-Session-Id'] 
         
+        console.log('Response headers:', response.headers)
+
         if (sessionId) {
           this.sessionId = sessionId
-          console.log('获取到的sessionId:', sessionId)
+          console.log('成功获取sessionId:', sessionId)
         } else {
-          // 如果无法从headers获取，生成一个临时的sessionId
-          this.sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-          console.log('生成的临时sessionId:', this.sessionId)
+          console.error('无法获取sessionId')
         }
         
         // 设置验证码图片URL
@@ -402,7 +399,8 @@ export default defineComponent({
         console.error('刷新验证码失败:', error)
         this.errorMessage = '获取验证码失败，请重试'
         
-        // 即使失败也设置图片URL，让用户能看到验证码
+        // 即使失败也生成一个sessionId和设置图片URL
+        this.sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
         this.captchaUrl = captchaAPI.getCaptchaImage()
         this.loginForm.captcha = ''
       }
@@ -431,7 +429,6 @@ export default defineComponent({
       // 限制只能输入数字
       this.twoFactorCode = this.twoFactorCode.replace(/\D/g, '')
     },
-    
     
     async resend2FA() {
       try {

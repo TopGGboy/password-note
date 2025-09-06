@@ -1,34 +1,33 @@
 // API接口路径常量
 export const API_ENDPOINTS = {
-  // 认证相关接口
-  AUTH: {
-    LOGIN: '/api/auth/login',
+  // 用户相关接口
+  USER: {
+    LOGIN: "/api/user/login", // 登录
+    LOGINEMAILVERIFICATION: "/api/user/login-email-verification", // 登录邮箱验证
+    REGISTER: "/api/user/register",   // 注册
+    REFRESH: "/api/user/refresh",     // 刷新token
+    LOGOUT: "/api/user/logout",       // 登出
 
-    LOGOUT: '/api/auth/logout',
-    REFRESH: '/api/auth/refresh',
-    ME: '/api/auth/me',
-    CHANGE_PASSWORD: '/api/auth/change-password',
-    FORGOT_PASSWORD: '/api/auth/forgot-password',
-    RESET_PASSWORD: '/api/auth/reset-password'
+
+
+
+    ME: "/api/user/me",
+    CHANGE_PASSWORD: "/api/user/change-password",
+    FORGOT_PASSWORD: "/api/user/forgot-password",
+    RESET_PASSWORD: "/api/user/reset-password",
   },
-  
-  // 验证码相关接口（纯JWT方案）
+
+  // 验证码相关接口
   CAPTCHA: {
-    IMAGE: '/api/captcha/image'
+    IMAGE: "/api/captcha/image",
   },
 
   // 邮件服务相关接口
   EMAIL: {
-    VALIDATEEMAILCODE: '/api/email/validate-email-code',
-    SEND2FACODE: '/api/email/send2FACode'
+    SEND2FACODE: "/api/email/send2FACode",
   },
-  
-  // 用户相关接口
-  USER: {
-    REGISTER: '/api/users/register',
-    PROFILE: '/api/users/profile'
-  }
-} as const
+
+} as const;
 
 // HTTP状态码常量
 export const HTTP_STATUS = {
@@ -39,23 +38,23 @@ export const HTTP_STATUS = {
   FORBIDDEN: 403,
   NOT_FOUND: 404,
   TOO_MANY_REQUESTS: 429,
-  INTERNAL_SERVER_ERROR: 500
-} as const
+  INTERNAL_SERVER_ERROR: 500,
+} as const;
 
 // 本地存储键名常量
 export const STORAGE_KEYS = {
-  ACCESS_TOKEN: 'accessToken',
-  REFRESH_TOKEN: 'refreshToken',
-  USER_ID: 'userId',
-  USERNAME: 'username',
-  TOKEN_EXPIRES_AT: 'tokenExpiresAt'
-} as const
+  ACCESS_TOKEN: "accessToken",
+  REFRESH_TOKEN: "refreshToken",
+  USER_ID: "userId",
+  USERNAME: "username",
+  TOKEN_EXPIRES_AT: "tokenExpiresAt",
+} as const;
 
 // 路由路径常量
 export const ROUTES = {
-  HOME: '/',
-  LOGIN: '/login',
-  REGISTER: '/register',
-  DASHBOARD: '/dashboard',
-  RESET_PASSWORD: '/reset-password'
-} as const
+  HOME: "/",
+  LOGIN: "/login",
+  REGISTER: "/register",
+  DASHBOARD: "/dashboard",
+  RESET_PASSWORD: "/reset-password",
+} as const;

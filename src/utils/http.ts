@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
 import router from '../router'
 import { HTTP_STATUS, STORAGE_KEYS, ROUTES, API_ENDPOINTS } from './constants'
+import { tokenManager } from './tokenManager'
 
 // 创建axios实例
 const http: AxiosInstance = axios.create({
@@ -14,20 +15,48 @@ const http: AxiosInstance = axios.create({
 
 // 请求拦截器
 http.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    // 添加认证token（登录和注册接口除外）
-    const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)
-    const isAuthEndpoint = config.url?.includes(API_ENDPOINTS.AUTH.LOGIN) || 
+  async (config: InternalAxiosRequestConfig) => {
+    // 检查是否为认证相关接口（不需要token的接口）
+    const isAuthEndpoint = config.url?.includes(API_ENDPOINTS.USER.LOGIN) || 
                           config.url?.includes(API_ENDPOINTS.USER.REGISTER) ||
-                          config.url?.includes('/captcha')
+                          config.url?.includes('/captcha') ||
+                          config.url?.includes('/refresh')
     
-    if (token && config.headers && !isAuthEndpoint) {
-      config.headers.Authorization = `Bearer ${token}`
+    if (!isAuthEndpoint) {
+      // 尝试自动刷新token（如果需要）
+      try {
+        await tokenManager.autoRefreshIfNeeded()
+      } catch (error) {
+        console.error('🔄 自动刷新token失败:', error)
+        // 刷新失败，清除token并跳转登录页
+        tokenManager.clearTokens()
+        if (router.currentRoute.value.path !== ROUTES.LOGIN) {
+          router.push(ROUTES.LOGIN)
+        }
+        return Promise.reject(new Error('Token refresh failed'))
+      }
+
+      // 添加认证token
+      const token = tokenManager.getAccessToken()
+      if (token && config.headers) {
+        // 验证token格式
+        if (tokenManager.validateTokenFormat(token)) {
+          config.headers.Authorization = `Bearer ${token}`
+        } else {
+          console.warn('⚠️ Token格式无效，清除并跳转登录页')
+          tokenManager.clearTokens()
+          if (router.currentRoute.value.path !== ROUTES.LOGIN) {
+            router.push(ROUTES.LOGIN)
+          }
+          return Promise.reject(new Error('Invalid token format'))
+        }
+      }
     }
     
-    // 添加请求时间戳
+    // 添加请求时间戳和安全头
     if (config.headers) {
       config.headers['X-Timestamp'] = Date.now().toString()
+      config.headers['X-Requested-With'] = 'XMLHttpRequest'
     }
     
     return config
@@ -40,45 +69,82 @@ http.interceptors.request.use(
 // 响应拦截器
 http.interceptors.response.use(
   (response: AxiosResponse) => {
+    // 检查响应中是否包含新的token信息
+    const newToken = response.headers['x-new-token']
+    const newRefreshToken = response.headers['x-new-refresh-token']
+    const expiresIn = response.headers['x-token-expires-in']
+    
+    if (newToken) {
+      console.log('🔄 收到新token，更新本地存储')
+      tokenManager.setTokens(
+        newToken, 
+        newRefreshToken, 
+        expiresIn ? parseInt(expiresIn) : undefined
+      )
+    }
+    
     return response.data
   },
   async error => {
-    const { response } = error
+    const { response, config } = error
     
     if (response) {
       switch (response.status) {
         case HTTP_STATUS.UNAUTHORIZED:
-          // 未授权，清除token并跳转到登录页
-          localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN)
-          localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
-          localStorage.removeItem(STORAGE_KEYS.USER_ID)
-          localStorage.removeItem(STORAGE_KEYS.USERNAME)
-          if (router.currentRoute.value.path !== ROUTES.LOGIN) {
-            router.push(ROUTES.LOGIN)
+          console.log('🔒 收到401未授权响应')
+          
+          // 如果不是刷新token的请求，尝试刷新token后重试
+          if (!config.url?.includes('/refresh') && tokenManager.getRefreshToken()) {
+            try {
+              console.log('🔄 尝试刷新token后重试请求')
+              await tokenManager.refreshToken()
+              
+              // 更新请求头中的token
+              const newToken = tokenManager.getAccessToken()
+              if (newToken && config.headers) {
+                config.headers.Authorization = `Bearer ${newToken}`
+              }
+              
+              // 重试原请求
+              return http.request(config)
+            } catch (refreshError) {
+              console.error('🔄 Token刷新失败，跳转登录页:', refreshError)
+              tokenManager.clearTokens()
+              if (router.currentRoute.value.path !== ROUTES.LOGIN) {
+                router.push(ROUTES.LOGIN)
+              }
+            }
+          } else {
+            // 刷新token失败或没有refresh token，清除认证信息
+            console.log('🧹 清除认证信息并跳转登录页')
+            tokenManager.clearTokens()
+            if (router.currentRoute.value.path !== ROUTES.LOGIN) {
+              router.push(ROUTES.LOGIN)
+            }
           }
           break
           
         case HTTP_STATUS.FORBIDDEN:
-          // 禁止访问
-          console.error('访问被拒绝')
+          console.error('🚫 访问被拒绝 - 权限不足')
+          // 可以显示权限不足的提示
           break
           
         case HTTP_STATUS.TOO_MANY_REQUESTS:
-          // 请求过于频繁
-          console.error('请求过于频繁，请稍后重试')
+          console.error('⏰ 请求过于频繁，请稍后重试')
+          // 可以实现退避重试机制
           break
           
         case HTTP_STATUS.INTERNAL_SERVER_ERROR:
-          // 服务器错误
-          console.error('服务器内部错误')
+          console.error('💥 服务器内部错误')
           break
           
         default:
-          console.error('请求失败:', response.data?.message || '未知错误')
+          console.error('❌ 请求失败:', response.data?.msg || response.data?.message || '未知错误')
       }
+    } else if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+      console.error('🌐 网络连接失败，请检查网络设置')
     } else {
-      // 网络错误
-      console.error('网络连接失败，请检查网络设置')
+      console.error('❌ 请求异常:', error.message)
     }
     
     return Promise.reject(error)

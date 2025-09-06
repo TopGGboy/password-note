@@ -18,6 +18,7 @@ export interface LoginResponse {
   username: string
   email: string
   token: string
+  refreshToken: string
   twoFactorEnabled: boolean
 }
 
@@ -39,8 +40,19 @@ export interface RegisterRequest {
   username: string
   email: string
   password: string
-  confirmPassword: string
+  emailCode: string
 }
+
+// 用户注册响应数据
+export interface RegisterResponse {
+  username: string
+  email: string
+}
+
+
+
+
+
 
 // 验证码Token响应数据
 export interface CaptchaTokenResponse {
@@ -90,4 +102,17 @@ export interface RefreshTokenRequest {
 export interface RefreshTokenResponse {
   token: string
   refreshToken: string
+  expiresIn?: number
 }
+
+// 邮箱验证码登录请求参数
+export interface EmailVerificationLoginRequest {
+  email: string
+  emailCode: string
+}
+
+// 登出请求（无需参数，通过Header传递token）
+export interface LogoutRequest {}
+
+// 登出响应（返回void，但包装在ApiResponse中）
+export interface LogoutResponse {}
