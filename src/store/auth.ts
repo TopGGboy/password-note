@@ -28,20 +28,48 @@ interface AuthState {
 }
 
 export const useAuthStore = defineStore("auth", {
-  state: (): AuthState => ({
-    user: null,
-    token: tokenManager.getAccessToken(),
-    refreshToken: tokenManager.getRefreshToken(),
-    isAuthenticated: false,
-    loginAttempts: 0,
-    isLocked: false,
-    lockoutEndTime: null,
-  }),
+  state: (): AuthState => {
+    // 从存储中恢复用户信息
+    const token = tokenManager.getAccessToken()
+    const refreshToken = tokenManager.getRefreshToken()
+    const username = localStorage.getItem(STORAGE_KEYS.USERNAME)
+    
+    let user: User | null = null
+    if (token && username) {
+      user = {
+        username,
+        email: localStorage.getItem('email') || undefined,
+        token,
+        twoFactorEnabled: false
+      }
+    }
+    
+    return {
+      user,
+      token,
+      refreshToken,
+      isAuthenticated: !!(token && user && !tokenManager.isTokenExpired()),
+      loginAttempts: 0,
+      isLocked: false,
+      lockoutEndTime: null,
+    }
+  },
 
   getters: {
     isLoggedIn: (state): boolean => {
-      // 使用token管理器验证登录状态
-      return tokenManager.hasValidToken() && !!state.user && !tokenManager.isTokenExpired()
+      // 检查是否有有效的访问token和用户信息
+      const hasValidToken = tokenManager.hasValidToken()
+      const hasUser = !!state.user
+      const tokenNotExpired = !tokenManager.isTokenExpired()
+      
+      console.log('🔍 登录状态检查:', {
+        hasValidToken,
+        hasUser,
+        tokenNotExpired,
+        result: hasValidToken && hasUser && tokenNotExpired
+      })
+      
+      return hasValidToken && hasUser && tokenNotExpired
     },
     userInfo: (state): User | null => state.user,
     remainingLockoutTime: (state): number => {
@@ -264,6 +292,9 @@ export const useAuthStore = defineStore("auth", {
       // 存储用户信息
       localStorage.setItem(STORAGE_KEYS.USER_ID, user.username);
       localStorage.setItem(STORAGE_KEYS.USERNAME, user.username);
+      if (user.email) {
+        localStorage.setItem('email', user.email);
+      }
 
       console.log("🔐 认证信息已安全保存:", {
         token: token.substring(0, 20) + "...",
@@ -287,35 +318,63 @@ export const useAuthStore = defineStore("auth", {
 
         // 检查token是否过期
         if (tokenManager.isTokenExpired()) {
-          console.log('🔍 Token已过期，尝试刷新')
-          try {
-            await tokenManager.refreshToken();
-            // 刷新成功，更新状态
-            this.token = tokenManager.getAccessToken();
-            this.refreshToken = tokenManager.getRefreshToken();
-          } catch (error) {
-            console.error('🔄 Token刷新失败:', error);
+          console.log('🔍 Token已过期，尝试刷新...')
+          
+          // 尝试使用刷新token获取新的访问token
+          const refreshToken = tokenManager.getRefreshToken()
+          if (refreshToken) {
+            try {
+              await tokenManager.refreshToken()
+              console.log('🔄 Token刷新成功')
+              // 更新store中的token
+              this.token = tokenManager.getAccessToken()
+            } catch (error) {
+              console.log('🔄 Token刷新失败，清除认证状态')
+              this.clearAuth();
+              return false;
+            }
+          } else {
+            console.log('🔍 没有刷新token，清除认证状态')
             this.clearAuth();
             return false;
           }
         }
 
-        // 如果有token但没有用户信息，尝试获取用户信息
+        // 如果有token但没有用户信息，尝试从本地存储恢复或获取用户信息
         if (this.token && !this.user) {
-          try {
-            const response = await userAPI.getCurrentUser();
-            if (response.code === 1 && response.data) {
-              this.user = {
-                username: response.data.user.username,
-                email: response.data.user.email,
-                token: this.token,
-                twoFactorEnabled: false
-              };
+          const username = localStorage.getItem(STORAGE_KEYS.USERNAME)
+          if (username) {
+            // 从本地存储恢复用户信息
+            this.user = {
+              username,
+              email: localStorage.getItem('email') || undefined,
+              token: this.token,
+              twoFactorEnabled: false
             }
-          } catch (error) {
-            console.error('🔍 获取用户信息失败:', error);
-            this.clearAuth();
-            return false;
+            console.log('🔍 从本地存储恢复用户信息:', username)
+          } else {
+            // 尝试从API获取用户信息
+            try {
+              const response = await userAPI.getCurrentUser();
+              if (response.code === 1 && response.data) {
+                this.user = {
+                  username: response.data.user.username,
+                  email: response.data.user.email,
+                  token: this.token,
+                  twoFactorEnabled: false
+                };
+                // 保存到本地存储
+                localStorage.setItem(STORAGE_KEYS.USERNAME, this.user.username)
+                if (this.user.email) {
+                  localStorage.setItem('email', this.user.email)
+                }
+                console.log('🔍 从API获取用户信息成功:', this.user.username)
+              }
+            } catch (error) {
+              console.error('🔍 获取用户信息失败:', error);
+              this.clearAuth();
+              return false;
+            }
           }
         }
 

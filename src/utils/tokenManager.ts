@@ -7,6 +7,9 @@ import { STORAGE_KEYS } from './constants'
 export class TokenManager {
   private static instance: TokenManager
   private refreshPromise: Promise<string> | null = null
+  private lastRefreshTime: number = 0
+  private refreshAttempts: number = 0
+  private maxRefreshAttempts: number = 3
 
   private constructor() {}
 
@@ -180,7 +183,7 @@ export class TokenManager {
   }
 
   /**
-   * 刷新token（防止并发刷新）
+   * 刷新token（防止并发刷新和频率限制）
    */
   public async refreshToken(): Promise<string | null> {
     // 如果已经有刷新请求在进行中，等待其完成
@@ -193,17 +196,34 @@ export class TokenManager {
       }
     }
 
+    // 检查刷新频率限制（30秒内最多刷新一次）
+    const now = Date.now()
+    if (now - this.lastRefreshTime < 30000) {
+      console.warn('⚠️ Token刷新过于频繁，跳过本次刷新')
+      throw new Error('Token refresh rate limited')
+    }
+
+    // 检查重试次数限制
+    if (this.refreshAttempts >= this.maxRefreshAttempts) {
+      console.error('❌ Token刷新重试次数超限，清除认证信息')
+      this.clearTokens()
+      throw new Error('Max refresh attempts exceeded')
+    }
+
     const refreshToken = this.getRefreshToken()
     if (!refreshToken) {
       throw new Error('No refresh token available')
     }
 
     // 创建刷新Promise
+    this.refreshAttempts++
     this.refreshPromise = this.performTokenRefresh(refreshToken)
 
     try {
       const newToken = await this.refreshPromise
       this.refreshPromise = null
+      this.lastRefreshTime = now
+      this.refreshAttempts = 0 // 成功后重置重试次数
       return newToken
     } catch (error) {
       this.refreshPromise = null
@@ -216,8 +236,6 @@ export class TokenManager {
    */
   private async performTokenRefresh(refreshToken: string): Promise<string> {
     try {
-      // 这里需要调用刷新token的API
-      // 由于需要避免循环依赖，这里使用原生fetch
       const response = await fetch(`${process.env.VUE_APP_API_BASE_URL || 'http://localhost:8080'}/api/user/refresh`, {
         method: 'POST',
         headers: {
@@ -240,6 +258,10 @@ export class TokenManager {
         this.setTokens(token, newRefreshToken, expiresIn)
         
         console.log('🔄 Token刷新成功')
+        
+        // 通知其他组件token已刷新（如果需要的话）
+        // 这里可以触发事件或调用回调
+        
         return token
       } else {
         throw new Error(data.msg || 'Token refresh failed')
@@ -261,13 +283,14 @@ export class TokenManager {
         return false
       }
 
+      // 如果token已过期，不尝试刷新，直接返回false让调用方处理
       if (this.isTokenExpired()) {
-        console.log('🔄 Token已过期，尝试刷新...')
-        await this.refreshToken()
-        return true
+        console.log('🔄 Token已过期，需要重新登录')
+        return false
       }
 
-      if (this.isTokenExpiringSoon()) {
+      // 只有在token即将过期（5分钟内）且当前没有刷新请求时才刷新
+      if (this.isTokenExpiringSoon() && !this.refreshPromise) {
         console.log('🔄 Token即将过期，提前刷新...')
         await this.refreshToken()
         return true
@@ -284,14 +307,20 @@ export class TokenManager {
    * 启动token自动刷新定时器
    */
   public startAutoRefreshTimer(): void {
-    // 每分钟检查一次token状态
+    // 每5分钟检查一次token状态，避免过度频繁
     setInterval(async () => {
       try {
-        await this.autoRefreshIfNeeded()
+        // 只在token即将过期时才刷新，避免不必要的刷新
+        if (this.hasValidToken() && this.isTokenExpiringSoon() && !this.isTokenExpired()) {
+          console.log('🔄 定时检查：Token即将过期，执行刷新')
+          await this.refreshToken()
+        }
       } catch (error) {
         console.error('❌ 定时刷新token失败:', error)
+        // 刷新失败时清除token
+        this.clearTokens()
       }
-    }, 60 * 1000) // 1分钟
+    }, 5 * 60 * 1000) // 5分钟
   }
 }
 

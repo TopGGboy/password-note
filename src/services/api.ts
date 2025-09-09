@@ -70,7 +70,7 @@ export const userAPI = {
 
   // 获取当前用户信息
   getCurrentUser: (): Promise<ApiResponse<UserInfoResponse>> => {
-    return http.get("/api/auth/me");
+    return http.get(API_ENDPOINTS.USER.ME);
   },
 
   // 修改密码

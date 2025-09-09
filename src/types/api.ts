@@ -54,6 +54,7 @@ export interface RegisterResponse {
 
 
 
+
 // 验证码Token响应数据
 export interface CaptchaTokenResponse {
   captchaToken: string

@@ -61,24 +61,12 @@ export default defineComponent({
           return false
         }
 
-        // 4. 验证认证状态
-        const authResult = await authStore.checkAuth()
-        if (!authResult) {
+        // 4. 简单验证认证状态（不调用API）
+        if (!authStore.isLoggedIn) {
           errorMessage.value = '身份验证失败'
           return false
         }
 
-        // 5. 检查token是否即将过期
-        if (tokenManager.isTokenExpiringSoon()) {
-          try {
-            await tokenManager.refreshToken()
-            console.log('🔄 Token已提前刷新')
-          } catch (error) {
-            console.error('❌ Token刷新失败:', error)
-            errorMessage.value = 'Token刷新失败'
-            return false
-          }
-        }
 
         return true
       } catch (error) {
@@ -99,17 +87,18 @@ export default defineComponent({
         isAuthenticated.value = result
         
         if (result) {
-          // 启动定期安全检查（每30秒）
-          securityCheckInterval = setInterval(async () => {
-            const checkResult = await performSecurityCheck()
-            if (!checkResult) {
+          // 启动定期安全检查（每5分钟，只检查token状态）
+          securityCheckInterval = setInterval(() => {
+            // 只检查token状态，不调用API
+            if (!tokenManager.hasValidToken() || tokenManager.isTokenExpired()) {
               isAuthenticated.value = false
+              errorMessage.value = 'Token已过期'
               if (securityCheckInterval) {
                 clearInterval(securityCheckInterval)
                 securityCheckInterval = null
               }
             }
-          }, 30000)
+          }, 5 * 60 * 1000) // 5分钟
         }
       } catch (error) {
         console.error('❌ 安全检查初始化失败:', error)

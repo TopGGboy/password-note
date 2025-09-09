@@ -23,20 +23,7 @@ http.interceptors.request.use(
                           config.url?.includes('/refresh')
     
     if (!isAuthEndpoint) {
-      // 尝试自动刷新token（如果需要）
-      try {
-        await tokenManager.autoRefreshIfNeeded()
-      } catch (error) {
-        console.error('🔄 自动刷新token失败:', error)
-        // 刷新失败，清除token并跳转登录页
-        tokenManager.clearTokens()
-        if (router.currentRoute.value.path !== ROUTES.LOGIN) {
-          router.push(ROUTES.LOGIN)
-        }
-        return Promise.reject(new Error('Token refresh failed'))
-      }
-
-      // 添加认证token
+      // 添加认证token（不在这里刷新token，避免并发问题）
       const token = tokenManager.getAccessToken()
       if (token && config.headers) {
         // 验证token格式
@@ -91,18 +78,29 @@ http.interceptors.response.use(
     if (response) {
       switch (response.status) {
         case HTTP_STATUS.UNAUTHORIZED:
-          console.log('🔒 收到401未授权响应')
+          console.log('🔒 收到401未授权响应，URL:', config.url)
           
-          // 如果不是刷新token的请求，尝试刷新token后重试
-          if (!config.url?.includes('/refresh') && tokenManager.getRefreshToken()) {
+          // 如果是刷新token的请求失败，直接清除认证信息
+          if (config.url?.includes('/refresh')) {
+            console.log('🧹 刷新token请求失败，清除认证信息')
+            tokenManager.clearTokens()
+            if (router.currentRoute.value.path !== ROUTES.LOGIN) {
+              router.push(ROUTES.LOGIN)
+            }
+            break
+          }
+          
+          // 如果有refresh token，尝试刷新后重试
+          if (tokenManager.getRefreshToken()) {
             try {
-              console.log('🔄 尝试刷新token后重试请求')
+              console.log('🔄 尝试刷新token后重试请求:', config.url)
               await tokenManager.refreshToken()
               
               // 更新请求头中的token
               const newToken = tokenManager.getAccessToken()
               if (newToken && config.headers) {
                 config.headers.Authorization = `Bearer ${newToken}`
+                console.log('🔄 使用新token重试请求')
               }
               
               // 重试原请求
@@ -115,8 +113,8 @@ http.interceptors.response.use(
               }
             }
           } else {
-            // 刷新token失败或没有refresh token，清除认证信息
-            console.log('🧹 清除认证信息并跳转登录页')
+            // 没有refresh token，清除认证信息
+            console.log('🧹 无refresh token，清除认证信息并跳转登录页')
             tokenManager.clearTokens()
             if (router.currentRoute.value.path !== ROUTES.LOGIN) {
               router.push(ROUTES.LOGIN)

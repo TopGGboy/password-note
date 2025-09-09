@@ -69,21 +69,9 @@ export class AppInitializer {
       if (hasValidToken) {
         console.log('🔍 发现有效token，检查认证状态...')
         
-        // 检查token是否过期
-        if (tokenManager.isTokenExpired()) {
-          console.log('⏰ Token已过期，尝试刷新...')
-          try {
-            await tokenManager.refreshToken()
-            console.log('🔄 Token刷新成功')
-          } catch (error) {
-            console.error('❌ Token刷新失败，清除认证状态:', error)
-            tokenManager.clearTokens()
-            return
-          }
-        }
-
-        // 验证认证状态
+        // 使用 checkAuth 方法进行完整的认证状态检查和恢复
         const isAuthenticated = await this.authStore.checkAuth()
+        
         if (isAuthenticated) {
           console.log('✅ 认证状态恢复成功')
         } else {
@@ -202,12 +190,10 @@ export class AppInitializer {
     try {
       if (tokenManager.hasValidToken()) {
         if (tokenManager.isTokenExpired()) {
-          console.log('🔄 页面重新可见，token已过期，尝试刷新...')
-          await tokenManager.refreshToken()
-        } else if (tokenManager.isTokenExpiringSoon()) {
-          console.log('🔄 页面重新可见，token即将过期，提前刷新...')
-          await tokenManager.refreshToken()
+          console.log('🔄 页面重新可见，token已过期，清除认证状态')
+          SecurityEventListener.dispatchEvent(SECURITY_EVENTS.TOKEN_EXPIRED)
         }
+        // 移除提前刷新逻辑，避免过度刷新
       }
     } catch (error) {
       console.error('❌ 页面可见性检查token失败:', error)

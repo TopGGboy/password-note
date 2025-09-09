@@ -91,24 +91,10 @@ router.beforeEach(async (to, from, next) => {
   
   if (requiresAuth) {
     // 需要认证的路由
-    if (!hasValidToken) {
-      console.log('🚫 无有效token，跳转登录页')
+    if (!hasValidToken || isTokenExpired) {
+      console.log('🚫 无有效token或token已过期，跳转登录页')
       tokenManager.clearTokens()
       next(ROUTES.LOGIN)
-      return
-    }
-    
-    if (isTokenExpired) {
-      console.log('⏰ Token已过期，尝试刷新')
-      try {
-        await tokenManager.refreshToken()
-        console.log('✅ Token刷新成功，继续访问')
-        next()
-      } catch (error) {
-        console.error('❌ Token刷新失败，跳转登录页:', error)
-        tokenManager.clearTokens()
-        next(ROUTES.LOGIN)
-      }
       return
     }
     
