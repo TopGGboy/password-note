@@ -6,7 +6,13 @@ import { tokenManager } from '../utils/tokenManager'
 const routes: Array<RouteRecordRaw> = [
   {
     path: ROUTES.HOME,
-    redirect: ROUTES.LOGIN
+    name: 'Home',
+    component: () => import('../views/Home.vue'),
+    meta: {
+      requiresAuth: true,
+      title: '主页 - 密码笔记',
+      description: '密码管理主页面'
+    }
   },
   {
     path: ROUTES.LOGIN,
@@ -36,6 +42,56 @@ const routes: Array<RouteRecordRaw> = [
       requiresAuth: true,
       title: '控制台 - 密码笔记',
       description: '用户主控制台，管理密码笔记'
+    }
+  },
+  {
+    path: '/passwords',
+    name: 'Passwords',
+    component: () => import('../views/Passwords.vue'),
+    meta: {
+      requiresAuth: true,
+      title: '密码管理 - 密码笔记',
+      description: '管理所有密码记录'
+    }
+  },
+  {
+    path: '/passwords/:id',
+    name: 'PasswordDetail',
+    component: () => import('../views/PasswordDetail.vue'),
+    meta: {
+      requiresAuth: true,
+      title: '密码详情 - 密码笔记',
+      description: '查看密码详细信息'
+    }
+  },
+  {
+    path: '/categories',
+    name: 'Categories',
+    component: () => import('../views/Categories.vue'),
+    meta: {
+      requiresAuth: true,
+      title: '分类管理 - 密码笔记',
+      description: '管理密码分类'
+    }
+  },
+  {
+    path: '/security',
+    name: 'Security',
+    component: () => import('../views/Security.vue'),
+    meta: {
+      requiresAuth: true,
+      title: '安全中心 - 密码笔记',
+      description: '安全检查和设置'
+    }
+  },
+  {
+    path: '/settings',
+    name: 'Settings',
+    component: () => import('../views/Settings.vue'),
+    meta: {
+      requiresAuth: true,
+      title: '设置 - 密码笔记',
+      description: '应用设置和偏好'
     }
   },
   {
@@ -103,8 +159,8 @@ router.beforeEach(async (to, from, next) => {
   } else {
     // 不需要认证的路由
     if (hasValidToken && !isTokenExpired && (to.path === ROUTES.LOGIN || to.path === ROUTES.REGISTER)) {
-      console.log('🔄 已登录用户访问登录/注册页，跳转控制台')
-      next(ROUTES.DASHBOARD)
+      console.log('🔄 已登录用户访问登录/注册页，跳转主页')
+      next(ROUTES.HOME)
       return
     }
     

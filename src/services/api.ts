@@ -15,7 +15,8 @@ import type {
   UserInfoResponse,
   ChangePasswordRequest,
   ResetPasswordRequest,
-  ForgotPasswordRequest
+  ForgotPasswordRequest,
+  CreatePasswordEntryRequest
 } from "../types/api";
 
 // 用户相关API（根据API接口文档）
@@ -120,8 +121,17 @@ export const emailAPI = {
   },
 };
 
+// 密码条目相关API
+export const passwordEntriesAPI = {
+  // 创建密码条目
+  create: (data: CreatePasswordEntryRequest): Promise<object> => {
+    return http.post(API_ENDPOINTS.PASSWORDENTRIES.BASE, data)
+  },
+}
+
 export default {
   user: userAPI,
   captcha: captchaAPI,
   email: emailAPI,
+  passwordEntries: passwordEntriesAPI,
 };

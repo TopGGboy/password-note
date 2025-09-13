@@ -4,17 +4,18 @@ export const API_ENDPOINTS = {
   USER: {
     LOGIN: "/api/user/login", // 登录
     LOGINEMAILVERIFICATION: "/api/user/login-email-verification", // 登录邮箱验证
-    REGISTER: "/api/user/register",   // 注册
-    REFRESH: "/api/user/refresh",     // 刷新token
-    LOGOUT: "/api/user/logout",       // 登出
-
-
-
+    REGISTER: "/api/user/register", // 注册
+    REFRESH: "/api/user/refresh", // 刷新token
+    LOGOUT: "/api/user/logout", // 登出
 
     ME: "/api/user/me",
     CHANGE_PASSWORD: "/api/user/change-password",
     FORGOT_PASSWORD: "/api/user/forgot-password",
     RESET_PASSWORD: "/api/user/reset-password",
+  },
+
+  PASSWORDENTRIES: {
+    BASE: "/api/password-entries",
   },
 
   // 验证码相关接口
@@ -26,7 +27,6 @@ export const API_ENDPOINTS = {
   EMAIL: {
     SEND2FACODE: "/api/email/send2FACode",
   },
-
 } as const;
 
 // HTTP状态码常量
@@ -57,4 +57,8 @@ export const ROUTES = {
   REGISTER: "/register",
   DASHBOARD: "/dashboard",
   RESET_PASSWORD: "/reset-password",
+  PASSWORDS: "/passwords",
+  CATEGORIES: "/categories",
+  SECURITY: "/security",
+  SETTINGS: "/settings",
 } as const;

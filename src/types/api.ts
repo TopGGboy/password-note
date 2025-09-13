@@ -49,6 +49,21 @@ export interface RegisterResponse {
   email: string
 }
 
+// 新增密码条目请求参数
+export interface CreatePasswordEntryRequest {
+  categoryId: number,
+  title: string,
+  useranme: string,
+  password: string,
+  url: string,
+  notesEncrypted: string,
+  customFields: Array<{
+    name: string,
+    value: string
+  }>
+  favorite: boolean
+}
+
 
 
 
