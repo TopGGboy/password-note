@@ -53,14 +53,10 @@ export interface RegisterResponse {
 export interface CreatePasswordEntryRequest {
   categoryId: number,
   title: string,
-  useranme: string,
-  password: string,
+  usernameEncrypted: string,
+  passwordEncrypted: string,
   url: string,
   notesEncrypted: string,
-  customFields: Array<{
-    name: string,
-    value: string
-  }>
   favorite: boolean
 }
 

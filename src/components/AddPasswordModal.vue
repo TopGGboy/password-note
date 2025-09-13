@@ -187,6 +187,8 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
+import { passwordEntriesAPI } from '../services/api'
+import type { CreatePasswordEntryRequest } from '../types/api'
 
 interface PasswordForm {
   title: string
@@ -310,32 +312,76 @@ export default defineComponent({
       this.isLoading = true
       
       try {
-        // 模拟API调用 - 实际项目中替换为真实API
-        await this.savePassword()
+        // 调用真实API
+        const response = await this.savePassword()
         
+        // 发送成功事件，传递创建的密码数据
         this.$emit('success', {
-          id: Date.now().toString(),
+          id: response.data?.id || Date.now().toString(),
           ...this.form,
           createdAt: new Date(),
           updatedAt: new Date(),
           lastUsed: new Date()
         })
         
+        // 关闭模态框
         this.$emit('close')
-      } catch (error) {
+        
+        // 显示成功提示
+        console.log('密码保存成功')
+      } catch (error: any) {
         console.error('保存密码失败:', error)
-        alert('保存失败，请重试')
+        
+        // 根据错误类型显示不同的提示信息
+        let errorMessage = '保存失败，请重试'
+        
+        if (error.response?.status === 401) {
+          errorMessage = '登录已过期，请重新登录'
+        } else if (error.response?.status === 400) {
+          errorMessage = '输入信息有误，请检查后重试'
+        } else if (error.response?.data?.msg) {
+          errorMessage = error.response.data.msg
+        }
+        
+        alert(errorMessage)
       } finally {
         this.isLoading = false
       }
     },
     
     async savePassword() {
-      // 模拟API延迟
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // 分类名称到ID的映射（临时方案，实际应该从API获取）
+      const categoryMap: Record<string, number> = {
+        '社交媒体': 1,
+        '邮箱服务': 2,
+        '金融服务': 3,
+        '开发工具': 4,
+        '购物网站': 5,
+        '娱乐平台': 6,
+        '工作相关': 7,
+        '其他': 8
+      }
       
-      // 这里应该调用实际的API
-      console.log('保存密码:', this.form)
+      // 构建API请求数据
+      const requestData: CreatePasswordEntryRequest = {
+        categoryId: categoryMap[this.form.category] || 8, // 默认为"其他"
+        title: this.form.title,
+        usernameEncrypted: this.form.username,
+        passwordEncrypted: this.form.password,
+        url: this.form.url || '',
+        notesEncrypted: this.form.notes || '',
+        favorite: false
+      }
+      
+      try {
+        // 调用真实API
+        const response = await passwordEntriesAPI.create(requestData)
+        console.log('密码创建成功:', response)
+        return response
+      } catch (error) {
+        console.error('创建密码条目失败:', error)
+        throw error
+      }
     },
     
     generateRandomPassword() {

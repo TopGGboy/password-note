@@ -124,7 +124,7 @@ export const emailAPI = {
 // 密码条目相关API
 export const passwordEntriesAPI = {
   // 创建密码条目
-  create: (data: CreatePasswordEntryRequest): Promise<object> => {
+  create: (data: CreatePasswordEntryRequest): Promise<ApiResponse<any>> => {
     return http.post(API_ENDPOINTS.PASSWORDENTRIES.BASE, data)
   },
 }
