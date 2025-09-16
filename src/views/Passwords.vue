@@ -238,6 +238,7 @@
       v-if="showAddModal"
       @close="showAddModal = false"
       @success="handlePasswordAdded"
+      @requireMasterPassword="handleRequireMasterPassword"
     />
 
     <!-- 编辑密码模态框 -->
@@ -254,6 +255,14 @@
       @close="showImportModal = false"
       @success="handlePasswordsImported"
     />
+
+    <!-- 主密码模态框 -->
+    <MasterPasswordModal
+      v-if="showMasterPasswordModal"
+      :is-setup="!hasMasterPassword"
+      @success="handleMasterPasswordSuccess"
+      @close="handleMasterPasswordClose"
+    />
   </div>
 </template>
 
@@ -262,6 +271,8 @@ import { defineComponent } from 'vue'
 import AddPasswordModal from '../components/AddPasswordModal.vue'
 import EditPasswordModal from '../components/EditPasswordModal.vue'
 import ImportPasswordsModal from '../components/ImportPasswordsModal.vue'
+import MasterPasswordModal from '../components/MasterPasswordModal.vue'
+import { KeyManager } from '../utils/crypto'
 
 interface PasswordItem {
   id: string
@@ -286,7 +297,8 @@ export default defineComponent({
   components: {
     AddPasswordModal,
     EditPasswordModal,
-    ImportPasswordsModal
+    ImportPasswordsModal,
+    MasterPasswordModal
   },
   data() {
     return {
@@ -301,6 +313,8 @@ export default defineComponent({
       showAddModal: false,
       showEditModal: false,
       showImportModal: false,
+      showMasterPasswordModal: false,
+      hasMasterPassword: false,
       editingPassword: null as PasswordItem | null,
       
       passwords: [] as PasswordItem[],
@@ -371,6 +385,8 @@ export default defineComponent({
     }
   },
   async mounted() {
+    // 检查是否已有主密码设置（持久化检查）
+    this.hasMasterPassword = KeyManager.hasMasterPassword()
     await this.loadPasswords()
   },
   methods: {
@@ -589,6 +605,27 @@ export default defineComponent({
     handlePasswordsImported(importedPasswords: PasswordItem[]) {
       this.passwords.push(...importedPasswords)
       this.categories = [...new Set(this.passwords.map(p => p.category))]
+    },
+
+    // 处理需要主密码的情况
+    handleRequireMasterPassword() {
+      this.showMasterPasswordModal = true
+    },
+
+    // 处理主密码设置/验证成功
+    handleMasterPasswordSuccess() {
+      this.showMasterPasswordModal = false
+      this.hasMasterPassword = true
+      console.log('主密码验证成功，可以继续保存密码')
+    },
+
+    // 处理主密码模态框关闭
+    handleMasterPasswordClose() {
+      this.showMasterPasswordModal = false
+      // 如果用户关闭了主密码模态框但没有设置密码，也关闭添加密码模态框
+      if (!KeyManager.hasKey()) {
+        this.showAddModal = false
+      }
     }
   }
 })

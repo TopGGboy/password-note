@@ -57,6 +57,10 @@ export interface CreatePasswordEntryRequest {
   passwordEncrypted: string,
   url: string,
   notesEncrypted: string,
+  customFieldsEncrypted: Array<{
+    name: string,
+    valueEncrypted: string
+  }>,
   favorite: boolean
 }
 

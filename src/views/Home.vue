@@ -101,11 +101,20 @@
       v-if="showAddModal"
       @close="showAddModal = false"
       @success="handlePasswordAdded"
+      @requireMasterPassword="handleRequireMasterPassword"
     />
     
     <PasswordGeneratorModal
       v-if="showGeneratorModal"
       @close="showGeneratorModal = false"
+    />
+    
+    <!-- 主密码模态框 -->
+    <MasterPasswordModal
+      v-if="showMasterPasswordModal"
+      :is-setup="!hasMasterPassword"
+      @success="handleMasterPasswordSuccess"
+      @close="handleMasterPasswordClose"
     />
   </div>
 </template>
@@ -114,6 +123,8 @@
 import { defineComponent } from 'vue'
 import AddPasswordModal from '../components/AddPasswordModal.vue'
 import PasswordGeneratorModal from '../components/PasswordGeneratorModal.vue'
+import MasterPasswordModal from '../components/MasterPasswordModal.vue'
+import { KeyManager } from '../utils/crypto'
 
 interface PasswordItem {
   id: string
@@ -141,12 +152,15 @@ export default defineComponent({
   name: 'Home',
   components: {
     AddPasswordModal,
-    PasswordGeneratorModal
+    PasswordGeneratorModal,
+    MasterPasswordModal
   },
   data() {
     return {
       showAddModal: false,
       showGeneratorModal: false,
+      showMasterPasswordModal: false,
+      hasMasterPassword: false,
       
       stats: {
         totalPasswords: 42,
@@ -197,6 +211,8 @@ export default defineComponent({
     }
   },
   async mounted() {
+    // 检查是否已有主密码设置（持久化检查）
+    this.hasMasterPassword = KeyManager.hasMasterPassword()
     await this.loadDashboardData()
   },
   methods: {
@@ -249,6 +265,27 @@ export default defineComponent({
         this.recentPasswords.pop()
       }
       this.stats.totalPasswords++
+    },
+
+    // 处理需要主密码的情况
+    handleRequireMasterPassword() {
+      this.showMasterPasswordModal = true
+    },
+
+    // 处理主密码设置/验证成功
+    handleMasterPasswordSuccess() {
+      this.showMasterPasswordModal = false
+      this.hasMasterPassword = true
+      console.log('主密码验证成功，可以继续保存密码')
+    },
+
+    // 处理主密码模态框关闭
+    handleMasterPasswordClose() {
+      this.showMasterPasswordModal = false
+      // 如果用户关闭了主密码模态框但没有设置密码，也关闭添加密码模态框
+      if (!KeyManager.hasKey()) {
+        this.showAddModal = false
+      }
     }
   }
 })

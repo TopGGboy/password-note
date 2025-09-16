@@ -275,9 +275,9 @@ export default defineComponent({
             }
           } else {
             // 登录成功，跳转到dashboard
-            console.log('登录成功，准备跳转到dashboard')
+            console.log('登录成功，准备跳转到home')
             try {
-              await this.router.push(ROUTES.DASHBOARD)
+              await this.router.push(ROUTES.HOME)
               console.log('跳转成功')
             } catch (error) {
               console.error('跳转失败:', error)
@@ -310,9 +310,9 @@ export default defineComponent({
           this.twoFactorCode = ''
           this.errorMessage = ''
           
-          // 跳转到dashboard
+          // 跳转到home
           try {
-            await this.router.push(ROUTES.DASHBOARD)
+            await this.router.push(ROUTES.HOME)
           } catch (error) {
             console.error('跳转失败:', error)
             await this.router.push(ROUTES.HOME)

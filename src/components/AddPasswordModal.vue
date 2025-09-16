@@ -189,6 +189,7 @@
 import { defineComponent } from 'vue'
 import { passwordEntriesAPI } from '../services/api'
 import type { CreatePasswordEntryRequest } from '../types/api'
+import { DataEncryptionService, KeyManager } from '../utils/crypto'
 
 interface PasswordForm {
   title: string
@@ -209,7 +210,7 @@ interface PasswordStrength {
 
 export default defineComponent({
   name: 'AddPasswordModal',
-  emits: ['close', 'success'],
+  emits: ['close', 'success', 'requireMasterPassword'],
   data() {
     return {
       isLoading: false,
@@ -350,6 +351,13 @@ export default defineComponent({
     },
     
     async savePassword() {
+      // 检查是否有加密密钥
+      if (!KeyManager.hasKey()) {
+        // 触发需要主密码的事件，让父组件处理
+        this.$emit('requireMasterPassword')
+        throw new Error('未找到加密密钥，请先设置主密码')
+      }
+      
       // 分类名称到ID的映射（临时方案，实际应该从API获取）
       const categoryMap: Record<string, number> = {
         '社交媒体': 1,
@@ -362,18 +370,30 @@ export default defineComponent({
         '其他': 8
       }
       
-      // 构建API请求数据
-      const requestData: CreatePasswordEntryRequest = {
-        categoryId: categoryMap[this.form.category] || 8, // 默认为"其他"
-        title: this.form.title,
-        usernameEncrypted: this.form.username,
-        passwordEncrypted: this.form.password,
-        url: this.form.url || '',
-        notesEncrypted: this.form.notes || '',
-        favorite: false
-      }
-      
       try {
+        // 加密敏感数据
+        const encryptedData = DataEncryptionService.encryptPasswordEntry({
+          username: this.form.username,
+          password: this.form.password,
+          notes: this.form.notes || '',
+          customFields: this.form.tags.map(tag => ({
+            name: 'tag',
+            value: tag
+          }))
+        })
+        
+        // 构建API请求数据
+        const requestData: CreatePasswordEntryRequest = {
+          categoryId: categoryMap[this.form.category] || 8, // 默认为"其他"
+          title: this.form.title, // 标题不加密，便于搜索和显示
+          usernameEncrypted: encryptedData.usernameEncrypted,
+          passwordEncrypted: encryptedData.passwordEncrypted,
+          url: this.form.url || '', // URL不加密，便于访问
+          notesEncrypted: encryptedData.notesEncrypted,
+          customFieldsEncrypted: encryptedData.customFieldsEncrypted,
+          favorite: false
+        }
+        
         // 调用真实API
         const response = await passwordEntriesAPI.create(requestData)
         console.log('密码创建成功:', response)
