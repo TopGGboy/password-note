@@ -10,34 +10,17 @@
         <!-- 用户名/邮箱 -->
         <div class="form-group">
           <label for="username">用户名/邮箱</label>
-          <input
-            id="username"
-            v-model="loginForm.username"
-            type="text"
-            placeholder="请输入用户名或邮箱"
-            :disabled="isLocked"
-            required
-          />
+          <input id="username" v-model="loginForm.username" type="text" placeholder="请输入用户名或邮箱" :disabled="isLocked"
+            required />
         </div>
 
         <!-- 密码 -->
         <div class="form-group">
           <label for="password">密码</label>
           <div class="password-input">
-            <input
-              id="password"
-              v-model="loginForm.password"
-              :type="showPassword ? 'text' : 'password'"
-              placeholder="请输入密码"
-              :disabled="isLocked"
-              required
-            />
-            <button
-              type="button"
-              class="password-toggle"
-              @click="showPassword = !showPassword"
-              :disabled="isLocked"
-            >
+            <input id="password" v-model="loginForm.password" :type="showPassword ? 'text' : 'password'"
+              placeholder="请输入密码" :disabled="isLocked" required />
+            <button type="button" class="password-toggle" @click="showPassword = !showPassword" :disabled="isLocked">
               {{ showPassword ? '隐藏' : '显示' }}
             </button>
           </div>
@@ -50,14 +33,8 @@
         <div class="form-group">
           <label for="captcha">验证码</label>
           <div class="captcha-container">
-            <input
-              id="captcha"
-              v-model="loginForm.captcha"
-              type="text"
-              placeholder="请输入验证码"
-              :disabled="isLocked"
-              required
-            />
+            <input id="captcha" v-model="loginForm.captcha" type="text" placeholder="请输入验证码" :disabled="isLocked"
+              required />
             <div class="captcha-image" @click="refreshCaptcha">
               <img :src="captchaUrl" alt="验证码" />
               <span class="refresh-hint">点击刷新</span>
@@ -85,11 +62,7 @@
         </div>
 
         <!-- 登录按钮 -->
-        <button
-          type="submit"
-          class="login-button"
-          :disabled="isLoading || isLocked"
-        >
+        <button type="submit" class="login-button" :disabled="isLoading || isLocked">
           <span v-if="isLoading">登录中...</span>
           <span v-else>登录</span>
         </button>
@@ -108,13 +81,8 @@
         <h3>双因素认证</h3>
         <p>验证码已发送至您的邮箱：{{ maskedEmail }}</p>
         <div class="form-group">
-          <input
-            v-model="twoFactorCode"
-            type="text"
-            placeholder="请输入6位验证码"
-            maxlength="6"
-            @input="validateTwoFactorCode"
-          />
+          <input v-model="twoFactorCode" type="text" placeholder="请输入6位验证码" maxlength="6"
+            @input="validateTwoFactorCode" />
         </div>
         <div class="modal-actions">
           <button @click="verify2FA" :disabled="!isValidTwoFactorCode">验证</button>
@@ -132,12 +100,7 @@
         <h3>重置密码</h3>
         <p>请输入您的邮箱地址，我们将发送重置链接</p>
         <div class="form-group">
-          <input
-            v-model="resetEmail"
-            type="email"
-            placeholder="请输入邮箱地址"
-            required
-          />
+          <input v-model="resetEmail" type="email" placeholder="请输入邮箱地址" required />
         </div>
         <div class="modal-actions">
           <button @click="sendResetEmail" :disabled="!resetEmail">发送重置链接</button>
@@ -151,10 +114,9 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '../store/auth'
-import { userAPI, captchaAPI } from '../services/api'
-import { ROUTES } from '../utils/constants'
-import type { LoginRequest } from '../types/api'
+import { useAuthStore } from '../../store/auth'
+import { captchaAPI } from '../../services/api'
+import { ROUTES } from '../../constants/constants'
 
 interface LoginForm {
   username: string
@@ -182,17 +144,17 @@ export default defineComponent({
       showPassword: false,
       isLoading: false,
       errorMessage: '',
-      
+
       // 验证码相关
       captchaUrl: '',
-      
+
       // 登录失败控制
       failedAttempts: 0,
       maxAttempts: 5,
       isLocked: false,
       lockoutDuration: 30, // 分钟
       lockoutTimeRemaining: 0,
-      
+
       // 双因素认证
       show2FA: false,
       twoFactorCode: '',
@@ -200,7 +162,7 @@ export default defineComponent({
       originalEmail: '', // 存储原始邮箱用于API调用
       sessionId: '',
       resendCooldown: 0,
-      
+
       // 忘记密码
       showForgotPassword: false,
       resetEmail: ''
@@ -221,21 +183,21 @@ export default defineComponent({
     // 处理登录
     async handleLogin() {
       if (this.isLocked) return
-      
+
       this.isLoading = true
       this.errorMessage = ''
-      
+
       try {
         // 前端基本验证
         if (!this.validateForm()) {
           return
         }
-        
+
         // 确保有sessionId
         if (!this.sessionId) {
           await this.refreshCaptcha()
         }
-        
+
         if (!this.sessionId) {
           this.errorMessage = '无法获取会话ID，请刷新页面重试'
           return
@@ -250,18 +212,18 @@ export default defineComponent({
         })
 
         console.log('登录结果：', result)
-        
+
         if (result.success) {
           console.log('登录成功，接下来检验是否需要双因素认证')
           console.log('登录结果：', result.twoFactorEnabled)
-          
+
           if ((result as any).twoFactorEnabled) {
             // 需要双因素认证，发送验证码
             console.log('需要双因素认证，发送验证码到邮箱')
-            
+
             try {
               const send2FAResult = await this.authStore.send2FACode(result.data?.email)
-              
+
               if (send2FAResult.success) {
                 this.originalEmail = result.data?.email || ''
                 this.maskedEmail = this.maskEmail(this.originalEmail)
@@ -304,12 +266,12 @@ export default defineComponent({
 
         // 使用认证store验证2FA
         const result = await this.authStore.verify2FA(this.originalEmail, this.twoFactorCode)
-        
+
         if (result.success) {
           this.show2FA = false
           this.twoFactorCode = ''
           this.errorMessage = ''
-          
+
           // 跳转到home
           try {
             await this.router.push(ROUTES.HOME)
@@ -325,35 +287,35 @@ export default defineComponent({
         this.errorMessage = error.response?.data?.msg || '验证失败，请重试'
       }
     },
-    
+
     // 表单验证
     validateForm() {
       if (!this.loginForm.username.trim()) {
         this.errorMessage = '请输入用户名或邮箱'
         return false
       }
-      
+
       if (!this.loginForm.password) {
         this.errorMessage = '请输入密码'
         return false
       }
-      
+
       if (!this.loginForm.captcha) {
         this.errorMessage = '请输入验证码'
         return false
       }
-      
+
       return true
     },
-    
+
     // 处理登录错误
     handleLoginError(error: any) {
       const errorData = error.response?.data
-      
+
       if (errorData?.code === 'INVALID_CREDENTIALS') {
         this.failedAttempts = errorData.failedAttempts
         this.errorMessage = '用户名或密码错误'
-        
+
         if (this.failedAttempts >= this.maxAttempts) {
           this.isLocked = true
           this.lockoutTimeRemaining = this.lockoutDuration * 60
@@ -371,17 +333,17 @@ export default defineComponent({
         this.errorMessage = '登录失败，请稍后重试'
       }
     },
-    
+
     // 刷新验证码
     async refreshCaptcha() {
       try {
         // 调用API建立session并获取sessionId
         const response = await captchaAPI.preloadCaptcha()
-        
+
         // 从响应头获取sessionId，尝试多种可能的header名称
-        const sessionId = response.headers['x-session-id'] || 
-                         response.headers['X-Session-Id'] 
-        
+        const sessionId = response.headers['x-session-id'] ||
+          response.headers['X-Session-Id']
+
         console.log('Response headers:', response.headers)
 
         if (sessionId) {
@@ -390,28 +352,28 @@ export default defineComponent({
         } else {
           console.error('无法获取sessionId')
         }
-        
+
         // 设置验证码图片URL
         this.captchaUrl = captchaAPI.getCaptchaImage()
         this.loginForm.captcha = ''
-        
+
       } catch (error) {
         console.error('刷新验证码失败:', error)
         this.errorMessage = '获取验证码失败，请重试'
-        
+
         // 即使失败也生成一个sessionId和设置图片URL
         this.sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
         this.captchaUrl = captchaAPI.getCaptchaImage()
         this.loginForm.captcha = ''
       }
     },
-    
+
     // 检查锁定状态
     checkLockoutStatus() {
       // 后端需要：检查当前用户是否被锁定
       // 这里可以从localStorage或调用API获取锁定状态
     },
-    
+
     // 开始锁定倒计时
     startLockoutTimer() {
       const timer = setInterval(() => {
@@ -423,13 +385,13 @@ export default defineComponent({
         }
       }, 1000)
     },
-    
+
     // 双因素认证相关方法
     validateTwoFactorCode() {
       // 限制只能输入数字
       this.twoFactorCode = this.twoFactorCode.replace(/\D/g, '')
     },
-    
+
     async resend2FA() {
       try {
         if (this.resendCooldown > 0) {
@@ -438,7 +400,7 @@ export default defineComponent({
 
         // 重新发送邮箱验证码
         const result = await this.authStore.send2FACode(this.originalEmail)
-        
+
         if (result.success) {
           // 开始倒计时
           this.resendCooldown = 60
@@ -448,7 +410,7 @@ export default defineComponent({
               clearInterval(timer)
             }
           }, 1000)
-          
+
           this.errorMessage = ''
         } else {
           this.errorMessage = '发送失败，请稍后重试'
@@ -458,7 +420,7 @@ export default defineComponent({
         this.errorMessage = error.response?.data?.msg || '发送失败，请稍后重试'
       }
     },
-    
+
     cancel2FA() {
       this.show2FA = false
       this.twoFactorCode = ''
@@ -467,17 +429,17 @@ export default defineComponent({
       this.errorMessage = ''
       this.resendCooldown = 0
     },
-    
+
     // 发送重置邮件
     async sendResetEmail() {
       // try {
       //   // 使用认证store发送重置邮件
       //   await this.authStore.forgotPassword(this.resetEmail)
-        
+
       //   alert('重置链接已发送到您的邮箱，请查收')
       //   this.showForgotPassword = false
       //   this.resetEmail = ''
-        
+
       // } catch (error) {
       //   this.errorMessage = '发送失败，请检查邮箱地址'
       // }
@@ -488,12 +450,12 @@ export default defineComponent({
       if (!email || !email.includes('@')) {
         return email
       }
-      
+
       const [username, domain] = email.split('@')
       if (username.length <= 2) {
         return `${username[0]}***@${domain}`
       }
-      
+
       const maskedUsername = `${username[0]}${'*'.repeat(username.length - 2)}${username[username.length - 1]}`
       return `${maskedUsername}@${domain}`
     }

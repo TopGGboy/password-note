@@ -5,26 +5,29 @@
       <span class="status-text">安全状态</span>
       <span class="toggle-icon">{{ isExpanded ? '▼' : '▶' }}</span>
     </div>
-    
+
     <div v-if="isExpanded" class="status-content">
       <!-- 认证状态 -->
       <div class="status-section">
         <h4>认证状态</h4>
         <div class="status-item">
           <span class="label">登录状态:</span>
-          <span class="value" :class="{ 'success': securityStatus.isAuthenticated, 'error': !securityStatus.isAuthenticated }">
+          <span class="value"
+            :class="{ 'success': securityStatus.isAuthenticated, 'error': !securityStatus.isAuthenticated }">
             {{ securityStatus.isAuthenticated ? '已登录' : '未登录' }}
           </span>
         </div>
         <div class="status-item">
           <span class="label">Token状态:</span>
-          <span class="value" :class="{ 'success': securityStatus.hasValidToken, 'error': !securityStatus.hasValidToken }">
+          <span class="value"
+            :class="{ 'success': securityStatus.hasValidToken, 'error': !securityStatus.hasValidToken }">
             {{ securityStatus.hasValidToken ? '有效' : '无效' }}
           </span>
         </div>
         <div class="status-item">
           <span class="label">Token过期:</span>
-          <span class="value" :class="{ 'error': securityStatus.tokenExpired, 'success': !securityStatus.tokenExpired }">
+          <span class="value"
+            :class="{ 'error': securityStatus.tokenExpired, 'success': !securityStatus.tokenExpired }">
             {{ securityStatus.tokenExpired ? '已过期' : '未过期' }}
           </span>
         </div>
@@ -94,16 +97,16 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted, onUnmounted } from 'vue'
-import { useAuthStore } from '../store/auth'
-import { tokenManager } from '../utils/tokenManager'
-import { SecurityUtils } from '../utils/security'
-import { getAppSecurityStatus } from '../utils/appInit'
+import { useAuthStore } from '../../store/auth'
+import { tokenManager } from '../../utils/auth/tokenManager'
+import { SecurityUtils } from '../../utils/auth/security'
+import { getAppSecurityStatus } from '../../utils/appInit'
 
 export default defineComponent({
   name: 'SecurityStatus',
   setup() {
     const authStore = useAuthStore()
-    
+
     const isExpanded = ref(false)
     const refreshing = ref(false)
     const securityStatus = ref({
@@ -114,7 +117,7 @@ export default defineComponent({
       isAuthenticated: false,
       isTokenExpiringSoon: false
     })
-    
+
     let updateInterval: number | null = null
 
     // 隐藏安全状态组件
@@ -143,9 +146,9 @@ export default defineComponent({
     const tokenInfo = computed(() => {
       const expirationTime = authStore.tokenExpirationTime
       if (!expirationTime) return null
-      
+
       const timeRemaining = Math.max(0, expirationTime - Date.now())
-      
+
       return {
         expirationTime,
         timeRemaining
@@ -187,12 +190,12 @@ export default defineComponent({
      */
     const formatTimeRemaining = (milliseconds: number): string => {
       if (milliseconds <= 0) return '已过期'
-      
+
       const seconds = Math.floor(milliseconds / 1000)
       const minutes = Math.floor(seconds / 60)
       const hours = Math.floor(minutes / 60)
       const days = Math.floor(hours / 24)
-      
+
       if (days > 0) return `${days}天${hours % 24}小时`
       if (hours > 0) return `${hours}小时${minutes % 60}分钟`
       if (minutes > 0) return `${minutes}分钟${seconds % 60}秒`
@@ -222,7 +225,7 @@ export default defineComponent({
      */
     const refreshToken = async () => {
       if (refreshing.value) return
-      
+
       try {
         refreshing.value = true
         await tokenManager.refreshToken()
@@ -248,7 +251,7 @@ export default defineComponent({
 
     onMounted(() => {
       updateSecurityStatus()
-      
+
       // 每秒更新一次状态
       updateInterval = setInterval(updateSecurityStatus, 1000)
     })
@@ -314,10 +317,21 @@ export default defineComponent({
   font-size: 14px;
 }
 
-.status-icon.success { color: #27ae60; }
-.status-icon.warning { color: #f39c12; }
-.status-icon.error { color: #e74c3c; }
-.status-icon.neutral { color: #95a5a6; }
+.status-icon.success {
+  color: #27ae60;
+}
+
+.status-icon.warning {
+  color: #f39c12;
+}
+
+.status-icon.error {
+  color: #e74c3c;
+}
+
+.status-icon.neutral {
+  color: #95a5a6;
+}
 
 .status-text {
   flex: 1;
@@ -372,9 +386,17 @@ export default defineComponent({
   word-break: break-all;
 }
 
-.value.success { color: #27ae60; }
-.value.warning { color: #f39c12; }
-.value.error { color: #e74c3c; }
+.value.success {
+  color: #27ae60;
+}
+
+.value.warning {
+  color: #f39c12;
+}
+
+.value.error {
+  color: #e74c3c;
+}
 
 .status-actions {
   display: flex;

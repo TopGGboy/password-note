@@ -187,9 +187,9 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import { passwordEntriesAPI } from '../services/api'
-import type { CreatePasswordEntryRequest } from '../types/api'
-import { DataEncryptionService, KeyManager } from '../utils/crypto'
+import { passwordEntriesAPI } from '../../services/api'
+import type { CreatePasswordEntryRequest } from '../../types/api'
+import { DataEncryptionService, KeyManager } from '../../utils/encryption/crypto'
 
 interface PasswordForm {
   title: string

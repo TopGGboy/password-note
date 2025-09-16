@@ -7,8 +7,8 @@ import {
   RegisterRequest,
   RegisterResponse,
 } from "src/types/api";
-import { tokenManager } from "../utils/tokenManager";
-import { STORAGE_KEYS } from "../utils/constants";
+import { tokenManager } from "../utils/auth/tokenManager";
+import { STORAGE_KEYS } from "../constants/constants";
 
 interface User {
   username: string;

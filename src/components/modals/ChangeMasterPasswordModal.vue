@@ -2,45 +2,69 @@
   <div class="modal-overlay" @click="handleOverlayClick">
     <div class="modal-content" @click.stop>
       <div class="modal-header">
-        <h3>{{ isSetup ? '设置主密码' : '输入主密码' }}</h3>
+        <h3>修改主密码</h3>
         <div class="security-icon">🔐</div>
       </div>
 
       <div class="modal-body">
-        <div class="description">
-          <p v-if="isSetup">
-            主密码用于加密您的所有密码数据。请设置一个强密码并牢记，<strong>忘记主密码将无法恢复您的数据</strong>。
-          </p>
-          <p v-else>
-            请输入您的主密码以解锁密码库。
-          </p>
+        <div class="warning-notice">
+          <div class="warning-icon">⚠️</div>
+          <div class="warning-content">
+            <h4>重要提醒</h4>
+            <p>修改主密码后，您需要使用新的主密码来解锁密码库。请确保牢记新密码，<strong>忘记主密码将无法恢复您的数据</strong>。</p>
+          </div>
         </div>
 
         <form @submit.prevent="handleSubmit" class="password-form">
+          <!-- 当前主密码 -->
           <div class="form-group">
-            <label for="masterPassword">主密码</label>
+            <label for="currentMasterPassword">当前主密码</label>
             <div class="password-input-group">
               <input
-                id="masterPassword"
-                v-model="masterPassword"
-                :type="showPassword ? 'text' : 'password'"
-                placeholder="输入主密码"
+                id="currentMasterPassword"
+                v-model="currentMasterPassword"
+                :type="showCurrentPassword ? 'text' : 'password'"
+                placeholder="输入当前主密码"
                 required
                 :disabled="isLoading"
-                @input="validatePassword"
+                @input="clearErrors"
               />
               <button
                 type="button"
-                @click="showPassword = !showPassword"
+                @click="showCurrentPassword = !showCurrentPassword"
                 class="password-toggle"
                 :disabled="isLoading"
               >
-                {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+                {{ showCurrentPassword ? '👁️' : '👁️‍🗨️' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- 新主密码 -->
+          <div class="form-group">
+            <label for="newMasterPassword">新主密码</label>
+            <div class="password-input-group">
+              <input
+                id="newMasterPassword"
+                v-model="newMasterPassword"
+                :type="showNewPassword ? 'text' : 'password'"
+                placeholder="输入新主密码"
+                required
+                :disabled="isLoading"
+                @input="validateNewPassword"
+              />
+              <button
+                type="button"
+                @click="showNewPassword = !showNewPassword"
+                class="password-toggle"
+                :disabled="isLoading"
+              >
+                {{ showNewPassword ? '👁️' : '👁️‍🗨️' }}
               </button>
             </div>
             
-            <!-- 密码强度指示器（仅在设置模式下显示） -->
-            <div v-if="isSetup && masterPassword" class="password-strength">
+            <!-- 密码强度指示器 -->
+            <div v-if="newMasterPassword" class="password-strength">
               <div class="strength-bar">
                 <div 
                   class="strength-fill" 
@@ -52,16 +76,18 @@
             </div>
           </div>
 
-          <div v-if="isSetup" class="form-group">
-            <label for="confirmPassword">确认主密码</label>
+          <!-- 确认新主密码 -->
+          <div class="form-group">
+            <label for="confirmNewPassword">确认新主密码</label>
             <div class="password-input-group">
               <input
-                id="confirmPassword"
-                v-model="confirmPassword"
+                id="confirmNewPassword"
+                v-model="confirmNewPassword"
                 :type="showConfirmPassword ? 'text' : 'password'"
-                placeholder="再次输入主密码"
+                placeholder="再次输入新主密码"
                 required
                 :disabled="isLoading"
+                @input="validateConfirmPassword"
               />
               <button
                 type="button"
@@ -72,8 +98,8 @@
                 {{ showConfirmPassword ? '👁️' : '👁️‍🗨️' }}
               </button>
             </div>
-            <div v-if="confirmPassword && masterPassword !== confirmPassword" class="error-message">
-              两次输入的密码不一致
+            <div v-if="confirmNewPassword && newMasterPassword !== confirmNewPassword" class="error-message">
+              两次输入的新密码不一致
             </div>
           </div>
 
@@ -83,22 +109,31 @@
 
           <div class="form-actions">
             <button 
+              type="button" 
+              @click="$emit('close')" 
+              class="cancel-btn"
+              :disabled="isLoading"
+            >
+              取消
+            </button>
+            <button 
               type="submit" 
               :disabled="!isFormValid || isLoading" 
               class="submit-btn"
             >
-              {{ isLoading ? '处理中...' : (isSetup ? '设置主密码' : '解锁') }}
+              {{ isLoading ? '修改中...' : '修改主密码' }}
             </button>
           </div>
         </form>
 
-        <div v-if="isSetup" class="security-tips">
+        <div class="security-tips">
           <h4>安全提示：</h4>
           <ul>
-            <li>使用至少12位字符的强密码</li>
+            <li>新主密码应使用至少12位字符的强密码</li>
             <li>包含大小写字母、数字和特殊字符</li>
-            <li>不要使用常见的密码或个人信息</li>
-            <li>请将主密码保存在安全的地方</li>
+            <li>不要使用与当前密码相似的密码</li>
+            <li>请将新主密码保存在安全的地方</li>
+            <li>修改后所有设备都需要重新输入新主密码</li>
           </ul>
         </div>
       </div>
@@ -108,32 +143,26 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { KeyManager } from '../utils/crypto'
-
-interface Props {
-  isSetup?: boolean
-}
+import { KeyManager, DataEncryptionService } from '../../utils/encryption/crypto'
 
 interface Emits {
   (e: 'success'): void
   (e: 'close'): void
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  isSetup: false
-})
-
 const emit = defineEmits<Emits>()
 
-const masterPassword = ref('')
-const confirmPassword = ref('')
-const showPassword = ref(false)
+const currentMasterPassword = ref('')
+const newMasterPassword = ref('')
+const confirmNewPassword = ref('')
+const showCurrentPassword = ref(false)
+const showNewPassword = ref(false)
 const showConfirmPassword = ref(false)
 const isLoading = ref(false)
 const errorMessage = ref('')
 
 const passwordStrength = computed(() => {
-  const password = masterPassword.value
+  const password = newMasterPassword.value
   if (!password) {
     return { level: 'weak', percentage: 0, text: '请输入密码' }
   }
@@ -192,13 +221,11 @@ const passwordStrength = computed(() => {
 })
 
 const isFormValid = computed(() => {
-  if (props.isSetup) {
-    return masterPassword.value.length >= 8 && 
-           masterPassword.value === confirmPassword.value &&
-           passwordStrength.value.level !== 'weak'
-  } else {
-    return masterPassword.value.length > 0
-  }
+  return currentMasterPassword.value.length > 0 &&
+         newMasterPassword.value.length >= 8 && 
+         newMasterPassword.value === confirmNewPassword.value &&
+         passwordStrength.value.level !== 'weak' &&
+         currentMasterPassword.value !== newMasterPassword.value
 })
 
 const handleOverlayClick = (event: Event) => {
@@ -207,7 +234,18 @@ const handleOverlayClick = (event: Event) => {
   }
 }
 
-const validatePassword = () => {
+const clearErrors = () => {
+  errorMessage.value = ''
+}
+
+const validateNewPassword = () => {
+  errorMessage.value = ''
+  if (newMasterPassword.value && currentMasterPassword.value === newMasterPassword.value) {
+    errorMessage.value = '新密码不能与当前密码相同'
+  }
+}
+
+const validateConfirmPassword = () => {
   errorMessage.value = ''
 }
 
@@ -218,23 +256,30 @@ const handleSubmit = async () => {
   errorMessage.value = ''
   
   try {
-    if (props.isSetup) {
-      // 设置主密码
-      KeyManager.setMasterPassword(masterPassword.value)
-      console.log('主密码设置成功')
-    } else {
-      // 验证主密码
-      const isValid = KeyManager.verifyMasterPassword(masterPassword.value)
-      if (!isValid) {
-        throw new Error('主密码错误，请重试')
-      }
-      console.log('主密码验证成功')
+    // 1. 验证当前主密码
+    const isCurrentPasswordValid = KeyManager.verifyMasterPassword(currentMasterPassword.value)
+    if (!isCurrentPasswordValid) {
+      throw new Error('当前主密码错误，请重试')
     }
+    
+    // 2. 获取当前的加密密钥（用于重新加密数据）
+    const currentEncryptionKey = KeyManager.getEncryptionKey()
+    if (!currentEncryptionKey) {
+      throw new Error('无法获取当前加密密钥')
+    }
+    
+    // 3. 设置新的主密码（这会生成新的加密密钥）
+    KeyManager.setMasterPassword(newMasterPassword.value)
+    
+    console.log('主密码修改成功')
+    
+    // 4. 提示用户需要重新加密现有数据
+    alert('主密码修改成功！\n\n重要提醒：\n- 请使用新主密码重新登录\n- 现有的密码条目需要重新加密\n- 建议立即备份您的数据')
     
     emit('success')
   } catch (error: any) {
-    console.error('主密码操作失败:', error)
-    errorMessage.value = error.message || '操作失败，请重试'
+    console.error('主密码修改失败:', error)
+    errorMessage.value = error.message || '修改失败，请重试'
   } finally {
     isLoading.value = false
   }
@@ -260,7 +305,7 @@ const handleSubmit = async () => {
   background: white;
   border-radius: 16px;
   width: 100%;
-  max-width: 500px;
+  max-width: 550px;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
@@ -293,18 +338,34 @@ const handleSubmit = async () => {
   padding: 0 32px 32px;
 }
 
-.description {
+.warning-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
   margin-bottom: 24px;
   padding: 16px;
-  background: #f7fafc;
+  background: #fef5e7;
   border-radius: 8px;
-  border-left: 4px solid #3182ce;
+  border-left: 4px solid #f6ad55;
 }
 
-.description p {
+.warning-icon {
+  font-size: 20px;
+  margin-top: 2px;
+}
+
+.warning-content h4 {
+  margin: 0 0 8px 0;
+  color: #c05621;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.warning-content p {
   margin: 0;
-  color: #4a5568;
-  line-height: 1.6;
+  color: #744210;
+  line-height: 1.5;
+  font-size: 14px;
 }
 
 .password-form {
@@ -425,20 +486,36 @@ const handleSubmit = async () => {
 }
 
 .form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
   margin-top: 32px;
 }
 
+.cancel-btn,
 .submit-btn {
-  width: 100%;
-  padding: 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
+  padding: 16px 24px;
   border-radius: 8px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  border: none;
+}
+
+.cancel-btn {
+  background: #f7fafc;
+  color: #4a5568;
+  border: 1px solid #e2e8f0;
+}
+
+.cancel-btn:hover:not(:disabled) {
+  background: #edf2f7;
+}
+
+.submit-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
 }
 
 .submit-btn:hover:not(:disabled) {
@@ -451,6 +528,11 @@ const handleSubmit = async () => {
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+.cancel-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .security-tips {
@@ -492,6 +574,15 @@ const handleSubmit = async () => {
   
   .modal-header h3 {
     font-size: 24px;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .cancel-btn,
+  .submit-btn {
+    width: 100%;
   }
 }
 </style>

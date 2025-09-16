@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
 import router from '../router'
-import { HTTP_STATUS, STORAGE_KEYS, ROUTES, API_ENDPOINTS } from './constants'
-import { tokenManager } from './tokenManager'
+import { HTTP_STATUS, STORAGE_KEYS, ROUTES, API_ENDPOINTS } from '../constants/constants'
+import { tokenManager } from './auth/tokenManager'
 
 // 创建axios实例
 const http: AxiosInstance = axios.create({

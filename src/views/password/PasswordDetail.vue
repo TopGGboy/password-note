@@ -109,7 +109,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import EditPasswordModal from '../components/EditPasswordModal.vue'
+import EditPasswordModal from '../../components/modals/EditPasswordModal.vue'
 
 interface PasswordItem {
   id: string

@@ -268,11 +268,11 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import AddPasswordModal from '../components/AddPasswordModal.vue'
-import EditPasswordModal from '../components/EditPasswordModal.vue'
-import ImportPasswordsModal from '../components/ImportPasswordsModal.vue'
-import MasterPasswordModal from '../components/MasterPasswordModal.vue'
-import { KeyManager } from '../utils/crypto'
+import AddPasswordModal from '../../components/modals/AddPasswordModal.vue'
+import EditPasswordModal from '../../components/modals/EditPasswordModal.vue'
+import ImportPasswordsModal from '../../components/modals/ImportPasswordsModal.vue'
+import MasterPasswordModal from '../../components/modals/MasterPasswordModal.vue'
+import { KeyManager } from '../../utils/encryption/crypto'
 
 interface PasswordItem {
   id: string

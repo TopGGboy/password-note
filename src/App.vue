@@ -1,26 +1,22 @@
 <template>
   <div id="app">
     <router-view />
-    
+
     <!-- 开发环境安全状态监控 -->
     <SecurityStatus />
-    
+
     <!-- 主密码模态框 -->
-    <MasterPasswordModal
-      v-if="showMasterPasswordModal"
-      :is-setup="!hasMasterPassword"
-      @success="handleMasterPasswordSuccess"
-      @close="handleMasterPasswordClose"
-    />
+    <MasterPasswordModal v-if="showMasterPasswordModal" :is-setup="!hasMasterPassword"
+      @success="handleMasterPasswordSuccess" @close="handleMasterPasswordClose" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import SecurityStatus from './components/SecurityStatus.vue'
-import MasterPasswordModal from './components/MasterPasswordModal.vue'
-import { KeyManager } from './utils/crypto'
+import SecurityStatus from './components/security/SecurityStatus.vue'
+import MasterPasswordModal from './components/modals/MasterPasswordModal.vue'
+import { KeyManager } from './utils/encryption/crypto'
 
 const route = useRoute()
 const showMasterPasswordModal = ref(false)
@@ -31,13 +27,13 @@ const protectedRoutes = ['/passwords', '/password-detail']
 
 // 检查是否需要主密码
 const checkMasterPasswordRequired = () => {
-  const currentPath = route.path
-  const isProtectedRoute = protectedRoutes.some(path => 
-    currentPath.startsWith(path)
+  const currentPath = route.path    // 获取当前路径
+  const isProtectedRoute = protectedRoutes.some(path =>
+    currentPath.startsWith(path)      // 检查是否是受保护路由
   )
-  
+
   if (isProtectedRoute && !KeyManager.hasKey()) {
-    showMasterPasswordModal.value = true
+    showMasterPasswordModal.value = true     // 显示主密码模态框
   }
 }
 
@@ -65,7 +61,7 @@ watch(() => route.path, () => {
 onMounted(() => {
   // 检查是否已有主密码设置（持久化检查）
   hasMasterPassword.value = KeyManager.hasMasterPassword()
-  
+
   // 检查当前路由是否需要主密码
   checkMasterPasswordRequired()
 })

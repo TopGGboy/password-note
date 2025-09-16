@@ -19,10 +19,10 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '../store/auth'
-import { tokenManager } from '../utils/tokenManager'
-import { SecurityUtils, SecurityEventListener, SECURITY_EVENTS } from '../utils/security'
-import { ROUTES } from '../utils/constants'
+import { useAuthStore } from '../../store/auth'
+import { tokenManager } from '../../utils/auth/tokenManager'
+import { SecurityUtils, SecurityEventListener, SECURITY_EVENTS } from '../../utils/auth/security'
+import { ROUTES } from '../../constants/constants'
 
 export default defineComponent({
   name: 'SecurityMiddleware',

@@ -1,6 +1,6 @@
 import http from "../utils/http";
 import axios from "axios";
-import { API_ENDPOINTS } from "../utils/constants";
+import { API_ENDPOINTS } from "../constants/constants";
 import type {
   ApiResponse,
   LoginRequest,

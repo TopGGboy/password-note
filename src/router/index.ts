@@ -1,13 +1,12 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
-import Login from '../views/Login.vue'
-import { ROUTES, STORAGE_KEYS } from '../utils/constants'
-import { tokenManager } from '../utils/tokenManager'
+import { ROUTES } from '../constants/constants'
+import { tokenManager } from '../utils/auth/tokenManager'
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: ROUTES.HOME,
     name: 'Home',
-    component: () => import('../views/Home.vue'),
+    component: () => import('../views/dashboard/Home.vue'),
     meta: {
       requiresAuth: true,
       title: '主页 - 密码笔记',
@@ -17,7 +16,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: ROUTES.LOGIN,
     name: 'Login',
-    component: Login,
+    component: () => import("../views/auth/Login.vue"),
     meta: {
       requiresAuth: false,
       title: '登录 - 密码笔记',
@@ -27,7 +26,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: ROUTES.REGISTER,
     name: 'Register',
-    component: () => import('../views/Register.vue'),
+    component: () => import('../views/auth/Register.vue'),
     meta: {
       requiresAuth: false,
       title: '注册 - 密码笔记',
@@ -37,7 +36,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: ROUTES.DASHBOARD,
     name: 'Dashboard',
-    component: () => import('../views/Dashboard.vue'),
+    component: () => import('../views/dashboard/Dashboard.vue'),
     meta: {
       requiresAuth: true,
       title: '控制台 - 密码笔记',
@@ -47,7 +46,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/passwords',
     name: 'Passwords',
-    component: () => import('../views/Passwords.vue'),
+    component: () => import('../views/password/Passwords.vue'),
     meta: {
       requiresAuth: true,
       title: '密码管理 - 密码笔记',
@@ -57,7 +56,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/passwords/:id',
     name: 'PasswordDetail',
-    component: () => import('../views/PasswordDetail.vue'),
+    component: () => import('../views/password/PasswordDetail.vue'),
     meta: {
       requiresAuth: true,
       title: '密码详情 - 密码笔记',
@@ -67,7 +66,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/categories',
     name: 'Categories',
-    component: () => import('../views/Categories.vue'),
+    component: () => import('../views/password/Categories.vue'),
     meta: {
       requiresAuth: true,
       title: '分类管理 - 密码笔记',
@@ -77,7 +76,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/security',
     name: 'Security',
-    component: () => import('../views/Security.vue'),
+    component: () => import('../views/security/Security.vue'),
     meta: {
       requiresAuth: true,
       title: '安全中心 - 密码笔记',
@@ -87,7 +86,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/settings',
     name: 'Settings',
-    component: () => import('../views/Settings.vue'),
+    component: () => import('../views/dashboard/Settings.vue'),
     meta: {
       requiresAuth: true,
       title: '设置 - 密码笔记',
@@ -97,7 +96,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: ROUTES.RESET_PASSWORD,
     name: 'ResetPassword',
-    component: () => import('../views/ResetPassword.vue'),
+    component: () => import('../views/auth/ResetPassword.vue'),
     meta: {
       requiresAuth: false,
       title: '重置密码 - 密码笔记',

@@ -349,11 +349,11 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import ChangePasswordModal from '../components/ChangePasswordModal.vue'
-import ChangeMasterPasswordModal from '../components/ChangeMasterPasswordModal.vue'
-import SessionsModal from '../components/SessionsModal.vue'
-import ImportDataModal from '../components/ImportDataModal.vue'
-import DeleteAccountModal from '../components/DeleteAccountModal.vue'
+import ChangePasswordModal from '../../components/modals/ChangePasswordModal.vue'
+import ChangeMasterPasswordModal from '../../components/modals/ChangeMasterPasswordModal.vue'
+import SessionsModal from '../../components/modals/SessionsModal.vue'
+import ImportDataModal from '../../components/modals/ImportDataModal.vue'
+import DeleteAccountModal from '../../components/modals/DeleteAccountModal.vue'
 
 interface UserSettings {
   username: string

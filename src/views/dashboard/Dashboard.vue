@@ -154,9 +154,9 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '../store/auth'
-import { tokenManager } from '../utils/tokenManager'
-import { STORAGE_KEYS } from '../utils/constants'
+import { useAuthStore } from '../../store/auth'
+import { tokenManager } from '../../utils/auth/tokenManager'
+import { STORAGE_KEYS } from '../../constants/constants'
 
 export default defineComponent({
   name: 'Dashboard',

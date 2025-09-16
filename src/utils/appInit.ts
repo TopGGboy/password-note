@@ -3,11 +3,11 @@
  * 负责应用启动时的安全初始化和配置
  */
 
-import { tokenManager } from './tokenManager'
-import { SecurityUtils, SecurityEventListener, SECURITY_EVENTS } from './security'
+import { tokenManager } from './auth/tokenManager'
+import { SecurityUtils, SecurityEventListener, SECURITY_EVENTS } from './auth/security'
 import { useAuthStore } from '../store/auth'
 import router from '../router'
-import { ROUTES } from './constants'
+import { ROUTES } from '../constants/constants'
 
 /**
  * 应用安全初始化类
