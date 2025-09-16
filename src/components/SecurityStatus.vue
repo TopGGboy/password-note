@@ -117,9 +117,9 @@ export default defineComponent({
     
     let updateInterval: number | null = null
 
-    // 只在开发环境显示
+    // 隐藏安全状态组件
     const showStatus = computed(() => {
-      return process.env.NODE_ENV === 'development'
+      return false
     })
 
     // 状态图标和样式

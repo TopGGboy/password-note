@@ -140,6 +140,18 @@
         <div class="settings-group">
           <div class="setting-item">
             <div class="setting-info">
+              <h4>修改主密码</h4>
+              <p>更改用于加密所有密码数据的主密码</p>
+            </div>
+            <div class="setting-control">
+              <button @click="showChangeMasterPassword = true" class="action-btn">
+                修改主密码
+              </button>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
               <h4>自动锁定</h4>
               <p>在指定时间后自动锁定应用</p>
             </div>
@@ -306,6 +318,13 @@
       @success="handlePasswordChanged"
     />
 
+    <!-- 修改主密码模态框 -->
+    <ChangeMasterPasswordModal
+      v-if="showChangeMasterPassword"
+      @close="showChangeMasterPassword = false"
+      @success="handleMasterPasswordChanged"
+    />
+
     <!-- 会话管理模态框 -->
     <SessionsModal
       v-if="showSessions"
@@ -331,6 +350,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 import ChangePasswordModal from '../components/ChangePasswordModal.vue'
+import ChangeMasterPasswordModal from '../components/ChangeMasterPasswordModal.vue'
 import SessionsModal from '../components/SessionsModal.vue'
 import ImportDataModal from '../components/ImportDataModal.vue'
 import DeleteAccountModal from '../components/DeleteAccountModal.vue'
@@ -357,6 +377,7 @@ export default defineComponent({
   name: 'Settings',
   components: {
     ChangePasswordModal,
+    ChangeMasterPasswordModal,
     SessionsModal,
     ImportDataModal,
     DeleteAccountModal
@@ -365,6 +386,7 @@ export default defineComponent({
     return {
       editingEmail: false,
       showChangePassword: false,
+      showChangeMasterPassword: false,
       showSessions: false,
       showImport: false,
       showDeleteAccount: false,
@@ -501,6 +523,13 @@ export default defineComponent({
     // 处理密码修改成功
     handlePasswordChanged() {
       console.log('密码修改成功')
+    },
+
+    // 处理主密码修改成功
+    handleMasterPasswordChanged() {
+      console.log('主密码修改成功')
+      // 可以在这里添加一些后续处理，比如提示用户重新登录等
+      alert('主密码修改成功！请使用新密码重新登录应用。')
     },
 
     // 处理数据导入成功
