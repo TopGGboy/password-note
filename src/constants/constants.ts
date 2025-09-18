@@ -16,6 +16,13 @@ export const API_ENDPOINTS = {
 
   PASSWORDENTRIES: {
     BASE: "/api/password-entries",
+    PAGE: "/api/password-entries/page",
+    SEARCH: "/api/password-entries/search",
+    FAVORITES: "/api/password-entries/favorites"
+  },
+
+  CATEGORIES: {
+    BASE: "/api/categories",
   },
 
   // 验证码相关接口

@@ -77,7 +77,7 @@
     <div class="stats-bar">
       <div class="stat-item">
         <span class="stat-label">总计:</span>
-        <span class="stat-value">{{ filteredPasswords.length }}</span>
+        <span class="stat-value">{{ passwordsTotal }}</span>
       </div>
       <div class="stat-item">
         <span class="stat-label">弱密码:</span>
@@ -100,7 +100,7 @@
         <p>加载中...</p>
       </div>
 
-      <div v-else-if="filteredPasswords.length === 0" class="empty-state">
+      <div v-else-if="passwords.length === 0" class="empty-state">
         <div class="empty-icon">🔐</div>
         <h3>{{ searchQuery ? '未找到匹配的密码' : '还没有密码记录' }}</h3>
         <p>{{ searchQuery ? '尝试使用不同的搜索词' : '点击添加按钮创建您的第一个密码记录' }}</p>
@@ -198,14 +198,14 @@
       <!-- 分页 -->
       <div v-if="totalPages > 1" class="pagination">
         <button
-          @click="currentPage = 1"
+          @click="goToPage(1)"
           :disabled="currentPage === 1"
           class="page-btn"
         >
           ⏮️
         </button>
         <button
-          @click="currentPage--"
+          @click="goToPage(currentPage - 1)"
           :disabled="currentPage === 1"
           class="page-btn"
         >
@@ -213,22 +213,29 @@
         </button>
         
         <span class="page-info">
-          第 {{ currentPage }} 页，共 {{ totalPages }} 页
+          第 {{ currentPage }} 页，共 {{ totalPages }} 页 (共 {{ passwordsTotal }} 条记录)
         </span>
         
         <button
-          @click="currentPage++"
+          @click="goToPage(currentPage + 1)"
           :disabled="currentPage === totalPages"
           class="page-btn"
         >
           ⏩
         </button>
         <button
-          @click="currentPage = totalPages"
+          @click="goToPage(totalPages)"
           :disabled="currentPage === totalPages"
           class="page-btn"
         >
           ⏭️
+        </button>
+      </div>
+
+      <!-- 加载更多按钮（可选的无限滚动替代方案） -->
+      <div v-if="passwordsHasMore && !isLoading" class="load-more">
+        <button @click="loadMore" class="load-more-btn">
+          加载更多
         </button>
       </div>
     </div>
@@ -272,24 +279,21 @@ import AddPasswordModal from '../../components/modals/AddPasswordModal.vue'
 import EditPasswordModal from '../../components/modals/EditPasswordModal.vue'
 import ImportPasswordsModal from '../../components/modals/ImportPasswordsModal.vue'
 import MasterPasswordModal from '../../components/modals/MasterPasswordModal.vue'
+import { usePasswordEntries } from '../../composables/usePasswordEntries'
+import { categoriesAPI } from '../../services/api'
 import { KeyManager } from '../../utils/encryption/crypto'
+import { tokenManager } from '../../utils/auth/tokenManager'
+import type { DecryptedPasswordEntry } from '../../composables/usePasswordEntries'
+import type { Category } from '../../types/api'
 
-interface PasswordItem {
-  id: string
-  title: string
-  username: string
-  password: string
-  url?: string
-  category: string
-  icon: string
-  lastUsed: Date
-  createdAt: Date
-  updatedAt: Date
+// 为了兼容现有代码，创建一个类型别名
+type PasswordItem = DecryptedPasswordEntry & {
+  id: string  // 保持原有的string类型ID
+  category: string  // 添加分类名称字段
+  url: string  // 确保url是string类型而不是可选的
   isWeak?: boolean
   isDuplicate?: boolean
   isExpiring?: boolean
-  notes?: string
-  tags?: string[]
 }
 
 export default defineComponent({
@@ -300,15 +304,55 @@ export default defineComponent({
     ImportPasswordsModal,
     MasterPasswordModal
   },
+  setup() {
+    // 使用密码条目组合式函数
+    const {
+      loading,
+      error,
+      entries,
+      total,
+      totalPages,
+      query,
+      hasData,
+      isEmpty,
+      hasMore,
+      fetchEntries,
+      searchEntries,
+      filterByCategory,
+      sortEntries,
+      refresh,
+      deleteEntry,
+      toggleFavorite,
+      recordUsage
+    } = usePasswordEntries()
+
+    return {
+      // 从组合式函数返回的状态和方法
+      passwordsLoading: loading,
+      passwordsError: error,
+      passwordEntries: entries,
+      passwordsTotal: total,
+      passwordsTotalPages: totalPages,
+      passwordsQuery: query,
+      passwordsHasData: hasData,
+      passwordsIsEmpty: isEmpty,
+      passwordsHasMore: hasMore,
+      fetchPasswordEntries: fetchEntries,
+      searchPasswordEntries: searchEntries,
+      filterPasswordsByCategory: filterByCategory,
+      sortPasswordEntries: sortEntries,
+      refreshPasswords: refresh,
+      deletePasswordEntry: deleteEntry,
+      togglePasswordFavorite: toggleFavorite,
+      recordPasswordUsage: recordUsage
+    }
+  },
   data() {
     return {
-      isLoading: false,
       searchQuery: '',
       selectedCategory: '',
-      sortBy: 'lastUsed',
+      sortBy: 'updatedAt',
       viewMode: 'grid' as 'grid' | 'list',
-      currentPage: 1,
-      pageSize: 20,
       
       showAddModal: false,
       showEditModal: false,
@@ -316,62 +360,52 @@ export default defineComponent({
       showMasterPasswordModal: false,
       hasMasterPassword: false,
       editingPassword: null as PasswordItem | null,
+      pendingViewPasswordId: null as string | null,
       
-      passwords: [] as PasswordItem[],
-      categories: [] as string[],
-      
+      categories: [] as Category[],
       searchTimeout: null as number | null
     }
   },
   computed: {
-    filteredPasswords(): PasswordItem[] {
-      let result = [...this.passwords]
-      
-      // 搜索过滤
-      if (this.searchQuery.trim()) {
-        const query = this.searchQuery.toLowerCase()
-        result = result.filter(password =>
-          password.title.toLowerCase().includes(query) ||
-          password.username.toLowerCase().includes(query) ||
-          password.category.toLowerCase().includes(query) ||
-          (password.url && password.url.toLowerCase().includes(query)) ||
-          (password.notes && password.notes.toLowerCase().includes(query))
-        )
-      }
-      
-      // 分类过滤
-      if (this.selectedCategory) {
-        result = result.filter(password => password.category === this.selectedCategory)
-      }
-      
-      // 排序
-      result.sort((a, b) => {
-        switch (this.sortBy) {
-          case 'title':
-            return a.title.localeCompare(b.title)
-          case 'createdAt':
-            return b.createdAt.getTime() - a.createdAt.getTime()
-          case 'updatedAt':
-            return b.updatedAt.getTime() - a.updatedAt.getTime()
-          case 'lastUsed':
-          default:
-            return b.lastUsed.getTime() - a.lastUsed.getTime()
-        }
+    // 使用后端分页的数据
+    isLoading(): boolean {
+      return this.passwordsLoading
+    },
+    
+    passwords(): PasswordItem[] {
+      return this.passwordEntries.map(entry => {
+        // 获取分类名称
+        const category = this.categories.find(cat => cat.id === entry.categoryId)
+        
+        return {
+          ...entry,
+          id: entry.id.toString(),  // 转换为string类型
+          category: category?.name || '其他',  // 添加分类名称
+          url: entry.url || '',  // 确保url不为undefined
+          // 添加安全状态检查
+          isWeak: this.checkPasswordStrength(entry.password) < 3,
+          isDuplicate: this.checkDuplicatePassword(entry.password),
+          isExpiring: this.checkPasswordExpiring(entry.updatedAt || entry.createdAt)
+        } as PasswordItem
       })
-      
-      return result
     },
     
+    // 显示的密码列表（后端已分页）
     paginatedPasswords(): PasswordItem[] {
-      const start = (this.currentPage - 1) * this.pageSize
-      const end = start + this.pageSize
-      return this.filteredPasswords.slice(start, end)
+      return this.passwords
     },
     
+    // 使用后端返回的总页数
     totalPages(): number {
-      return Math.ceil(this.filteredPasswords.length / this.pageSize)
+      return this.passwordsTotalPages
     },
     
+    // 当前页码
+    currentPage(): number {
+      return this.passwordsQuery.page || 1
+    },
+    
+    // 统计信息
     weakPasswordsCount(): number {
       return this.passwords.filter(p => p.isWeak).length
     },
@@ -382,134 +416,145 @@ export default defineComponent({
     
     expiringPasswordsCount(): number {
       return this.passwords.filter(p => p.isExpiring).length
+    },
+    
+    // 获取分类名称
+    categoryNames(): string[] {
+      return this.categories.map(cat => cat.name)
     }
   },
   async mounted() {
     // 检查是否已有主密码设置（持久化检查）
     this.hasMasterPassword = KeyManager.hasMasterPassword()
-    await this.loadPasswords()
+    await Promise.all([
+      this.loadCategories(),
+      this.loadPasswords()
+    ])
   },
   methods: {
-    // 加载密码数据
-    async loadPasswords() {
-      this.isLoading = true
+    // 加载分类数据
+    async loadCategories() {
       try {
-        // 模拟API调用 - 实际项目中从API获取
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
-        this.passwords = [
-          {
-            id: '1',
-            title: 'GitHub',
-            username: 'user@example.com',
-            password: 'encrypted_password_1',
-            url: 'https://github.com',
-            category: '开发工具',
-            icon: '🐙',
-            lastUsed: new Date(Date.now() - 2 * 60 * 60 * 1000),
-            createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-            updatedAt: new Date(),
-            isWeak: false,
-            isDuplicate: false,
-            isExpiring: false,
-            notes: 'GitHub开发账户',
-            tags: ['开发', '代码']
-          },
-          {
-            id: '2',
-            title: '微信',
-            username: 'wechat_user',
-            password: 'encrypted_password_2',
-            category: '社交媒体',
-            icon: '💬',
-            lastUsed: new Date(Date.now() - 5 * 60 * 60 * 1000),
-            createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
-            updatedAt: new Date(),
-            isWeak: true,
-            isDuplicate: false,
-            isExpiring: false
-          },
-          {
-            id: '3',
-            title: '支付宝',
-            username: '138****8888',
-            password: 'encrypted_password_3',
-            category: '金融服务',
-            icon: '💰',
-            lastUsed: new Date(Date.now() - 24 * 60 * 60 * 1000),
-            createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000),
-            updatedAt: new Date(),
-            isWeak: false,
-            isDuplicate: true,
-            isExpiring: false
-          },
-          {
-            id: '4',
-            title: 'Gmail',
-            username: 'myemail@gmail.com',
-            password: 'encrypted_password_4',
-            url: 'https://gmail.com',
-            category: '邮箱服务',
-            icon: '📧',
-            lastUsed: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-            createdAt: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000),
-            updatedAt: new Date(),
-            isWeak: false,
-            isDuplicate: false,
-            isExpiring: true
-          }
-        ]
-        
-        // 提取分类
-        this.categories = [...new Set(this.passwords.map(p => p.category))]
-        
+        const response = await categoriesAPI.getAll()
+        if (response.code === 200 && response.data) {
+          this.categories = response.data.categories
+        }
       } catch (error) {
-        console.error('加载密码失败:', error)
-      } finally {
-        this.isLoading = false
+        console.error('加载分类失败:', error)
+        // 使用默认分类
+        this.categories = [
+          { id: 1, name: '其他' },
+          { id: 2, name: '社交媒体' },
+          { id: 3, name: '邮箱服务' },
+          { id: 4, name: '金融服务' },
+          { id: 5, name: '开发工具' },
+          { id: 6, name: '购物网站' },
+          { id: 7, name: '娱乐平台' },
+          { id: 8, name: '工作相关' }
+        ]
       }
     },
 
-    // 搜索处理
+    // 加载密码数据（使用后端分页）
+    async loadPasswords() {
+      try {
+        await this.fetchPasswordEntries()
+      } catch (error) {
+        console.error('加载密码失败:', error)
+      }
+    },
+
+    // 密码强度检查
+    checkPasswordStrength(password: string): number {
+      let score = 0
+      if (password.length >= 8) score++
+      if (/[a-z]/.test(password)) score++
+      if (/[A-Z]/.test(password)) score++
+      if (/\d/.test(password)) score++
+      if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score++
+      return score
+    },
+
+    // 检查重复密码
+    checkDuplicatePassword(password: string): boolean {
+      const passwordCount = this.passwordEntries.filter(p => p.password === password).length
+      return passwordCount > 1
+    },
+
+    // 检查密码是否即将过期（超过90天未更新）
+    checkPasswordExpiring(updatedAt: string): boolean {
+      const updateDate = new Date(updatedAt)
+      const now = new Date()
+      const daysDiff = (now.getTime() - updateDate.getTime()) / (1000 * 60 * 60 * 24)
+      return daysDiff > 90
+    },
+
+    // 搜索处理（使用后端搜索）
     handleSearch() {
       if (this.searchTimeout) {
         clearTimeout(this.searchTimeout)
       }
       
-      this.searchTimeout = setTimeout(() => {
-        this.currentPage = 1 // 重置到第一页
+      this.searchTimeout = setTimeout(async () => {
+        await this.searchPasswordEntries(this.searchQuery)
       }, 300)
     },
 
     // 清除搜索
-    clearSearch() {
+    async clearSearch() {
       this.searchQuery = ''
-      this.currentPage = 1
+      await this.searchPasswordEntries('')
     },
 
-    // 应用筛选
-    applyFilters() {
-      this.currentPage = 1
+    // 应用筛选（使用后端筛选）
+    async applyFilters() {
+      const categoryId = this.selectedCategory ? 
+        this.categories.find(cat => cat.name === this.selectedCategory)?.id : 
+        undefined
+      await this.filterPasswordsByCategory(categoryId)
     },
 
-    // 应用排序
-    applySorting() {
-      this.currentPage = 1
+    // 应用排序（使用后端排序）
+    async applySorting() {
+      const sortBy = this.sortBy as any
+      await this.sortPasswordEntries(sortBy, 'desc')
     },
 
     // 查看密码详情
-    viewPassword(password: PasswordItem) {
-      this.$router.push(`/passwords/${password.id}`)
+    async viewPassword(password: PasswordItem) {
+      try {
+        // 首先检查用户是否已登录（有有效的API token）
+        if (!tokenManager.hasValidToken() || tokenManager.isTokenExpired()) {
+          console.log('🚫 用户未登录或token已过期，跳转到登录页面')
+          this.$router.push('/login')
+          return
+        }
+
+        // 检查是否已有加密密钥（用户是否已通过主密码验证）
+        if (!KeyManager.hasKey()) {
+          // 如果没有密钥，显示主密码模态框
+          this.showMasterPasswordModal = true
+          // 保存要查看的密码ID，验证成功后跳转
+          this.pendingViewPasswordId = password.id
+          return
+        }
+        
+        // 如果已有密钥，直接跳转到详情页面
+        this.$router.push(`/passwords/${password.id}`)
+      } catch (error) {
+        console.error('查看密码详情失败:', error)
+        // 如果出现错误，可能是认证问题，跳转到登录页面
+        this.$router.push('/login')
+      }
     },
 
     // 复制密码
     async copyPassword(password: PasswordItem) {
       try {
-        // 实际项目中需要先解密密码
         await navigator.clipboard.writeText(password.password)
         console.log('密码已复制')
-        // 更新最后使用时间
-        password.lastUsed = new Date()
+        // 记录使用次数
+        await this.recordPasswordUsage(parseInt(password.id))  // 转换为number类型
       } catch (error) {
         console.error('复制失败:', error)
       }
@@ -531,18 +576,11 @@ export default defineComponent({
       this.showEditModal = true
     },
 
-    // 删除密码
+    // 删除密码（使用后端API）
     async deletePassword(password: PasswordItem) {
       if (confirm(`确定要删除密码 "${password.title}" 吗？此操作不可撤销。`)) {
         try {
-          // 模拟API调用
-          await new Promise(resolve => setTimeout(resolve, 500))
-          
-          const index = this.passwords.findIndex(p => p.id === password.id)
-          if (index > -1) {
-            this.passwords.splice(index, 1)
-          }
-          
+          await this.deletePasswordEntry(parseInt(password.id))  // 转换为number类型
           console.log('密码已删除')
         } catch (error) {
           console.error('删除失败:', error)
@@ -587,24 +625,49 @@ export default defineComponent({
     },
 
     // 处理密码添加成功
-    handlePasswordAdded(password: PasswordItem) {
-      this.passwords.unshift(password)
-      this.categories = [...new Set(this.passwords.map(p => p.category))]
+    async handlePasswordAdded(password: PasswordItem) {
+      console.log('密码添加成功')
+      // 刷新密码列表
+      await this.refreshPasswords()
     },
 
     // 处理密码更新成功
-    handlePasswordUpdated(updatedPassword: PasswordItem) {
-      const index = this.passwords.findIndex(p => p.id === updatedPassword.id)
-      if (index > -1) {
-        this.passwords[index] = updatedPassword
-      }
-      this.categories = [...new Set(this.passwords.map(p => p.category))]
+    async handlePasswordUpdated(updatedPassword: PasswordItem) {
+      console.log('密码更新成功')
+      // 刷新密码列表
+      await this.refreshPasswords()
     },
 
     // 处理密码导入成功
-    handlePasswordsImported(importedPasswords: PasswordItem[]) {
-      this.passwords.push(...importedPasswords)
-      this.categories = [...new Set(this.passwords.map(p => p.category))]
+    async handlePasswordsImported(importedPasswords: PasswordItem[]) {
+      console.log('密码导入成功')
+      // 刷新密码列表
+      await this.refreshPasswords()
+    },
+
+    // 分页控制方法
+    async goToPage(page: number) {
+      if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
+        try {
+          // 更新查询参数并重新获取数据
+          this.passwordsQuery.page = page
+          await this.fetchPasswordEntries()
+        } catch (error) {
+          console.error('切换页面失败:', error)
+        }
+      }
+    },
+
+    // 加载更多（无限滚动）
+    async loadMore() {
+      try {
+        const nextPage = this.currentPage + 1
+        this.passwordsQuery.page = nextPage
+        // 这里需要修改组合式函数以支持追加模式
+        await this.fetchPasswordEntries()
+      } catch (error) {
+        console.error('加载更多失败:', error)
+      }
     },
 
     // 处理需要主密码的情况
@@ -616,12 +679,20 @@ export default defineComponent({
     handleMasterPasswordSuccess() {
       this.showMasterPasswordModal = false
       this.hasMasterPassword = true
-      console.log('主密码验证成功，可以继续保存密码')
+      console.log('主密码验证成功')
+      
+      // 如果有待查看的密码ID，验证成功后跳转到详情页面
+      if (this.pendingViewPasswordId) {
+        this.$router.push(`/passwords/${this.pendingViewPasswordId}`)
+        this.pendingViewPasswordId = null
+      }
     },
 
     // 处理主密码模态框关闭
     handleMasterPasswordClose() {
       this.showMasterPasswordModal = false
+      // 清除待查看的密码ID
+      this.pendingViewPasswordId = null
       // 如果用户关闭了主密码模态框但没有设置密码，也关闭添加密码模态框
       if (!KeyManager.hasKey()) {
         this.showAddModal = false
@@ -1080,6 +1151,33 @@ export default defineComponent({
 .page-info {
   color: #718096;
   font-size: 14px;
+}
+
+/* 加载更多按钮样式 */
+.load-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.load-more-btn {
+  padding: 12px 24px;
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #4a5568;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.load-more-btn:hover {
+  background: #edf2f7;
+  border-color: #cbd5e0;
+}
+
+.load-more-btn:active {
+  transform: translateY(1px);
 }
 
 @media (max-width: 768px) {

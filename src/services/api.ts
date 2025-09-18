@@ -9,14 +9,17 @@ import type {
   Validate2FACodeRequest,
   RegisterRequest,
   RegisterResponse,
-
-
-
+  CreatePasswordEntryRequest,
+  GetPasswordEntriesRequest,
+  GetPasswordEntriesResponse,
+  PasswordEntry,
+  Category,
   UserInfoResponse,
   ChangePasswordRequest,
   ResetPasswordRequest,
   ForgotPasswordRequest,
-  CreatePasswordEntryRequest
+  CategoriesResponse,
+  PasswordEntriesResponse
 } from "../types/api";
 
 // 用户相关API（根据API接口文档）
@@ -121,17 +124,56 @@ export const emailAPI = {
   },
 };
 
+// 分类相关API
+export const categoriesAPI = {
+  // 获取所有分类
+  getAll: (): Promise<ApiResponse<CategoriesResponse>> => {
+    return http.get(API_ENDPOINTS.CATEGORIES.BASE)
+  },
+}
+
 // 密码条目相关API
 export const passwordEntriesAPI = {
   // 创建密码条目
-  create: (data: CreatePasswordEntryRequest): Promise<ApiResponse<any>> => {
+  create: (data: CreatePasswordEntryRequest): Promise<ApiResponse<PasswordEntry>> => {
     return http.post(API_ENDPOINTS.PASSWORDENTRIES.BASE, data)
   },
+  
+  // 分页查询密码条目
+  page: (params: GetPasswordEntriesRequest): Promise<ApiResponse<GetPasswordEntriesResponse>> => {
+    return http.post(API_ENDPOINTS.PASSWORDENTRIES.PAGE, params)
+  },
+  
+  // 获取单个密码条目
+  getById: (id: number): Promise<ApiResponse<PasswordEntry>> => {
+    return http.get(`${API_ENDPOINTS.PASSWORDENTRIES.BASE}/${id}`)
+  },
+  
+  // 更新密码条目
+  update: (id: number, data: Partial<CreatePasswordEntryRequest>): Promise<ApiResponse<PasswordEntry>> => {
+    return http.put(`${API_ENDPOINTS.PASSWORDENTRIES.BASE}/${id}`, data)
+  },
+  
+  // 删除密码条目
+  delete: (id: number): Promise<ApiResponse<null>> => {
+    return http.delete(`${API_ENDPOINTS.PASSWORDENTRIES.BASE}/${id}`)
+  },
+  
+  // 切换收藏状态
+  toggleFavorite: (id: number): Promise<ApiResponse<PasswordEntry>> => {
+    return http.patch(`${API_ENDPOINTS.PASSWORDENTRIES.BASE}/${id}/favorite`)
+  },
+  
+  // 记录使用次数
+  recordUsage: (id: number): Promise<ApiResponse<null>> => {
+    return http.patch(`${API_ENDPOINTS.PASSWORDENTRIES.BASE}/${id}/usage`)
+  }
 }
 
 export default {
   user: userAPI,
   captcha: captchaAPI,
   email: emailAPI,
+  categories: categoriesAPI,
   passwordEntries: passwordEntriesAPI,
 };

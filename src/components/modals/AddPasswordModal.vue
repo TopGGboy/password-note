@@ -34,16 +34,15 @@
 
           <div class="form-group">
             <label for="category">分类 *</label>
-            <select id="category" v-model="form.category" required>
+            <select id="category" v-model="form.categoryId" required>
               <option value="">请选择分类</option>
-              <option value="社交媒体">社交媒体</option>
-              <option value="邮箱服务">邮箱服务</option>
-              <option value="金融服务">金融服务</option>
-              <option value="开发工具">开发工具</option>
-              <option value="购物网站">购物网站</option>
-              <option value="娱乐平台">娱乐平台</option>
-              <option value="工作相关">工作相关</option>
-              <option value="其他">其他</option>
+              <option 
+                v-for="category in categories" 
+                :key="category.id" 
+                :value="category.id"
+              >
+                {{ category.name }}
+              </option>
             </select>
           </div>
 
@@ -187,14 +186,14 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import { passwordEntriesAPI } from '../../services/api'
-import type { CreatePasswordEntryRequest } from '../../types/api'
+import { passwordEntriesAPI, categoriesAPI } from '../../services/api'
+import type { CreatePasswordEntryRequest, Category } from '../../types/api'
 import { DataEncryptionService, KeyManager } from '../../utils/encryption/crypto'
 
 interface PasswordForm {
   title: string
   url: string
-  category: string
+  categoryId: number | ''
   icon: string
   username: string
   password: string
@@ -216,11 +215,12 @@ export default defineComponent({
       isLoading: false,
       showPassword: false,
       tagsInput: '',
+      categories: [] as Category[],
       
       form: {
         title: '',
         url: '',
-        category: '',
+        categoryId: '',
         icon: '🔐',
         username: '',
         password: '',
@@ -231,14 +231,26 @@ export default defineComponent({
       commonIcons: [
         '🔐', '🌐', '📧', '💬', '🛒', '🎵', '📺', '🎮',
         '💰', '🏦', '📱', '💻', '🔧', '📊', '📝', '🎯'
-      ]
+      ],
+      
+      // 分类ID到图标的映射
+      categoryIconMap: {
+        1: '🔐', // 其他
+        2: '💬', // 社交媒体
+        3: '📧', // 邮箱服务
+        4: '💰', // 金融服务
+        5: '💻', // 开发工具
+        6: '🛒', // 购物网站
+        7: '🎵', // 娱乐平台
+        8: '🔧'  // 工作相关
+      } as Record<number, string>
     }
   },
   computed: {
     isFormValid(): boolean {
       return !!(
         this.form.title.trim() &&
-        this.form.category &&
+        this.form.categoryId &&
         this.form.username.trim() &&
         this.form.password.trim()
       )
@@ -319,7 +331,14 @@ export default defineComponent({
         // 发送成功事件，传递创建的密码数据
         this.$emit('success', {
           id: response.data?.id || Date.now().toString(),
-          ...this.form,
+          title: this.form.title,
+          url: this.form.url,
+          categoryId: this.form.categoryId,
+          icon: this.form.icon,
+          username: this.form.username,
+          password: this.form.password,
+          notes: this.form.notes,
+          tags: this.form.tags,
           createdAt: new Date(),
           updatedAt: new Date(),
           lastUsed: new Date()
@@ -358,18 +377,6 @@ export default defineComponent({
         throw new Error('未找到加密密钥，请先设置主密码')
       }
       
-      // 分类名称到ID的映射（临时方案，实际应该从API获取）
-      const categoryMap: Record<string, number> = {
-        '社交媒体': 1,
-        '邮箱服务': 2,
-        '金融服务': 3,
-        '开发工具': 4,
-        '购物网站': 5,
-        '娱乐平台': 6,
-        '工作相关': 7,
-        '其他': 8
-      }
-      
       try {
         // 加密敏感数据
         const encryptedData = DataEncryptionService.encryptPasswordEntry({
@@ -384,13 +391,16 @@ export default defineComponent({
         
         // 构建API请求数据
         const requestData: CreatePasswordEntryRequest = {
-          categoryId: categoryMap[this.form.category] || 8, // 默认为"其他"
+          categoryId: typeof this.form.categoryId === 'number' ? this.form.categoryId : undefined,
           title: this.form.title, // 标题不加密，便于搜索和显示
           usernameEncrypted: encryptedData.usernameEncrypted,
           passwordEncrypted: encryptedData.passwordEncrypted,
-          url: this.form.url || '', // URL不加密，便于访问
+          url: this.form.url || undefined,
           notesEncrypted: encryptedData.notesEncrypted,
-          customFieldsEncrypted: encryptedData.customFieldsEncrypted,
+          customFields: {
+            tags: this.form.tags,
+            icon: this.form.icon // 将图标存储在自定义字段中
+          },
           favorite: false
         }
         
@@ -436,7 +446,51 @@ export default defineComponent({
     removeTag(index: number) {
       this.form.tags.splice(index, 1)
       this.tagsInput = this.form.tags.join(', ')
+    },
+    
+    // 加载分类列表
+    async loadCategories() {
+      try {
+        const response = await categoriesAPI.getAll()
+        if (response.data && response.data.categories) {
+          this.categories = response.data.categories
+        }
+      } catch (error) {
+        console.error('加载分类列表失败:', error)
+        // 如果API失败，使用默认分类
+        this.categories = [
+          { id: 1, name: '其他' },
+          { id: 2, name: '社交媒体' },
+          { id: 3, name: '邮箱服务' },
+          { id: 4, name: '金融服务' },
+          { id: 5, name: '开发工具' },
+          { id: 6, name: '购物网站' },
+          { id: 7, name: '娱乐平台' },
+          { id: 8, name: '工作相关' }
+        ]
+      }
+    },
+    
+    // 根据分类ID自动设置图标
+    onCategoryChange() {
+      if (this.form.categoryId && this.categoryIconMap[this.form.categoryId as number]) {
+        this.form.icon = this.categoryIconMap[this.form.categoryId as number]
+      }
     }
+  },
+  
+  watch: {
+    // 监听分类变化，自动更新图标
+    'form.categoryId'(newCategoryId) {
+      if (newCategoryId && this.categoryIconMap[newCategoryId as number]) {
+        this.form.icon = this.categoryIconMap[newCategoryId as number]
+      }
+    }
+  },
+  
+  async mounted() {
+    // 组件挂载时加载分类列表
+    await this.loadCategories()
   }
 })
 </script>

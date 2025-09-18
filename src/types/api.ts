@@ -49,20 +49,105 @@ export interface RegisterResponse {
   email: string
 }
 
+
 // 新增密码条目请求参数
 export interface CreatePasswordEntryRequest {
-  categoryId: number,
-  title: string,
-  usernameEncrypted: string,
-  passwordEncrypted: string,
-  url: string,
-  notesEncrypted: string,
-  customFieldsEncrypted: Array<{
-    name: string,
-    valueEncrypted: string
-  }>,
-  favorite: boolean
+  categoryId?: number
+  title: string
+  usernameEncrypted: string
+  passwordEncrypted: string
+  url?: string
+  notesEncrypted?: string
+  customFields?: any
+  favorite?: boolean
 }
+
+
+// 分页获取用户密码条目请求参数
+export interface GetPasswordEntriesRequest {
+  page?: number
+  pageSize?: number
+  keyword?: string // 搜索关键词
+  categoryId?: number // 分类筛选
+  favorite?: boolean // 收藏筛选
+  sortBy?: 'title' | 'createdAt' | 'updatedAt' | 'lastUsed' | 'timesUsed' // 排序字段
+  sortOrder?: 'asc' | 'desc' // 排序方向
+}
+
+// 分页查询响应数据
+export interface PagedResponse<T> {
+  list: T[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
+// 密码条目分页响应
+export interface GetPasswordEntriesResponse extends PagedResponse<PasswordEntry> {}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// 分类信息
+export interface Category {
+  id: number
+  name: string
+  description?: string
+  icon?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+// 密码条目信息
+export interface PasswordEntry {
+  id: number
+  userId: number
+  categoryId?: number
+  title: string
+  usernameEncrypted: string
+  passwordEncrypted: string
+  url?: string
+  notesEncrypted?: string
+  customFields?: any
+  strengthScore?: number
+  favorite: boolean
+  timesUsed: number
+  lastUsed?: string
+  createdAt: string
+  updatedAt: string
+  // 解密后的字段（前端使用）
+  username?: string
+  password?: string
+  notes?: string
+}
+
+
+
+// 获取分类列表响应
+export interface CategoriesResponse {
+  categories: Category[]
+}
+
+// 获取密码条目列表响应
+export interface PasswordEntriesResponse {
+  entries: PasswordEntry[]
+  total: number
+}
+
+
 
 
 

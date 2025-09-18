@@ -110,17 +110,15 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import EditPasswordModal from '../../components/modals/EditPasswordModal.vue'
+import { KeyManager } from '../../utils/encryption/crypto'
+import { tokenManager } from '../../utils/auth/tokenManager'
+import { passwordEntriesAPI } from '../../services/api'
+import type { DecryptedPasswordEntry } from '../../composables/usePasswordEntries'
 
-interface PasswordItem {
+// 使用与 Passwords.vue 相同的类型定义
+type PasswordItem = DecryptedPasswordEntry & {
   id: string
-  title: string
-  url: string
-  username: string
-  password: string
   category: string
-  notes: string
-  createdAt: Date
-  updatedAt: Date
 }
 
 interface PasswordStrength {
@@ -164,22 +162,77 @@ const passwordStrength = computed((): PasswordStrength => {
 const loadPassword = async () => {
   const id = route.params.id as string
   
-  // 模拟API调用
   try {
-    // 这里应该调用实际的API
-    password.value = {
-      id: id,
-      title: 'Google',
-      url: 'https://accounts.google.com',
-      username: 'user@gmail.com',
-      password: 'MySecurePassword123!',
-      category: '邮箱',
-      notes: '主要邮箱账户，用于工作和个人用途',
-      createdAt: new Date('2024-01-15'),
-      updatedAt: new Date('2024-03-10')
+    // 首先检查用户是否已登录（有有效的API token）
+    if (!tokenManager.hasValidToken() || tokenManager.isTokenExpired()) {
+      console.log('🚫 用户未登录或token已过期，跳转到登录页面')
+      router.push('/login')
+      return
+    }
+
+    // 检查是否已有加密密钥（用户是否已通过主密码验证）
+    if (!KeyManager.hasKey()) {
+      // 如果没有密钥，跳转回密码列表页面，让用户重新验证主密码
+      console.warn('未找到加密密钥，跳转回密码列表')
+      router.push('/passwords')
+      return
+    }
+    
+    // 调用真实的API获取密码详情
+    const response = await passwordEntriesAPI.getById(parseInt(id))
+    
+    if (response.code === 200 && response.data) {
+      const entry = response.data
+      
+      // 使用与 usePasswordEntries 相同的解密逻辑
+      const { DataEncryptionService } = await import('../../utils/encryption/crypto')
+      
+      const decryptedData = DataEncryptionService.decryptPasswordEntry({
+        usernameEncrypted: entry.usernameEncrypted,
+        passwordEncrypted: entry.passwordEncrypted,
+        notesEncrypted: entry.notesEncrypted || '',
+        customFieldsEncrypted: []
+      })
+      
+      // 构造符合 PasswordItem 类型的对象
+      password.value = {
+        id: entry.id.toString(),
+        userId: entry.userId,
+        categoryId: entry.categoryId,
+        title: entry.title,
+        url: entry.url || '',
+        username: decryptedData.username,
+        password: decryptedData.password,
+        notes: decryptedData.notes,
+        category: '其他', // 这里需要根据 categoryId 获取分类名称
+        usernameEncrypted: entry.usernameEncrypted,
+        passwordEncrypted: entry.passwordEncrypted,
+        notesEncrypted: entry.notesEncrypted,
+        customFields: entry.customFields,
+        strengthScore: entry.strengthScore,
+        favorite: entry.favorite,
+        timesUsed: entry.timesUsed,
+        lastUsed: entry.lastUsed,
+        createdAt: entry.createdAt,
+        updatedAt: entry.updatedAt,
+        icon: '🔐',
+        tags: []
+      }
+    } else {
+      throw new Error(response.msg || '获取密码详情失败')
     }
   } catch (error) {
     console.error('加载密码详情失败:', error)
+    
+    // 检查是否是认证相关的错误
+    if (error.message?.includes('未授权') || error.message?.includes('401')) {
+      console.log('🚫 认证失败，跳转到登录页面')
+      router.push('/login')
+      return
+    }
+    
+    // 如果是其他错误（如解密失败），设置为null显示错误页面
+    password.value = null
   }
 }
 
