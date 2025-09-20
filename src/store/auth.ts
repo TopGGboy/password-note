@@ -1,8 +1,8 @@
 import { defineStore } from "pinia";
 import { userAPI, emailAPI } from "../services/api";
-import { 
-  ApiResponse, 
-  LoginRequest, 
+import {
+  ApiResponse,
+  LoginRequest,
   LoginResponse,
   RegisterRequest,
   RegisterResponse,
@@ -11,6 +11,7 @@ import { tokenManager } from "../utils/auth/tokenManager";
 import { STORAGE_KEYS } from "../constants/constants";
 
 interface User {
+  id: number;
   username: string;
   email?: string;
   token: string;
@@ -30,20 +31,22 @@ interface AuthState {
 export const useAuthStore = defineStore("auth", {
   state: (): AuthState => {
     // 从存储中恢复用户信息
-    const token = tokenManager.getAccessToken()
-    const refreshToken = tokenManager.getRefreshToken()
-    const username = localStorage.getItem(STORAGE_KEYS.USERNAME)
-    
-    let user: User | null = null
+    const token = tokenManager.getAccessToken();
+    const refreshToken = tokenManager.getRefreshToken();
+    const username = localStorage.getItem(STORAGE_KEYS.USERNAME);
+
+    let user: User | null = null;
     if (token && username) {
+      const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
       user = {
+        id: userId ? parseInt(userId, 10) : 0,
         username,
-        email: localStorage.getItem('email') || undefined,
+        email: localStorage.getItem("email") || undefined,
         token,
-        twoFactorEnabled: false
-      }
+        twoFactorEnabled: false,
+      };
     }
-    
+
     return {
       user,
       token,
@@ -52,24 +55,24 @@ export const useAuthStore = defineStore("auth", {
       loginAttempts: 0,
       isLocked: false,
       lockoutEndTime: null,
-    }
+    };
   },
 
   getters: {
     isLoggedIn: (state): boolean => {
       // 检查是否有有效的访问token和用户信息
-      const hasValidToken = tokenManager.hasValidToken()
-      const hasUser = !!state.user
-      const tokenNotExpired = !tokenManager.isTokenExpired()
-      
-      console.log('🔍 登录状态检查:', {
+      const hasValidToken = tokenManager.hasValidToken();
+      const hasUser = !!state.user;
+      const tokenNotExpired = !tokenManager.isTokenExpired();
+
+      console.log("🔍 登录状态检查:", {
         hasValidToken,
         hasUser,
         tokenNotExpired,
-        result: hasValidToken && hasUser && tokenNotExpired
-      })
-      
-      return hasValidToken && hasUser && tokenNotExpired
+        result: hasValidToken && hasUser && tokenNotExpired,
+      });
+
+      return hasValidToken && hasUser && tokenNotExpired;
     },
     userInfo: (state): User | null => state.user,
     remainingLockoutTime: (state): number => {
@@ -78,40 +81,13 @@ export const useAuthStore = defineStore("auth", {
       return Math.max(0, Math.ceil(remaining / 1000));
     },
     tokenExpirationTime: (): number | null => {
-      const expiresAt = localStorage.getItem(STORAGE_KEYS.TOKEN_EXPIRES_AT)
-      return expiresAt ? parseInt(expiresAt) : null
+      const expiresAt = localStorage.getItem(STORAGE_KEYS.TOKEN_EXPIRES_AT);
+      return expiresAt ? parseInt(expiresAt) : null;
     },
     isTokenExpiringSoon: (): boolean => tokenManager.isTokenExpiringSoon(),
   },
 
   actions: {
-    // 刷新Token
-    async refreshAccessToken(): Promise<{ success: boolean; data?: any }> {
-      try {
-        const response = await userAPI.refreshToken();
-        
-        if (response.code === 1 && response.data) {
-          const { token, refreshToken } = response.data;
-          
-          // 更新token信息
-          this.token = token;
-          this.refreshToken = refreshToken;
-          
-          // 使用token管理器更新存储
-          tokenManager.setTokens(token, refreshToken);
-          
-          return { success: true, data: response.data };
-        }
-        
-        return { success: false };
-      } catch (error) {
-        console.error("刷新Token失败:", error);
-        // 刷新失败，清除认证信息
-        this.clearAuth();
-        throw error;
-      }
-    },
-
     // 登出
     async logout(): Promise<void> {
       try {
@@ -126,7 +102,7 @@ export const useAuthStore = defineStore("auth", {
     // 登录
     async login(
       credentials: LoginRequest
-    ): Promise<{ success: boolean; twoFactorEnabled?: boolean; data?:  any}> {
+    ): Promise<{ success: boolean; twoFactorEnabled?: boolean; data?: any }> {
       try {
         const response: ApiResponse<LoginResponse> = await userAPI.login(
           credentials
@@ -137,7 +113,8 @@ export const useAuthStore = defineStore("auth", {
 
         // 检查响应是否成功
         if (response.code === 1) {
-          const { username, email, token, refreshToken, twoFactorEnabled } = response.data;
+          const { id, username, email, token, refreshToken, twoFactorEnabled } =
+            response.data;
 
           // 如果需要2FA验证，不保存认证信息，返回需要验证的状态
           if (twoFactorEnabled) {
@@ -150,6 +127,7 @@ export const useAuthStore = defineStore("auth", {
 
           // 如果不需要2FA验证，直接保存认证信息
           const user: User = {
+            id,
             username,
             email,
             token,
@@ -159,7 +137,9 @@ export const useAuthStore = defineStore("auth", {
 
           // 解析token获取过期时间
           const tokenPayload = tokenManager.parseJWTPayload(token);
-          const expiresIn = tokenPayload?.exp ? (tokenPayload.exp - Math.floor(Date.now() / 1000)) : undefined;
+          const expiresIn = tokenPayload?.exp
+            ? tokenPayload.exp - Math.floor(Date.now() / 1000)
+            : undefined;
 
           // 保存认证信息，包括refreshToken
           this.setAuth(token, refreshToken || "", user, expiresIn);
@@ -202,14 +182,22 @@ export const useAuthStore = defineStore("auth", {
         });
 
         if (response.code === 1 && response.data) {
-          const { username, token, refreshToken, twoFactorEnabled, email } = response.data;
+          const { username, token, refreshToken, twoFactorEnabled, email } =
+            response.data;
 
           // 解析token获取过期时间
           const tokenPayload = tokenManager.parseJWTPayload(token);
-          const expiresIn = tokenPayload?.exp ? (tokenPayload.exp - Math.floor(Date.now() / 1000)) : undefined;
+          const expiresIn = tokenPayload?.exp
+            ? tokenPayload.exp - Math.floor(Date.now() / 1000)
+            : undefined;
 
           // 设置认证信息，包括refreshToken
-          this.setAuth(token, refreshToken || "", { username, token, twoFactorEnabled, email }, expiresIn);
+          this.setAuth(
+            token,
+            refreshToken || "",
+            { id: 0, username, email, token, twoFactorEnabled },
+            expiresIn
+          );
           this.resetLoginAttempts();
 
           return {
@@ -226,7 +214,9 @@ export const useAuthStore = defineStore("auth", {
     },
 
     // 发送注册邮箱验证码
-    async sendRegisterEmailCode(email: string): Promise<{ success: boolean; message?: string }> {
+    async sendRegisterEmailCode(
+      email: string
+    ): Promise<{ success: boolean; message?: string }> {
       try {
         const response = await emailAPI.send2FACode({ email });
 
@@ -234,15 +224,15 @@ export const useAuthStore = defineStore("auth", {
           return { success: true, message: "验证码发送成功" };
         }
 
-        return { 
-          success: false, 
-          message: response.msg || "验证码发送失败" 
+        return {
+          success: false,
+          message: response.msg || "验证码发送失败",
         };
       } catch (error: any) {
         console.error("发送注册验证码失败:", error);
-        return { 
-          success: false, 
-          message: error.response?.data?.msg || "网络错误，请稍后重试" 
+        return {
+          success: false,
+          message: error.response?.data?.msg || "网络错误，请稍后重试",
         };
       }
     },
@@ -250,60 +240,73 @@ export const useAuthStore = defineStore("auth", {
     // 用户注册
     async register(
       registerData: RegisterRequest
-    ): Promise<{ success: boolean; message?: string; data?: RegisterResponse }> {
+    ): Promise<{
+      success: boolean;
+      message?: string;
+      data?: RegisterResponse;
+    }> {
       try {
-        const response: ApiResponse<RegisterResponse> = await userAPI.register(registerData);
+        const response: ApiResponse<RegisterResponse> = await userAPI.register(
+          registerData
+        );
 
         if (response.code === 1) {
           return {
             success: true,
             message: "注册成功",
-            data: response.data
+            data: response.data,
           };
         }
 
         return {
           success: false,
-          message: response.msg || "注册失败"
+          message: response.msg || "注册失败",
         };
       } catch (error: any) {
         console.error("用户注册失败:", error);
-        
+
         // 处理不同类型的错误
-        const errorMessage = error.response?.data?.msg || "注册失败，请稍后重试";
-        
+        const errorMessage =
+          error.response?.data?.msg || "注册失败，请稍后重试";
+
         return {
           success: false,
-          message: errorMessage
+          message: errorMessage,
         };
       }
     },
 
     // 设置认证信息
-    setAuth(token: string, refreshToken: string, user: User, expiresIn?: number): void {
+    setAuth(
+      token: string,
+      refreshToken: string,
+      user: User,
+      expiresIn?: number
+    ): void {
       // 使用token管理器安全存储token
       tokenManager.setTokens(token, refreshToken, expiresIn);
-      
+
       this.token = token;
       this.refreshToken = refreshToken || "";
       this.user = user;
       this.isAuthenticated = true;
 
       // 存储用户信息
-      localStorage.setItem(STORAGE_KEYS.USER_ID, user.username);
+      localStorage.setItem(STORAGE_KEYS.USER_ID, user.id.toString());
       localStorage.setItem(STORAGE_KEYS.USERNAME, user.username);
       if (user.email) {
-        localStorage.setItem('email', user.email);
+        localStorage.setItem("email", user.email);
       }
 
-      console.log("🔐 认证信息已安全保存:", {
-        token: token.substring(0, 20) + "...",
-        username: user.username,
-        expiresIn: expiresIn ? `${expiresIn}秒` : '未知'
-      });
-
-      // 启动自动刷新定时器
-      tokenManager.startAutoRefreshTimer();
+      // 触发自定义事件，通知其他组件认证状态已更新
+      window.dispatchEvent(
+        new CustomEvent("auth-state-changed", {
+          detail: {
+            isAuthenticated: true,
+            user,
+          },
+        })
+      );
     },
 
     // 检查认证状态
@@ -311,30 +314,30 @@ export const useAuthStore = defineStore("auth", {
       try {
         // 使用token管理器检查token有效性
         if (!tokenManager.hasValidToken()) {
-          console.log('🔍 Token无效或不存在')
+          console.log("🔍 Token无效或不存在");
           this.clearAuth();
           return false;
         }
 
         // 检查token是否过期
         if (tokenManager.isTokenExpired()) {
-          console.log('🔍 Token已过期，尝试刷新...')
-          
+          console.log("🔍 Token已过期，尝试刷新...");
+
           // 尝试使用刷新token获取新的访问token
-          const refreshToken = tokenManager.getRefreshToken()
+          const refreshToken = tokenManager.getRefreshToken();
           if (refreshToken) {
             try {
-              await tokenManager.refreshToken()
-              console.log('🔄 Token刷新成功')
+              await tokenManager.refreshToken();
+              console.log("🔄 Token刷新成功");
               // 更新store中的token
-              this.token = tokenManager.getAccessToken()
+              this.token = tokenManager.getAccessToken();
             } catch (error) {
-              console.log('🔄 Token刷新失败，清除认证状态')
+              console.log("🔄 Token刷新失败，清除认证状态");
               this.clearAuth();
               return false;
             }
           } else {
-            console.log('🔍 没有刷新token，清除认证状态')
+            console.log("🔍 没有刷新token，清除认证状态");
             this.clearAuth();
             return false;
           }
@@ -342,36 +345,44 @@ export const useAuthStore = defineStore("auth", {
 
         // 如果有token但没有用户信息，尝试从本地存储恢复或获取用户信息
         if (this.token && !this.user) {
-          const username = localStorage.getItem(STORAGE_KEYS.USERNAME)
-          if (username) {
+          const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+          const username = localStorage.getItem(STORAGE_KEYS.USERNAME);
+          if (userId && username) {
             // 从本地存储恢复用户信息
             this.user = {
+              id: parseInt(userId),
               username,
-              email: localStorage.getItem('email') || undefined,
+              email: localStorage.getItem("email") || undefined,
               token: this.token,
-              twoFactorEnabled: false
-            }
-            console.log('🔍 从本地存储恢复用户信息:', username)
+              twoFactorEnabled: false,
+            };
+            console.log("🔍 从本地存储恢复用户信息:", username);
           } else {
             // 尝试从API获取用户信息
             try {
               const response = await userAPI.getCurrentUser();
-              if (response.code === 1 && response.data) {
+              if (response.code === 1 && response.data && response.data.user) {
+                const userData = response.data.user;
                 this.user = {
-                  username: response.data.user.username,
-                  email: response.data.user.email,
+                  id: userData.id || 0,
+                  username: userData.username,
+                  email: userData.email,
                   token: this.token,
-                  twoFactorEnabled: false
+                  twoFactorEnabled: false,
                 };
                 // 保存到本地存储
-                localStorage.setItem(STORAGE_KEYS.USERNAME, this.user.username)
+                localStorage.setItem(
+                  STORAGE_KEYS.USER_ID,
+                  this.user.id.toString()
+                );
+                localStorage.setItem(STORAGE_KEYS.USERNAME, this.user.username);
                 if (this.user.email) {
-                  localStorage.setItem('email', this.user.email)
+                  localStorage.setItem("email", this.user.email);
                 }
-                console.log('🔍 从API获取用户信息成功:', this.user.username)
+                console.log("🔍 从API获取用户信息成功:", this.user.username);
               }
             } catch (error) {
-              console.error('🔍 获取用户信息失败:', error);
+              console.error("🔍 获取用户信息失败:", error);
               this.clearAuth();
               return false;
             }
@@ -385,79 +396,37 @@ export const useAuthStore = defineStore("auth", {
 
         return false;
       } catch (error: any) {
-        console.error('🔍 认证状态检查失败:', error);
+        console.error("🔍 认证状态检查失败:", error);
         this.clearAuth();
         return false;
       }
     },
 
-    // 设置tokens
-    setTokens(token: string, refreshToken: string): void {
-      // this.token = token
-      // this.refreshToken = refreshToken
-      // localStorage.setItem('token', token)
-      // localStorage.setItem('refreshToken', refreshToken)
-    },
+
 
     // 清除认证信息
     clearAuth(): void {
       // 使用token管理器安全清除所有token
       tokenManager.clearTokens();
-      
+
       this.token = null;
       this.refreshToken = null;
       this.user = null;
       this.isAuthenticated = false;
 
-      console.log('🧹 认证信息已清除');
+      console.log("🧹 认证信息已清除");
     },
 
     // 处理登录错误
     handleLoginError(error: any): void {
-      // const errorData = error.response?.data
-      // if (errorData?.code === 'ACCOUNT_LOCKED') {
-      //   this.isLocked = true
-      //   this.lockoutEndTime = Date.now() + (errorData.lockoutTimeRemaining * 1000)
-      //   // 开始倒计时
-      //   this.startLockoutTimer()
-      // } else if (errorData?.failedAttempts) {
-      //   this.loginAttempts = errorData.failedAttempts
-      // }
+      console.error("登录错误:", error);
     },
 
     // 重置登录尝试次数
     resetLoginAttempts(): void {
-      // this.loginAttempts = 0
-      // this.isLocked = false
-      // this.lockoutEndTime = null
-    },
-
-    // 开始锁定倒计时
-    startLockoutTimer(): void {
-      // const timer = setInterval(() => {
-      //   if (this.remainingLockoutTime <= 0) {
-      //     this.isLocked = false
-      //     this.lockoutEndTime = null
-      //     this.resetLoginAttempts()
-      //     clearInterval(timer)
-      //   }
-      // }, 1000)
-    },
-
-    // 修改密码
-    async changePassword(
-      currentPassword: string,
-      newPassword: string
-    ): Promise<any> {
-      // try {
-      //   const response = await authAPI.changePassword({
-      //     currentPassword,
-      //     newPassword
-      //   })
-      //   return response.data
-      // } catch (error) {
-      //   throw error
-      // }
+      this.loginAttempts = 0;
+      this.isLocked = false;
+      this.lockoutEndTime = null;
     },
   },
 });

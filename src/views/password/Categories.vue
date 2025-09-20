@@ -18,12 +18,7 @@
 
     <!-- 分类列表 -->
     <div class="categories-grid">
-      <div 
-        v-for="category in categories" 
-        :key="category.id"
-        class="category-card"
-        @click="viewCategory(category)"
-      >
+      <div v-for="category in categories" :key="category.id" class="category-card" @click="viewCategory(category)">
         <div class="category-header">
           <div class="category-icon">{{ category.icon }}</div>
           <div class="category-actions">
@@ -35,12 +30,12 @@
             </button>
           </div>
         </div>
-        
+
         <div class="category-info">
           <h3>{{ category.name }}</h3>
           <p>{{ category.description }}</p>
         </div>
-        
+
         <div class="category-stats">
           <div class="stat-item">
             <span class="stat-number">{{ category.passwordCount }}</span>
@@ -61,29 +56,18 @@
           <h3>{{ showEditModal ? '编辑分类' : '添加分类' }}</h3>
           <button @click="closeModals" class="close-btn">✕</button>
         </div>
-        
+
         <form @submit.prevent="handleSubmit" class="modal-body">
           <div class="form-group">
             <label>分类名称 *</label>
-            <input
-              v-model="form.name"
-              type="text"
-              required
-              class="form-input"
-              placeholder="输入分类名称"
-            />
+            <input v-model="form.name" type="text" required class="form-input" placeholder="输入分类名称" />
           </div>
 
           <div class="form-group">
             <label>图标</label>
             <div class="icon-selector">
-              <div 
-                v-for="icon in availableIcons" 
-                :key="icon"
-                class="icon-option"
-                :class="{ selected: form.icon === icon }"
-                @click="form.icon = icon"
-              >
+              <div v-for="icon in availableIcons" :key="icon" class="icon-option"
+                :class="{ selected: form.icon === icon }" @click="form.icon = icon">
                 {{ icon }}
               </div>
             </div>
@@ -91,23 +75,14 @@
 
           <div class="form-group">
             <label>描述</label>
-            <textarea
-              v-model="form.description"
-              class="form-textarea"
-              rows="3"
-              placeholder="添加分类描述..."
-            ></textarea>
+            <textarea v-model="form.description" class="form-textarea" rows="3" placeholder="添加分类描述..."></textarea>
           </div>
 
           <div class="modal-actions">
             <button type="button" @click="closeModals" class="cancel-btn">
               取消
             </button>
-            <button 
-              type="submit" 
-              class="submit-btn"
-              :disabled="loading"
-            >
+            <button type="submit" class="submit-btn" :disabled="loading">
               {{ loading ? '保存中...' : (showEditModal ? '更新' : '添加') }}
             </button>
           </div>
@@ -118,7 +93,8 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent, ref, onMounted } from 'vue'
+
 
 interface Category {
   id: string
@@ -143,18 +119,18 @@ export default defineComponent({
       showAddModal: false,
       showEditModal: false,
       editingCategory: null as Category | null,
-      
+
       form: {
         name: '',
         icon: '📁',
         description: ''
       } as CategoryForm,
-      
+
       availableIcons: [
-        '📁', '🔐', '💼', '🏦', '🛒', '📧', '🎮', '📱', 
+        '📁', '🔐', '💼', '🏦', '🛒', '📧', '🎮', '📱',
         '💻', '🌐', '🎵', '📺', '🏠', '🚗', '✈️', '🏥'
       ],
-      
+
       categories: [
         {
           id: '1',
@@ -215,7 +191,7 @@ export default defineComponent({
         query: { category: category.name }
       })
     },
-    
+
     editCategory(category: Category) {
       this.editingCategory = category
       this.form = {
@@ -225,7 +201,7 @@ export default defineComponent({
       }
       this.showEditModal = true
     },
-    
+
     async deleteCategory(category: Category) {
       if (category.passwordCount > 0) {
         if (!confirm(`分类 "${category.name}" 中还有 ${category.passwordCount} 个密码。删除分类后，这些密码将移动到"未分类"。确定要删除吗？`)) {
@@ -236,26 +212,26 @@ export default defineComponent({
           return
         }
       }
-      
+
       try {
         // 模拟API调用
         await new Promise(resolve => setTimeout(resolve, 500))
-        
+
         this.categories = this.categories.filter(c => c.id !== category.id)
         console.log('分类已删除:', category.name)
       } catch (error) {
         console.error('删除分类失败:', error)
       }
     },
-    
+
     async handleSubmit() {
       if (!this.form.name.trim()) return
-      
+
       this.loading = true
       try {
         // 模拟API调用
         await new Promise(resolve => setTimeout(resolve, 1000))
-        
+
         if (this.showEditModal && this.editingCategory) {
           // 更新分类
           const index = this.categories.findIndex(c => c.id === this.editingCategory!.id)
@@ -281,7 +257,7 @@ export default defineComponent({
           this.categories.push(newCategory)
           console.log('分类已添加:', newCategory)
         }
-        
+
         this.closeModals()
       } catch (error) {
         console.error('保存分类失败:', error)
@@ -289,7 +265,7 @@ export default defineComponent({
         this.loading = false
       }
     },
-    
+
     closeModals() {
       this.showAddModal = false
       this.showEditModal = false
@@ -624,22 +600,22 @@ export default defineComponent({
   .categories-container {
     padding: 16px;
   }
-  
+
   .header-content {
     flex-direction: column;
     gap: 16px;
     align-items: stretch;
   }
-  
+
   .categories-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .category-stats {
     flex-direction: column;
     gap: 12px;
   }
-  
+
   .stat-item {
     text-align: left;
   }

@@ -68,15 +68,15 @@
 
         <div class="form-group">
           <label>分类</label>
-          <select v-model="form.category" class="form-select">
-            <option value="">选择分类</option>
-            <option value="社交媒体">社交媒体</option>
-            <option value="邮箱">邮箱</option>
-            <option value="购物">购物</option>
-            <option value="银行">银行</option>
-            <option value="工作">工作</option>
-            <option value="娱乐">娱乐</option>
-            <option value="其他">其他</option>
+          <select v-model="form.categoryId" class="form-select">
+            <option :value="undefined">选择分类</option>
+            <option :value="1">社交媒体</option>
+            <option :value="2">邮箱</option>
+            <option :value="3">购物</option>
+            <option :value="4">银行</option>
+            <option :value="5">工作</option>
+            <option :value="6">娱乐</option>
+            <option :value="7">其他</option>
           </select>
         </div>
 
@@ -109,24 +109,13 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from 'vue'
-
-interface PasswordItem {
-  id?: string
-  title: string
-  url: string
-  username: string
-  password: string
-  category: string
-  notes: string
-  createdAt?: Date
-  updatedAt?: Date
-}
+import type { DecryptedPasswordEntry } from '../../composables/usePasswordEntries'
 
 export default defineComponent({
   name: 'EditPasswordModal',
   props: {
-    password: {
-      type: Object as PropType<PasswordItem>,
+    entry: {
+      type: Object as PropType<DecryptedPasswordEntry>,
       default: null
     }
   },
@@ -140,19 +129,26 @@ export default defineComponent({
         url: '',
         username: '',
         password: '',
-        category: '',
+        categoryId: undefined,
         notes: ''
-      } as PasswordItem
+      } as Partial<DecryptedPasswordEntry>
     }
   },
   computed: {
     isEdit(): boolean {
-      return !!this.password
+      return !!this.entry
     }
   },
   mounted() {
-    if (this.password) {
-      this.form = { ...this.password }
+    if (this.entry) {
+      this.form = {
+        title: this.entry.title || '',
+        url: this.entry.url || '',
+        username: this.entry.username || '',
+        password: this.entry.password || '',
+        categoryId: this.entry.categoryId,
+        notes: this.entry.notes || ''
+      }
     }
   },
   methods: {
@@ -175,20 +171,18 @@ export default defineComponent({
     async handleSubmit() {
       this.loading = true
       try {
-        // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
+        // 这里应该调用实际的API来保存密码
         console.log(this.isEdit ? '更新密码:' : '添加密码:', this.form)
         
+        // 触发成功事件，让父组件处理实际的保存逻辑
         this.$emit('success', {
           ...this.form,
-          id: this.form.id || Date.now().toString(),
-          createdAt: this.form.createdAt || new Date(),
-          updatedAt: new Date()
+          id: this.entry?.id || undefined
         })
-        this.$emit('close')
+        
       } catch (error) {
         console.error('保存失败:', error)
+        alert('保存失败，请重试')
       } finally {
         this.loading = false
       }

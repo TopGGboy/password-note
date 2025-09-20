@@ -1,18 +1,17 @@
 import { ref, reactive, computed } from 'vue'
 import { passwordEntriesAPI } from '../services/api'
 import { DataEncryptionService, KeyManager } from '../utils/encryption/crypto'
+import { authManager } from '../utils/auth/authManager'
 import type { 
   GetPasswordEntriesRequest, 
   GetPasswordEntriesResponse, 
   PasswordEntry,
   CreatePasswordEntryRequest 
 } from '../types/api'
+import { createDefaultPasswordEntriesQuery, validatePasswordEntriesQuery } from '../types/api'
 
-// 查询参数接口
-export interface PasswordEntriesQuery extends GetPasswordEntriesRequest {
-  page: number
-  pageSize: number
-}
+// 查询参数接口（继承API请求参数）
+export interface PasswordEntriesQuery extends GetPasswordEntriesRequest {}
 
 // 解密后的密码条目
 export interface DecryptedPasswordEntry extends Omit<PasswordEntry, 'usernameEncrypted' | 'passwordEncrypted' | 'notesEncrypted'> {
@@ -32,15 +31,7 @@ export function usePasswordEntries() {
   const totalPages = ref(0)
   
   // 查询参数
-  const query = reactive<PasswordEntriesQuery>({
-    page: 1,
-    pageSize: 10,
-    keyword: '',
-    categoryId: undefined,
-    favorite: undefined,
-    sortBy: 'updatedAt',
-    sortOrder: 'desc'
-  })
+  const query = reactive<PasswordEntriesQuery>(createDefaultPasswordEntriesQuery())
 
   // 计算属性
   const hasData = computed(() => entries.value.length > 0)
@@ -96,6 +87,13 @@ export function usePasswordEntries() {
 
   // 获取密码条目列表
   const fetchEntries = async (resetPage = false) => {
+    // 检查认证状态
+    if (!authManager.isAuthenticated()) {
+      console.warn('用户未认证，无法获取密码条目')
+      error.value = '用户未认证，请重新登录'
+      return
+    }
+
     if (resetPage) {
       query.page = 1
     }
@@ -104,13 +102,17 @@ export function usePasswordEntries() {
     error.value = null
 
     try {
-      const response = await passwordEntriesAPI.page(query)
+      // 验证并规范化查询参数
+      const validatedQuery = validatePasswordEntriesQuery(query)
+      Object.assign(query, validatedQuery)
       
-      if (response.code === 200 && response.data) {
-        const { list, total: totalCount, totalPages: pages } = response.data
+      const response = await passwordEntriesAPI.page(validatedQuery)
+      
+      if (response.code === 1 && response.data) {
+        const entriesList = Array.isArray(response.data) ? response.data : []
         
         // 解密所有条目
-        const decryptedEntries = list.map(decryptPasswordEntry)
+        const decryptedEntries = entriesList.map(decryptPasswordEntry)
         
         if (resetPage || query.page === 1) {
           entries.value = decryptedEntries
@@ -119,8 +121,8 @@ export function usePasswordEntries() {
           entries.value.push(...decryptedEntries)
         }
         
-        total.value = totalCount
-        totalPages.value = pages
+        total.value = entriesList.length
+        totalPages.value = Math.ceil(total.value / validatedQuery.pageSize)
       } else {
         throw new Error(response.msg || '获取密码条目失败')
       }
@@ -172,15 +174,7 @@ export function usePasswordEntries() {
 
   // 重置查询条件
   const resetQuery = () => {
-    Object.assign(query, {
-      page: 1,
-      pageSize: 10,
-      keyword: '',
-      categoryId: undefined,
-      favorite: undefined,
-      sortBy: 'updatedAt',
-      sortOrder: 'desc'
-    })
+    Object.assign(query, createDefaultPasswordEntriesQuery())
   }
 
   // 创建新密码条目

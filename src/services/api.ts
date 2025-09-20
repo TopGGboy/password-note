@@ -18,8 +18,7 @@ import type {
   ChangePasswordRequest,
   ResetPasswordRequest,
   ForgotPasswordRequest,
-  CategoriesResponse,
-  PasswordEntriesResponse
+  CategoriesResponse
 } from "../types/api";
 
 // 用户相关API（根据API接口文档）
@@ -126,7 +125,7 @@ export const emailAPI = {
 
 // 分类相关API
 export const categoriesAPI = {
-  // 获取所有分类
+  // 获取用户的所有分类
   getAll: (): Promise<ApiResponse<CategoriesResponse>> => {
     return http.get(API_ENDPOINTS.CATEGORIES.BASE)
   },
@@ -141,7 +140,7 @@ export const passwordEntriesAPI = {
   
   // 分页查询密码条目
   page: (params: GetPasswordEntriesRequest): Promise<ApiResponse<GetPasswordEntriesResponse>> => {
-    return http.post(API_ENDPOINTS.PASSWORDENTRIES.PAGE, params)
+    return http.get(API_ENDPOINTS.PASSWORDENTRIES.PAGE, { params })
   },
   
   // 获取单个密码条目

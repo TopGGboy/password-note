@@ -236,14 +236,17 @@ export default defineComponent({
               this.errorMessage = '发送验证码失败，请重试'
             }
           } else {
-            // 登录成功，跳转到dashboard
+            // 登录成功，跳转到home
             console.log('登录成功，准备跳转到home')
             try {
+              // 确保状态已经更新
+              await this.$nextTick()
               await this.router.push(ROUTES.HOME)
               console.log('跳转成功')
             } catch (error) {
               console.error('跳转失败:', error)
-              await this.router.push(ROUTES.HOME)
+              // 使用window.location作为备选方案
+              window.location.href = ROUTES.HOME
             }
           }
         } else {
@@ -274,10 +277,13 @@ export default defineComponent({
 
           // 跳转到home
           try {
+             // 确保状态已更新
+            await this.$nextTick()
             await this.router.push(ROUTES.HOME)
           } catch (error) {
             console.error('跳转失败:', error)
-            await this.router.push(ROUTES.HOME)
+             // 使用window.location作为备选方案
+            window.location.href = ROUTES.HOME
           }
         } else {
           this.errorMessage = '验证码错误，请重新输入'

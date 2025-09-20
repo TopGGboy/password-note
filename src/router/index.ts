@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import { ROUTES } from '../constants/constants'
-import { tokenManager } from '../utils/auth/tokenManager'
+import { authManager } from '../utils/auth/authManager'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -128,44 +128,57 @@ router.beforeEach(async (to, from, next) => {
     requiresAuth: to.matched.some(record => record.meta?.requiresAuth)
   })
   
-  const requiresAuth = to.matched.some(record => record.meta?.requiresAuth)
-  
   // 设置页面标题
   document.title = (to.meta?.title as string) || '密码笔记'
   
-  // 使用token管理器进行安全的认证检查
-  const hasValidToken = tokenManager.hasValidToken()
-  const isTokenExpired = tokenManager.isTokenExpired()
+  // 监听认证状态变化事件
+  const handleAuthStateChange = () => {
+    // 重新检查认证状态
+    authManager['isInitialized'] = false;
+  };
   
-  console.log('🔍 安全认证检查:', {
-    hasValidToken,
-    isTokenExpired,
-    requiresAuth,
-    targetPath: to.path
+  window.addEventListener('auth-state-changed', handleAuthStateChange);
+  
+  // 确保认证管理器已初始化
+  if (!authManager['isInitialized']) {
+    try {
+      await authManager.initialize()
+    } catch (error) {
+      console.error('❌ 认证管理器初始化失败:', error)
+    }
+  }
+  
+  // 检查路由访问权限
+  const canAccess = authManager.canAccessRoute(to)
+  const isAuthenticated = authManager.isAuthenticated()
+  
+  console.log('🔍 路由权限检查:', {
+    canAccess,
+    isAuthenticated,
+    targetPath: to.path,
+    authSummary: authManager.getAuthSummary()
   })
+  
+  const requiresAuth = to.matched.some(record => record.meta?.requiresAuth)
   
   if (requiresAuth) {
     // 需要认证的路由
-    if (!hasValidToken || isTokenExpired) {
-      console.log('🚫 无有效token或token已过期，跳转登录页')
-      tokenManager.clearTokens()
+    if (!canAccess) {
+      console.log('🚫 访问被拒绝，跳转登录页')
       next(ROUTES.LOGIN)
       return
     }
-    
-    // Token有效，允许访问
-    next()
   } else {
     // 不需要认证的路由
-    if (hasValidToken && !isTokenExpired && (to.path === ROUTES.LOGIN || to.path === ROUTES.REGISTER)) {
+    if (isAuthenticated && (to.path === ROUTES.LOGIN || to.path === ROUTES.REGISTER)) {
       console.log('🔄 已登录用户访问登录/注册页，跳转主页')
       next(ROUTES.HOME)
       return
     }
-    
-    // 正常访问
-    next()
   }
+  
+  // 允许访问
+  next()
 })
 
 // 路由后置守卫 - 用于处理页面加载完成后的逻辑

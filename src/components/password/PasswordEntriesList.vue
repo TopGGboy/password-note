@@ -3,38 +3,24 @@
     <!-- 搜索和筛选栏 -->
     <div class="search-filter-bar">
       <div class="search-box">
-        <input
-          v-model="searchKeyword"
-          type="text"
-          placeholder="搜索密码条目..."
-          class="search-input"
-          @input="handleSearch"
-        />
+        <input v-model="searchKeyword" type="text" placeholder="搜索密码条目..." class="search-input" @input="handleSearch" />
         <button @click="handleSearch" class="search-btn">
           🔍
         </button>
       </div>
-      
+
       <div class="filter-controls">
         <select v-model="selectedCategory" @change="handleCategoryFilter" class="category-filter">
           <option value="">所有分类</option>
-          <option 
-            v-for="category in categories" 
-            :key="category.id" 
-            :value="category.id"
-          >
+          <option v-for="category in categories" :key="category.id" :value="category.id">
             {{ category.name }}
           </option>
         </select>
-        
-        <button 
-          @click="handleFavoriteFilter" 
-          class="favorite-filter"
-          :class="{ active: showFavoritesOnly }"
-        >
+
+        <button @click="handleFavoriteFilter" class="favorite-filter" :class="{ active: showFavoritesOnly }">
           ⭐ {{ showFavoritesOnly ? '显示全部' : '仅收藏' }}
         </button>
-        
+
         <select v-model="sortOption" @change="handleSort" class="sort-select">
           <option value="updatedAt-desc">最近更新</option>
           <option value="createdAt-desc">最近创建</option>
@@ -70,12 +56,7 @@
 
     <!-- 密码条目列表 -->
     <div v-else class="entries-grid">
-      <div 
-        v-for="entry in entries" 
-        :key="entry.id" 
-        class="entry-card"
-        @click="$emit('view-entry', entry)"
-      >
+      <div v-for="entry in entries" :key="entry.id" class="entry-card" @click="$emit('view-entry', entry)">
         <div class="entry-header">
           <div class="entry-icon">{{ entry.icon || '🔐' }}</div>
           <div class="entry-info">
@@ -83,37 +64,22 @@
             <p class="entry-username">{{ entry.username }}</p>
           </div>
           <div class="entry-actions">
-            <button 
-              @click.stop="handleToggleFavorite(entry.id, entry.favorite)"
-              class="favorite-btn"
-              :class="{ active: entry.favorite }"
-            >
+            <button @click.stop="handleToggleFavorite(entry.id, entry.favorite)" class="favorite-btn"
+              :class="{ active: entry.favorite }">
               {{ entry.favorite ? '⭐' : '☆' }}
             </button>
-            <button 
-              @click.stop="handleCopyPassword(entry)"
-              class="copy-btn"
-              title="复制密码"
-            >
+            <button @click.stop="handleCopyPassword(entry)" class="copy-btn" title="复制密码">
               📋
             </button>
-            <button 
-              @click.stop="$emit('edit-entry', entry)"
-              class="edit-btn"
-              title="编辑"
-            >
+            <button @click.stop="$emit('edit-entry', entry)" class="edit-btn" title="编辑">
               ✏️
             </button>
-            <button 
-              @click.stop="handleDeleteEntry(entry.id, entry.title)"
-              class="delete-btn"
-              title="删除"
-            >
+            <button @click.stop="handleDeleteEntry(entry.id, entry.title)" class="delete-btn" title="删除">
               🗑️
             </button>
           </div>
         </div>
-        
+
         <div class="entry-details">
           <div v-if="entry.url" class="entry-url">
             <a :href="entry.url" target="_blank" @click.stop>{{ entry.url }}</a>
@@ -133,11 +99,7 @@
 
     <!-- 加载更多 -->
     <div v-if="hasMore" class="load-more-section">
-      <button 
-        @click="loadMore" 
-        :disabled="loading"
-        class="load-more-btn"
-      >
+      <button @click="loadMore" :disabled="loading" class="load-more-btn">
         {{ loading ? '加载中...' : '加载更多' }}
       </button>
     </div>
@@ -152,6 +114,7 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted, watch } from 'vue'
 import { usePasswordEntries } from '../../composables/usePasswordEntries'
+import { useAuth } from '../../composables/useAuth'
 import { categoriesAPI } from '../../services/api'
 import type { Category } from '../../types/api'
 import type { DecryptedPasswordEntry } from '../../composables/usePasswordEntries'
@@ -160,6 +123,9 @@ export default defineComponent({
   name: 'PasswordEntriesList',
   emits: ['add-password', 'view-entry', 'edit-entry'],
   setup(props, { emit }) {
+    // 使用认证组合式函数
+    const { userId, isAuthenticated, initialize } = useAuth()
+
     // 使用密码条目组合式函数
     const {
       loading,
@@ -283,33 +249,64 @@ export default defineComponent({
 
     // 加载分类列表
     const loadCategories = async () => {
+      if (!userId.value || isNaN(Number(userId.value))) {
+        console.warn('用户ID无效，无法加载分类')
+        return
+      }
+
+      const userIdNum = Number(userId.value)
+
       try {
         const response = await categoriesAPI.getAll()
         if (response.code === 200 && response.data) {
-          categories.value = response.data.categories
+          categories.value = response.data
         }
       } catch (err) {
         console.error('加载分类失败:', err)
         // 使用默认分类
         categories.value = [
-          { id: 1, name: '其他' },
-          { id: 2, name: '社交媒体' },
-          { id: 3, name: '邮箱服务' },
-          { id: 4, name: '金融服务' },
-          { id: 5, name: '开发工具' },
-          { id: 6, name: '购物网站' },
-          { id: 7, name: '娱乐平台' },
-          { id: 8, name: '工作相关' }
+          { id: 1, userId: userIdNum, name: '其他' },
+          { id: 2, userId: userIdNum, name: '社交媒体' },
+          { id: 3, userId: userIdNum, name: '邮箱服务' },
+          { id: 4, userId: userIdNum, name: '金融服务' },
+          { id: 5, userId: userIdNum, name: '开发工具' },
+          { id: 6, userId: userIdNum, name: '购物网站' },
+          { id: 7, userId: Number(userId.value), name: '娱乐平台' },
+          { id: 8, userId: Number(userId.value), name: '工作相关' }
         ]
       }
     }
 
+
+
     // 组件挂载时初始化
     onMounted(async () => {
-      await Promise.all([
-        loadCategories(),
-        fetchEntries()
-      ])
+      // 先检查认证状态
+      if (!isAuthenticated.value) {
+        // 尝试初始化认证状态
+        await initialize()
+        // 再次检查认证状态
+        if (!isAuthenticated.value) {
+          console.warn('用户未认证，跳过数据加载')
+          return
+        }
+      }
+
+      // 等待用户ID可用
+      if (!userId.value) {
+        console.warn('用户ID不可用，跳过数据加载')
+        return
+      }
+
+      try {
+        await Promise.all([
+          loadCategories(),
+          fetchEntries()
+        ])
+      } catch (error) {
+        console.error('初始化数据加载失败:', error)
+        showToast('数据加载失败，请刷新页面重试', 'error')
+      }
     })
 
     return {
@@ -326,7 +323,7 @@ export default defineComponent({
       showFavoritesOnly,
       sortOption,
       categories,
-      
+
       // 方法
       handleSearch,
       handleCategoryFilter,
@@ -443,8 +440,13 @@ export default defineComponent({
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .error-message {
@@ -644,29 +646,29 @@ export default defineComponent({
   .password-entries-list {
     padding: 16px;
   }
-  
+
   .search-filter-bar {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .search-box {
     min-width: auto;
   }
-  
+
   .filter-controls {
     justify-content: space-between;
   }
-  
+
   .entries-grid {
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  
+
   .entry-header {
     flex-wrap: wrap;
   }
-  
+
   .entry-actions {
     order: 3;
     width: 100%;

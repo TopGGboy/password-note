@@ -1,668 +1,321 @@
 <template>
-  <div class="passwords-container">
+  <div class="passwords-page">
     <!-- 页面头部 -->
     <div class="page-header">
-      <div class="header-content">
-        <div class="header-left">
-          <h1>密码管理</h1>
-          <p>管理您的所有密码记录</p>
-        </div>
-        <div class="header-actions">
-          <button @click="showAddModal = true" class="add-btn">
-            <span class="btn-icon">➕</span>
-            添加密码
-          </button>
-          <button @click="showImportModal = true" class="import-btn">
-            <span class="btn-icon">📥</span>
-            导入
-          </button>
-          <button @click="exportPasswords" class="export-btn">
-            <span class="btn-icon">📤</span>
-            导出
-          </button>
-        </div>
+      <div class="header-left">
+        <h1 class="page-title">密码管理</h1>
+        <p class="page-subtitle">安全管理您的所有账号密码</p>
       </div>
-    </div>
-
-    <!-- 搜索和筛选 -->
-    <div class="filters-section">
-      <div class="search-bar">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="搜索密码..."
-          class="search-input"
-          @input="handleSearch"
-        />
-        <button v-if="searchQuery" @click="clearSearch" class="clear-search">
-          ✕
+      <div class="header-actions">
+        <button @click="showAddModal = true" class="add-btn">
+          <span class="btn-icon">➕</span>
+          添加密码
         </button>
-      </div>
-
-      <div class="filter-controls">
-        <select v-model="selectedCategory" @change="applyFilters" class="category-filter">
-          <option value="">所有分类</option>
-          <option v-for="category in categories" :key="category" :value="category">
-            {{ category }}
-          </option>
-        </select>
-
-        <select v-model="sortBy" @change="applySorting" class="sort-select">
-          <option value="lastUsed">最近使用</option>
-          <option value="title">名称排序</option>
-          <option value="createdAt">创建时间</option>
-          <option value="updatedAt">更新时间</option>
-        </select>
-
-        <div class="view-toggle">
-          <button
-            @click="viewMode = 'grid'"
-            class="view-btn"
-            :class="{ active: viewMode === 'grid' }"
-          >
-            ⊞
-          </button>
-          <button
-            @click="viewMode = 'list'"
-            class="view-btn"
-            :class="{ active: viewMode === 'list' }"
-          >
-            ☰
-          </button>
-        </div>
+        <button @click="refreshEntries" class="refresh-btn" :disabled="loading">
+          <span class="btn-icon">🔄</span>
+          刷新
+        </button>
       </div>
     </div>
 
     <!-- 统计信息 -->
-    <div class="stats-bar">
-      <div class="stat-item">
-        <span class="stat-label">总计:</span>
-        <span class="stat-value">{{ filteredPasswords.length }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">弱密码:</span>
-        <span class="stat-value weak">{{ weakPasswordsCount }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">重复密码:</span>
-        <span class="stat-value duplicate">{{ duplicatePasswordsCount }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">即将过期:</span>
-        <span class="stat-value expiring">{{ expiringPasswordsCount }}</span>
-      </div>
-    </div>
-
-    <!-- 密码列表 -->
-    <div class="passwords-content">
-      <div v-if="isLoading" class="loading-state">
-        <div class="loading-spinner"></div>
-        <p>加载中...</p>
-      </div>
-
-      <div v-else-if="filteredPasswords.length === 0" class="empty-state">
-        <div class="empty-icon">🔐</div>
-        <h3>{{ searchQuery ? '未找到匹配的密码' : '还没有密码记录' }}</h3>
-        <p>{{ searchQuery ? '尝试使用不同的搜索词' : '点击添加按钮创建您的第一个密码记录' }}</p>
-        <button v-if="!searchQuery" @click="showAddModal = true" class="empty-action-btn">
-          添加密码
-        </button>
-      </div>
-
-      <div v-else class="passwords-list" :class="viewMode">
-        <div
-          v-for="password in paginatedPasswords"
-          :key="password.id"
-          class="password-item"
-          @click="viewPassword(password)"
-        >
-          <div class="password-header">
-            <div class="password-info">
-              <span class="password-icon">{{ password.icon }}</span>
-              <div class="password-details">
-                <h3 class="password-title">{{ password.title }}</h3>
-                <p class="password-username">{{ password.username }}</p>
-                <div class="password-meta">
-                  <span class="password-category">{{ password.category }}</span>
-                  <span class="password-date">{{ formatDate(password.lastUsed) }}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="password-actions">
-              <button
-                @click.stop="copyPassword(password)"
-                class="action-btn copy-btn"
-                title="复制密码"
-              >
-                📋
-              </button>
-              <button
-                @click.stop="copyUsername(password)"
-                class="action-btn copy-username-btn"
-                title="复制用户名"
-              >
-                👤
-              </button>
-              <button
-                @click.stop="editPassword(password)"
-                class="action-btn edit-btn"
-                title="编辑"
-              >
-                ✏️
-              </button>
-              <button
-                @click.stop="deletePassword(password)"
-                class="action-btn delete-btn"
-                title="删除"
-              >
-                🗑️
-              </button>
-            </div>
-          </div>
-
-          <!-- 安全状态指示器 -->
-          <div class="security-indicators">
-            <span
-              v-if="password.isWeak"
-              class="security-badge weak"
-              title="弱密码"
-            >
-              ⚠️ 弱
-            </span>
-            <span
-              v-if="password.isDuplicate"
-              class="security-badge duplicate"
-              title="重复密码"
-            >
-              🔄 重复
-            </span>
-            <span
-              v-if="password.isExpiring"
-              class="security-badge expiring"
-              title="即将过期"
-            >
-              ⏰ 过期
-            </span>
-          </div>
-
-          <!-- URL 链接 -->
-          <div v-if="password.url" class="password-url">
-            <a :href="password.url" target="_blank" rel="noopener noreferrer">
-              🌐 {{ getDomainFromUrl(password.url) }}
-            </a>
-          </div>
+    <div class="stats-section">
+      <div class="stat-card">
+        <div class="stat-icon">🔐</div>
+        <div class="stat-info">
+          <div class="stat-number">{{ total }}</div>
+          <div class="stat-label">总密码数</div>
         </div>
       </div>
-
-      <!-- 分页 -->
-      <div v-if="totalPages > 1" class="pagination">
-        <button
-          @click="currentPage = 1"
-          :disabled="currentPage === 1"
-          class="page-btn"
-        >
-          ⏮️
-        </button>
-        <button
-          @click="currentPage--"
-          :disabled="currentPage === 1"
-          class="page-btn"
-        >
-          ⏪
-        </button>
-        
-        <span class="page-info">
-          第 {{ currentPage }} 页，共 {{ totalPages }} 页
-        </span>
-        
-        <button
-          @click="currentPage++"
-          :disabled="currentPage === totalPages"
-          class="page-btn"
-        >
-          ⏩
-        </button>
-        <button
-          @click="currentPage = totalPages"
-          :disabled="currentPage === totalPages"
-          class="page-btn"
-        >
-          ⏭️
-        </button>
+      <div class="stat-card">
+        <div class="stat-icon">⭐</div>
+        <div class="stat-info">
+          <div class="stat-number">{{ favoriteCount }}</div>
+          <div class="stat-label">收藏密码</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📂</div>
+        <div class="stat-info">
+          <div class="stat-number">{{ categoriesCount }}</div>
+          <div class="stat-label">分类数量</div>
+        </div>
       </div>
     </div>
 
-    <!-- 添加密码模态框 -->
+    <!-- 密码条目列表 -->
+    <div class="content-section">
+      <PasswordEntriesList
+        @add-password="showAddModal = true"
+        @view-entry="handleViewEntry"
+        @edit-entry="handleEditEntry"
+      />
+    </div>
+
+    <!-- 添加密码弹窗 -->
     <AddPasswordModal
       v-if="showAddModal"
       @close="showAddModal = false"
-      @success="handlePasswordAdded"
-      @requireMasterPassword="handleRequireMasterPassword"
+      @success="handleAddSuccess"
     />
 
-    <!-- 编辑密码模态框 -->
+    <!-- 密码详情弹窗 -->
+    <PasswordEntryDetail
+      v-if="showDetailModal && selectedEntry"
+      :entry="selectedEntry"
+      @close="showDetailModal = false"
+      @edit="handleEditFromDetail"
+    />
+
+    <!-- 编辑密码弹窗 -->
     <EditPasswordModal
-      v-if="showEditModal && editingPassword"
-      :password="editingPassword"
+      v-if="showEditModal && selectedEntry"
+      :entry="selectedEntry"
       @close="showEditModal = false"
-      @success="handlePasswordUpdated"
+      @success="handleEditSuccess"
     />
 
-    <!-- 导入模态框 -->
-    <ImportPasswordsModal
-      v-if="showImportModal"
-      @close="showImportModal = false"
-      @success="handlePasswordsImported"
-    />
+    <!-- 加载遮罩 -->
+    <div v-if="loading && entries.length === 0" class="loading-overlay">
+      <div class="loading-spinner">
+        <div class="spinner"></div>
+        <p>加载中...</p>
+      </div>
+    </div>
 
-    <!-- 主密码模态框 -->
-    <MasterPasswordModal
-      v-if="showMasterPasswordModal"
-      :is-setup="!hasMasterPassword"
-      @success="handleMasterPasswordSuccess"
-      @close="handleMasterPasswordClose"
-    />
+    <!-- 错误提示 -->
+    <div v-if="error" class="error-message">
+      <div class="error-content">
+        <span class="error-icon">⚠️</span>
+        <span class="error-text">{{ error }}</span>
+        <button @click="clearError" class="error-close">✕</button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent, ref, computed, onMounted, watch } from 'vue'
+import { usePasswordEntries } from '../../composables/usePasswordEntries'
+import { useAuth } from '../../composables/useAuth'
+import { categoriesAPI } from '../../services/api'
+import PasswordEntriesList from '../../components/password/PasswordEntriesList.vue'
+import PasswordEntryDetail from '../../components/password/PasswordEntryDetail.vue'
 import AddPasswordModal from '../../components/modals/AddPasswordModal.vue'
 import EditPasswordModal from '../../components/modals/EditPasswordModal.vue'
-import ImportPasswordsModal from '../../components/modals/ImportPasswordsModal.vue'
-import MasterPasswordModal from '../../components/modals/MasterPasswordModal.vue'
-import { KeyManager } from '../../utils/encryption/crypto'
-
-interface PasswordItem {
-  id: string
-  title: string
-  username: string
-  password: string
-  url?: string
-  category: string
-  icon: string
-  lastUsed: Date
-  createdAt: Date
-  updatedAt: Date
-  isWeak?: boolean
-  isDuplicate?: boolean
-  isExpiring?: boolean
-  notes?: string
-  tags?: string[]
-}
+import type { DecryptedPasswordEntry } from '../../composables/usePasswordEntries'
+import type { Category } from '../../types/api'
 
 export default defineComponent({
   name: 'Passwords',
   components: {
+    PasswordEntriesList,
+    PasswordEntryDetail,
     AddPasswordModal,
     EditPasswordModal,
-    ImportPasswordsModal,
-    MasterPasswordModal
   },
-  data() {
+  setup() {
+    // 认证状态
+    const { userId, isAuthenticated, initialize } = useAuth()
+    
+    // 密码条目管理
+    const {
+      loading,
+      error,
+      entries,
+      total,
+      fetchEntries,
+      refresh
+    } = usePasswordEntries()
+
+
+    // 本地状态
+    const showAddModal = ref(false)
+    const showDetailModal = ref(false)
+    const showEditModal = ref(false)
+    const selectedEntry = ref<DecryptedPasswordEntry | null>(null)
+    const categories = ref<Category[]>([])
+
+    // 计算属性
+    const favoriteCount = computed(() => 
+      entries.value.filter(entry => entry.favorite).length
+    )
+    
+    const categoriesCount = computed(() => categories.value.length)
+
+    // 方法
+    const refreshEntries = async () => {
+      try {
+        await refresh()
+      } catch (err) {
+        console.error('刷新密码列表失败:', err)
+      }
+    }
+
+    const handleViewEntry = (entry: DecryptedPasswordEntry) => {
+      selectedEntry.value = entry
+      showDetailModal.value = true
+    }
+
+    const handleEditEntry = (entry: DecryptedPasswordEntry) => {
+      selectedEntry.value = entry
+      showEditModal.value = true
+    }
+
+    const handleEditFromDetail = () => {
+      showDetailModal.value = false
+      showEditModal.value = true
+    }
+
+    const handleAddSuccess = () => {
+      showAddModal.value = false
+      refreshEntries()
+    }
+
+    const handleEditSuccess = () => {
+      showEditModal.value = false
+      selectedEntry.value = null
+      refreshEntries()
+    }
+
+    const clearError = () => {
+      error.value = null
+    }
+
+    // 加载分类数据
+    const loadCategories = async () => {
+      if (!userId.value || isNaN(Number(userId.value))) {
+        console.warn('用户ID无效，跳过加载分类')
+        return
+      }
+      
+      try {
+        const response = await categoriesAPI.getAll()
+        if (response.code === 200 && response.data) {
+          categories.value = response.data
+        }
+      } catch (err) {
+        console.error('加载分类失败:', err)
+      }
+    }
+
+    // 监听登录状态变化
+    watch(isAuthenticated, (newValue) => {
+      if (newValue) {
+        fetchEntries()
+        loadCategories()
+      }
+    })
+
+        // 添加简单的 toast 函数
+    const showToast = (message: string, type: string) => {
+      // 使用现有的 error 状态显示错误信息
+      if (type === 'error') {
+        error.value = message
+        // 3秒后自动清除错误信息
+        setTimeout(() => {
+          error.value = null
+        }, 3000)
+      }
+    }
+
+    // 组件挂载时初始化
+    onMounted(async () => {
+      // 先检查认证状态
+      if (!isAuthenticated.value) {
+        // 尝试初始化认证状态
+        await initialize()
+        // 再次检查认证状态
+        if (!isAuthenticated.value) {
+          console.warn('用户未认证，跳过数据加载')
+          return
+        }
+      }
+
+      // 等待用户ID可用
+      if (!userId.value) {
+        console.warn('用户ID不可用，跳过数据加载')
+        return
+      }
+
+      try {
+        await Promise.all([
+          loadCategories(),
+          fetchEntries()
+        ])
+      } catch (error) {
+        console.error('初始化数据加载失败:', error)
+        showToast('数据加载失败，请刷新页面重试', 'error')
+      }
+    })
+
     return {
-      isLoading: false,
-      searchQuery: '',
-      selectedCategory: '',
-      sortBy: 'lastUsed',
-      viewMode: 'grid' as 'grid' | 'list',
-      currentPage: 1,
-      pageSize: 20,
+      // 数据
+      loading,
+      error,
+      entries,
+      total,
+      showAddModal,
+      showDetailModal,
+      showEditModal,
+      selectedEntry,
       
-      showAddModal: false,
-      showEditModal: false,
-      showImportModal: false,
-      showMasterPasswordModal: false,
-      hasMasterPassword: false,
-      editingPassword: null as PasswordItem | null,
+      // 计算属性
+      favoriteCount,
+      categoriesCount,
       
-      passwords: [] as PasswordItem[],
-      categories: [] as string[],
-      
-      searchTimeout: null as number | null
-    }
-  },
-  computed: {
-    filteredPasswords(): PasswordItem[] {
-      let result = [...this.passwords]
-      
-      // 搜索过滤
-      if (this.searchQuery.trim()) {
-        const query = this.searchQuery.toLowerCase()
-        result = result.filter(password =>
-          password.title.toLowerCase().includes(query) ||
-          password.username.toLowerCase().includes(query) ||
-          password.category.toLowerCase().includes(query) ||
-          (password.url && password.url.toLowerCase().includes(query)) ||
-          (password.notes && password.notes.toLowerCase().includes(query))
-        )
-      }
-      
-      // 分类过滤
-      if (this.selectedCategory) {
-        result = result.filter(password => password.category === this.selectedCategory)
-      }
-      
-      // 排序
-      result.sort((a, b) => {
-        switch (this.sortBy) {
-          case 'title':
-            return a.title.localeCompare(b.title)
-          case 'createdAt':
-            return b.createdAt.getTime() - a.createdAt.getTime()
-          case 'updatedAt':
-            return b.updatedAt.getTime() - a.updatedAt.getTime()
-          case 'lastUsed':
-          default:
-            return b.lastUsed.getTime() - a.lastUsed.getTime()
-        }
-      })
-      
-      return result
-    },
-    
-    paginatedPasswords(): PasswordItem[] {
-      const start = (this.currentPage - 1) * this.pageSize
-      const end = start + this.pageSize
-      return this.filteredPasswords.slice(start, end)
-    },
-    
-    totalPages(): number {
-      return Math.ceil(this.filteredPasswords.length / this.pageSize)
-    },
-    
-    weakPasswordsCount(): number {
-      return this.passwords.filter(p => p.isWeak).length
-    },
-    
-    duplicatePasswordsCount(): number {
-      return this.passwords.filter(p => p.isDuplicate).length
-    },
-    
-    expiringPasswordsCount(): number {
-      return this.passwords.filter(p => p.isExpiring).length
-    }
-  },
-  async mounted() {
-    // 检查是否已有主密码设置（持久化检查）
-    this.hasMasterPassword = KeyManager.hasMasterPassword()
-    await this.loadPasswords()
-  },
-  methods: {
-    // 加载密码数据
-    async loadPasswords() {
-      this.isLoading = true
-      try {
-        // 模拟API调用 - 实际项目中从API获取
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
-        this.passwords = [
-          {
-            id: '1',
-            title: 'GitHub',
-            username: 'user@example.com',
-            password: 'encrypted_password_1',
-            url: 'https://github.com',
-            category: '开发工具',
-            icon: '🐙',
-            lastUsed: new Date(Date.now() - 2 * 60 * 60 * 1000),
-            createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-            updatedAt: new Date(),
-            isWeak: false,
-            isDuplicate: false,
-            isExpiring: false,
-            notes: 'GitHub开发账户',
-            tags: ['开发', '代码']
-          },
-          {
-            id: '2',
-            title: '微信',
-            username: 'wechat_user',
-            password: 'encrypted_password_2',
-            category: '社交媒体',
-            icon: '💬',
-            lastUsed: new Date(Date.now() - 5 * 60 * 60 * 1000),
-            createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
-            updatedAt: new Date(),
-            isWeak: true,
-            isDuplicate: false,
-            isExpiring: false
-          },
-          {
-            id: '3',
-            title: '支付宝',
-            username: '138****8888',
-            password: 'encrypted_password_3',
-            category: '金融服务',
-            icon: '💰',
-            lastUsed: new Date(Date.now() - 24 * 60 * 60 * 1000),
-            createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000),
-            updatedAt: new Date(),
-            isWeak: false,
-            isDuplicate: true,
-            isExpiring: false
-          },
-          {
-            id: '4',
-            title: 'Gmail',
-            username: 'myemail@gmail.com',
-            password: 'encrypted_password_4',
-            url: 'https://gmail.com',
-            category: '邮箱服务',
-            icon: '📧',
-            lastUsed: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-            createdAt: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000),
-            updatedAt: new Date(),
-            isWeak: false,
-            isDuplicate: false,
-            isExpiring: true
-          }
-        ]
-        
-        // 提取分类
-        this.categories = [...new Set(this.passwords.map(p => p.category))]
-        
-      } catch (error) {
-        console.error('加载密码失败:', error)
-      } finally {
-        this.isLoading = false
-      }
-    },
-
-    // 搜索处理
-    handleSearch() {
-      if (this.searchTimeout) {
-        clearTimeout(this.searchTimeout)
-      }
-      
-      this.searchTimeout = setTimeout(() => {
-        this.currentPage = 1 // 重置到第一页
-      }, 300)
-    },
-
-    // 清除搜索
-    clearSearch() {
-      this.searchQuery = ''
-      this.currentPage = 1
-    },
-
-    // 应用筛选
-    applyFilters() {
-      this.currentPage = 1
-    },
-
-    // 应用排序
-    applySorting() {
-      this.currentPage = 1
-    },
-
-    // 查看密码详情
-    viewPassword(password: PasswordItem) {
-      this.$router.push(`/passwords/${password.id}`)
-    },
-
-    // 复制密码
-    async copyPassword(password: PasswordItem) {
-      try {
-        // 实际项目中需要先解密密码
-        await navigator.clipboard.writeText(password.password)
-        console.log('密码已复制')
-        // 更新最后使用时间
-        password.lastUsed = new Date()
-      } catch (error) {
-        console.error('复制失败:', error)
-      }
-    },
-
-    // 复制用户名
-    async copyUsername(password: PasswordItem) {
-      try {
-        await navigator.clipboard.writeText(password.username)
-        console.log('用户名已复制')
-      } catch (error) {
-        console.error('复制失败:', error)
-      }
-    },
-
-    // 编辑密码
-    editPassword(password: PasswordItem) {
-      this.editingPassword = password
-      this.showEditModal = true
-    },
-
-    // 删除密码
-    async deletePassword(password: PasswordItem) {
-      if (confirm(`确定要删除密码 "${password.title}" 吗？此操作不可撤销。`)) {
-        try {
-          // 模拟API调用
-          await new Promise(resolve => setTimeout(resolve, 500))
-          
-          const index = this.passwords.findIndex(p => p.id === password.id)
-          if (index > -1) {
-            this.passwords.splice(index, 1)
-          }
-          
-          console.log('密码已删除')
-        } catch (error) {
-          console.error('删除失败:', error)
-        }
-      }
-    },
-
-    // 导出密码
-    exportPasswords() {
-      // 实际项目中实现导出功能
-      console.log('导出密码')
-    },
-
-    // 格式化日期
-    formatDate(date: Date): string {
-      const now = new Date()
-      const diff = now.getTime() - date.getTime()
-      const hours = Math.floor(diff / (1000 * 60 * 60))
-      
-      if (hours < 1) {
-        return '刚刚'
-      } else if (hours < 24) {
-        return `${hours}小时前`
-      } else {
-        const days = Math.floor(hours / 24)
-        if (days < 30) {
-          return `${days}天前`
-        } else {
-          return date.toLocaleDateString('zh-CN')
-        }
-      }
-    },
-
-    // 从URL提取域名
-    getDomainFromUrl(url: string): string {
-      try {
-        const domain = new URL(url).hostname
-        return domain.replace('www.', '')
-      } catch {
-        return url
-      }
-    },
-
-    // 处理密码添加成功
-    handlePasswordAdded(password: PasswordItem) {
-      this.passwords.unshift(password)
-      this.categories = [...new Set(this.passwords.map(p => p.category))]
-    },
-
-    // 处理密码更新成功
-    handlePasswordUpdated(updatedPassword: PasswordItem) {
-      const index = this.passwords.findIndex(p => p.id === updatedPassword.id)
-      if (index > -1) {
-        this.passwords[index] = updatedPassword
-      }
-      this.categories = [...new Set(this.passwords.map(p => p.category))]
-    },
-
-    // 处理密码导入成功
-    handlePasswordsImported(importedPasswords: PasswordItem[]) {
-      this.passwords.push(...importedPasswords)
-      this.categories = [...new Set(this.passwords.map(p => p.category))]
-    },
-
-    // 处理需要主密码的情况
-    handleRequireMasterPassword() {
-      this.showMasterPasswordModal = true
-    },
-
-    // 处理主密码设置/验证成功
-    handleMasterPasswordSuccess() {
-      this.showMasterPasswordModal = false
-      this.hasMasterPassword = true
-      console.log('主密码验证成功，可以继续保存密码')
-    },
-
-    // 处理主密码模态框关闭
-    handleMasterPasswordClose() {
-      this.showMasterPasswordModal = false
-      // 如果用户关闭了主密码模态框但没有设置密码，也关闭添加密码模态框
-      if (!KeyManager.hasKey()) {
-        this.showAddModal = false
-      }
+      // 方法
+      refreshEntries,
+      handleViewEntry,
+      handleEditEntry,
+      handleEditFromDetail,
+      handleAddSuccess,
+      handleEditSuccess,
+      clearError
     }
   }
 })
 </script>
 
 <style scoped>
-.passwords-container {
+.passwords-page {
   min-height: 100vh;
-  background: #f8fafc;
-  padding: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
 }
 
+/* 页面头部 */
 .page-header {
-  background: white;
-  border-radius: 16px;
-  padding: 32px;
-  margin-bottom: 24px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-}
-
-.header-content {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  margin-bottom: 30px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 25px 30px;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
 }
 
-.header-left h1 {
-  font-size: 32px;
+.header-left {
+  flex: 1;
+}
+
+.page-title {
+  font-size: 2.5rem;
   font-weight: 700;
-  color: #1a202c;
+  color: #2d3748;
   margin: 0 0 8px 0;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.header-left p {
+.page-subtitle {
+  font-size: 1.1rem;
   color: #718096;
   margin: 0;
-  font-size: 16px;
 }
 
 .header-actions {
@@ -670,182 +323,143 @@ export default defineComponent({
   gap: 12px;
 }
 
-.add-btn,
-.import-btn,
-.export-btn {
+.add-btn, .refresh-btn {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 12px 20px;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
   border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .add-btn {
-  background: #3182ce;
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
   color: white;
 }
 
 .add-btn:hover {
-  background: #2c5282;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
 }
 
-.import-btn,
-.export-btn {
-  background: #f7fafc;
+.refresh-btn {
+  background: rgba(255, 255, 255, 0.9);
   color: #4a5568;
   border: 1px solid #e2e8f0;
 }
 
-.import-btn:hover,
-.export-btn:hover {
-  background: #edf2f7;
-  border-color: #cbd5e0;
-}
-
-.filters-section {
+.refresh-btn:hover:not(:disabled) {
   background: white;
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.search-bar {
-  position: relative;
-  margin-bottom: 20px;
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.search-input {
-  width: 100%;
-  padding: 12px 16px;
-  padding-right: 40px;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 16px;
-  transition: border-color 0.2s;
-  box-sizing: border-box;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: #3182ce;
-}
-
-.clear-search {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: #a0aec0;
-  cursor: pointer;
+.btn-icon {
   font-size: 16px;
 }
 
-.filter-controls {
+/* 统计信息 */
+.stats-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 25px;
+  border-radius: 16px;
   display: flex;
-  gap: 16px;
   align-items: center;
-  flex-wrap: wrap;
+  gap: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  transition: transform 0.3s ease;
 }
 
-.category-filter,
-.sort-select {
-  padding: 8px 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  background: white;
-  cursor: pointer;
+.stat-card:hover {
+  transform: translateY(-4px);
 }
 
-.view-toggle {
+.stat-icon {
+  font-size: 2.5rem;
+  width: 60px;
+  height: 60px;
   display: flex;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.view-btn {
-  padding: 8px 12px;
-  background: white;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.view-btn.active {
-  background: #3182ce;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 16px;
   color: white;
 }
 
-.stats-bar {
-  display: flex;
-  gap: 24px;
-  background: white;
-  border-radius: 12px;
-  padding: 20px 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+.stat-info {
+  flex: 1;
 }
 
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 4px;
 }
 
 .stat-label {
+  font-size: 0.9rem;
   color: #718096;
-  font-size: 14px;
+  font-weight: 500;
 }
 
-.stat-value {
-  font-weight: 600;
-  color: #2d3748;
+/* 内容区域 */
+.content-section {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  min-height: 400px;
 }
 
-.stat-value.weak {
-  color: #e53e3e;
-}
-
-.stat-value.duplicate {
-  color: #d69e2e;
-}
-
-.stat-value.expiring {
-  color: #dd6b20;
-}
-
-.passwords-content {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.loading-state,
-.empty-state {
+/* 加载状态 */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
-  color: #718096;
+  z-index: 1000;
 }
 
 .loading-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid #e2e8f0;
-  border-top: 3px solid #3182ce;
+  background: white;
+  padding: 40px;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-bottom: 16px;
+  margin: 0 auto 20px;
 }
 
 @keyframes spin {
@@ -853,273 +467,82 @@ export default defineComponent({
   100% { transform: rotate(360deg); }
 }
 
-.empty-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
+/* 错误提示 */
+.error-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1001;
 }
 
-.empty-state h3 {
-  color: #2d3748;
-  margin: 0 0 8px 0;
+.error-content {
+  background: #fed7d7;
+  color: #c53030;
+  padding: 16px 20px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 8px 25px rgba(197, 48, 48, 0.2);
+  border-left: 4px solid #c53030;
 }
 
-.empty-state p {
-  margin: 0 0 20px 0;
+.error-icon {
+  font-size: 18px;
 }
 
-.empty-action-btn {
-  background: #3182ce;
-  color: white;
+.error-text {
+  flex: 1;
+  font-weight: 500;
+}
+
+.error-close {
+  background: none;
   border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
+  color: #c53030;
   cursor: pointer;
-  font-weight: 500;
-}
-
-.passwords-list.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 20px;
-}
-
-.passwords-list.list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.password-item {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 20px;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: white;
-}
-
-.password-item:hover {
-  border-color: #cbd5e0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.password-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.password-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-}
-
-.password-icon {
-  font-size: 24px;
-  flex-shrink: 0;
-}
-
-.password-details {
-  flex: 1;
-  min-width: 0;
-}
-
-.password-title {
   font-size: 16px;
-  font-weight: 600;
-  color: #1a202c;
-  margin: 0 0 4px 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
 }
 
-.password-username {
-  font-size: 14px;
-  color: #718096;
-  margin: 0 0 8px 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.error-close:hover {
+  background: rgba(197, 48, 48, 0.1);
 }
 
-.password-meta {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.password-category {
-  background: #edf2f7;
-  color: #4a5568;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.password-date {
-  font-size: 12px;
-  color: #a0aec0;
-}
-
-.password-actions {
-  display: flex;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.action-btn {
-  background: #f7fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s;
-}
-
-.action-btn:hover {
-  background: #edf2f7;
-  border-color: #cbd5e0;
-}
-
-.delete-btn:hover {
-  background: #fed7d7;
-  border-color: #feb2b2;
-  color: #c53030;
-}
-
-.security-indicators {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.security-badge {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 12px;
-  font-weight: 500;
-}
-
-.security-badge.weak {
-  background: #fed7d7;
-  color: #c53030;
-}
-
-.security-badge.duplicate {
-  background: #fef5e7;
-  color: #d69e2e;
-}
-
-.security-badge.expiring {
-  background: #feebc8;
-  color: #dd6b20;
-}
-
-.password-url {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid #f7fafc;
-}
-
-.password-url a {
-  color: #3182ce;
-  text-decoration: none;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.password-url a:hover {
-  text-decoration: underline;
-}
-
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  margin-top: 32px;
-  padding-top: 24px;
-  border-top: 1px solid #e2e8f0;
-}
-
-.page-btn {
-  background: #f7fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.page-btn:hover:not(:disabled) {
-  background: #edf2f7;
-  border-color: #cbd5e0;
-}
-
-.page-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.page-info {
-  color: #718096;
-  font-size: 14px;
-}
-
+/* 响应式设计 */
 @media (max-width: 768px) {
-  .passwords-container {
-    padding: 16px;
+  .passwords-page {
+    padding: 15px;
   }
   
-  .header-content {
+  .page-header {
     flex-direction: column;
     gap: 20px;
-    align-items: flex-start;
+    padding: 20px;
   }
   
   .header-actions {
     width: 100%;
-    justify-content: space-between;
+    justify-content: stretch;
   }
   
-  .filter-controls {
-    flex-direction: column;
-    align-items: stretch;
+  .add-btn, .refresh-btn {
+    flex: 1;
+    justify-content: center;
   }
   
-  .stats-bar {
-    flex-wrap: wrap;
-    gap: 16px;
+  .page-title {
+    font-size: 2rem;
   }
   
-  .passwords-list.grid {
+  .stats-section {
     grid-template-columns: 1fr;
   }
   
-  .password-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  
-  .password-actions {
-    align-self: flex-end;
+  .content-section {
+    padding: 20px;
   }
 }
 </style>

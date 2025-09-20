@@ -189,6 +189,7 @@ import { defineComponent } from 'vue'
 import { passwordEntriesAPI, categoriesAPI } from '../../services/api'
 import type { CreatePasswordEntryRequest, Category } from '../../types/api'
 import { DataEncryptionService, KeyManager } from '../../utils/encryption/crypto'
+import { STORAGE_KEYS } from '../../constants/constants'
 
 interface PasswordForm {
   title: string
@@ -247,6 +248,11 @@ export default defineComponent({
     }
   },
   computed: {
+    userId(): number | null {
+      const id = localStorage.getItem(STORAGE_KEYS.USER_ID)
+      return id ? Number(id) : null
+    },
+    
     isFormValid(): boolean {
       return !!(
         this.form.title.trim() &&
@@ -450,23 +456,30 @@ export default defineComponent({
     
     // 加载分类列表
     async loadCategories() {
+      if (!this.userId || isNaN(Number(this.userId))) {
+        console.warn('用户ID无效，无法加载分类')
+        return
+      }
+      
+      const userIdNum = Number(this.userId)
+      
       try {
         const response = await categoriesAPI.getAll()
-        if (response.data && response.data.categories) {
-          this.categories = response.data.categories
+        if (response.code === 200 && response.data) {
+          this.categories = response.data
         }
       } catch (error) {
         console.error('加载分类列表失败:', error)
         // 如果API失败，使用默认分类
         this.categories = [
-          { id: 1, name: '其他' },
-          { id: 2, name: '社交媒体' },
-          { id: 3, name: '邮箱服务' },
-          { id: 4, name: '金融服务' },
-          { id: 5, name: '开发工具' },
-          { id: 6, name: '购物网站' },
-          { id: 7, name: '娱乐平台' },
-          { id: 8, name: '工作相关' }
+          { id: 1, userId: userIdNum, name: '其他' },
+          { id: 2, userId: userIdNum, name: '社交媒体' },
+          { id: 3, userId: userIdNum, name: '邮箱服务' },
+          { id: 4, userId: userIdNum, name: '金融服务' },
+          { id: 5, userId: userIdNum, name: '开发工具' },
+          { id: 6, userId: userIdNum, name: '购物网站' },
+          { id: 7, userId: userIdNum, name: '娱乐平台' },
+          { id: 8, userId: userIdNum, name: '工作相关' }
         ]
       }
     },

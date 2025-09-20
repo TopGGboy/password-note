@@ -15,6 +15,7 @@ export interface LoginRequest{
 
 // 登录的响应
 export interface LoginResponse {
+  id: number
   username: string
   email: string
   token: string
@@ -65,8 +66,8 @@ export interface CreatePasswordEntryRequest {
 
 // 分页获取用户密码条目请求参数
 export interface GetPasswordEntriesRequest {
-  page?: number
-  pageSize?: number
+  page: number // 页码，从1开始
+  pageSize: number // 每页条数
   keyword?: string // 搜索关键词
   categoryId?: number // 分类筛选
   favorite?: boolean // 收藏筛选
@@ -86,30 +87,62 @@ export interface PagedResponse<T> {
 // 密码条目分页响应
 export interface GetPasswordEntriesResponse extends PagedResponse<PasswordEntry> {}
 
+// 创建默认的分页查询参数
+export function createDefaultPasswordEntriesQuery(): GetPasswordEntriesRequest {
+  return {
+    page: 1,
+    pageSize: 10,
+    keyword: undefined,
+    categoryId: undefined,
+    favorite: undefined,
+    sortBy: 'updatedAt',
+    sortOrder: 'desc'
+  }
+}
+
+// 验证分页查询参数
+export function validatePasswordEntriesQuery(query: Partial<GetPasswordEntriesRequest>): GetPasswordEntriesRequest {
+  return {
+    page: Math.max(1, query.page || 1),
+    pageSize: Math.min(Math.max(1, query.pageSize || 10), 100), // 限制最大每页100条
+    keyword: query.keyword?.trim() || undefined,
+    categoryId: query.categoryId,
+    favorite: query.favorite,
+    sortBy: query.sortBy || 'updatedAt',
+    sortOrder: query.sortOrder || 'desc'
+  }
+}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-// 分类信息
+// 分类信息 - 匹配后端CategoriesVO
 export interface Category {
   id: number
+  userId: number
   name: string
+  color?: string
+  sortOrder?: number
+  icon?: number
   description?: string
-  icon?: string
   createdAt?: string
   updatedAt?: string
+  entryCount?: number
 }
+
+// 获取分类列表响应 - 后端直接返回Category数组
+export type CategoriesResponse = Category[]
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // 密码条目信息
 export interface PasswordEntry {
@@ -135,17 +168,6 @@ export interface PasswordEntry {
 }
 
 
-
-// 获取分类列表响应
-export interface CategoriesResponse {
-  categories: Category[]
-}
-
-// 获取密码条目列表响应
-export interface PasswordEntriesResponse {
-  entries: PasswordEntry[]
-  total: number
-}
 
 
 

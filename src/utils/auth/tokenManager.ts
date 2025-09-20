@@ -82,7 +82,7 @@ export class TokenManager {
   }
 
   /**
-   * 检查token是否即将过期（提前5分钟刷新）
+   * 检查token是否即将过期（提前10分钟刷新，增加缓冲时间）
    */
   public isTokenExpiringSoon(): boolean {
     try {
@@ -91,9 +91,9 @@ export class TokenManager {
       
       const expirationTime = parseInt(expiresAt)
       const currentTime = Date.now()
-      const fiveMinutes = 5 * 60 * 1000 // 5分钟
+      const tenMinutes = 10 * 60 * 1000 // 10分钟
       
-      return (expirationTime - currentTime) <= fiveMinutes
+      return (expirationTime - currentTime) <= tenMinutes
     } catch (error) {
       console.error('❌ 检查token过期时间失败:', error)
       return false
@@ -196,9 +196,9 @@ export class TokenManager {
       }
     }
 
-    // 检查刷新频率限制（30秒内最多刷新一次）
+    // 检查刷新频率限制（10秒内最多刷新一次，减少限制时间）
     const now = Date.now()
-    if (now - this.lastRefreshTime < 30000) {
+    if (now - this.lastRefreshTime < 10000) {
       console.warn('⚠️ Token刷新过于频繁，跳过本次刷新')
       throw new Error('Token refresh rate limited')
     }
@@ -253,6 +253,10 @@ export class TokenManager {
       
       if (data.code === 1 && data.data) {
         const { token, refreshToken: newRefreshToken, expiresIn } = data.data
+
+        console.log('🔄 刷新token成功')
+        console.log('token:', token)
+        console.log('refreshToken:', newRefreshToken)
         
         // 存储新的token
         this.setTokens(token, newRefreshToken, expiresIn)
@@ -304,23 +308,12 @@ export class TokenManager {
   }
 
   /**
-   * 启动token自动刷新定时器
+   * 重置刷新状态（用于清理）
    */
-  public startAutoRefreshTimer(): void {
-    // 每5分钟检查一次token状态，避免过度频繁
-    setInterval(async () => {
-      try {
-        // 只在token即将过期时才刷新，避免不必要的刷新
-        if (this.hasValidToken() && this.isTokenExpiringSoon() && !this.isTokenExpired()) {
-          console.log('🔄 定时检查：Token即将过期，执行刷新')
-          await this.refreshToken()
-        }
-      } catch (error) {
-        console.error('❌ 定时刷新token失败:', error)
-        // 刷新失败时清除token
-        this.clearTokens()
-      }
-    }, 5 * 60 * 1000) // 5分钟
+  public resetRefreshState(): void {
+    this.refreshPromise = null
+    this.refreshAttempts = 0
+    this.lastRefreshTime = 0
   }
 }
 

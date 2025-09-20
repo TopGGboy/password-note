@@ -167,8 +167,8 @@ export class AppInitializer {
    * 启动token自动刷新
    */
   private static startTokenAutoRefresh(): void {
-    tokenManager.startAutoRefreshTimer()
-    console.log('🔄 Token自动刷新已启动')
+    // 注意：自动刷新现在由AuthManager管理
+    console.log('🔄 Token自动刷新由AuthManager管理')
   }
 
   /**
