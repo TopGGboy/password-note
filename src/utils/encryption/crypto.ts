@@ -79,17 +79,24 @@ export class PasswordCrypto {
       // 解析Base64数据
       const combined = CryptoJS.enc.Base64.parse(ciphertext);
 
-      // IV大小为16字节
-      const ivWords = this.IV_SIZE / 4; // 16 / 4 = 4 words
-      
-      // 验证数据长度
-      if (combined.words.length < ivWords) {
-        throw new Error("密文数据长度不足，可能已损坏");
+      // 验证数据长度（至少需要IV的长度）
+      const minBytes = this.IV_SIZE; // 16字节
+      if (combined.sigBytes < minBytes) {
+        throw new Error(`密文数据长度不足，期望至少${minBytes}字节，实际${combined.sigBytes}字节`);
       }
 
-      // 提取IV和加密数据
-      const iv = CryptoJS.lib.WordArray.create(combined.words.slice(0, ivWords));
-      const encrypted = CryptoJS.lib.WordArray.create(combined.words.slice(ivWords));
+      // 提取IV（前16字节）
+      const iv = CryptoJS.lib.WordArray.create(combined.words, this.IV_SIZE);
+      
+      // 提取加密数据（剩余字节）
+      const encryptedBytes = combined.sigBytes - this.IV_SIZE;
+      const encryptedWords = Math.ceil(encryptedBytes / 4);
+      const startWordIndex = Math.ceil(this.IV_SIZE / 4);
+      
+      const encrypted = CryptoJS.lib.WordArray.create(
+        combined.words.slice(startWordIndex),
+        encryptedBytes
+      );
 
       // 解密
       const decrypted = CryptoJS.AES.decrypt(
@@ -105,8 +112,8 @@ export class PasswordCrypto {
       // 转换为UTF-8字符串
       const result = decrypted.toString(CryptoJS.enc.Utf8);
       
-      if (result === null || result === undefined) {
-        throw new Error("解密结果为空或无效");
+      if (!result) {
+        throw new Error("解密结果为空，可能密钥不正确或数据已损坏");
       }
 
       return result;
@@ -164,8 +171,8 @@ export class KeyManager {
     // 生成主密码哈希
     const masterPasswordHash = PasswordCrypto.hashPassword(masterPassword, masterPasswordSalt);
 
-    // 存储到sessionStorage（密钥和盐值）
-    sessionStorage.setItem(this.STORAGE_KEY, encryptionKey.toString());
+    // 存储到sessionStorage（密钥和盐值）- 明确使用Hex格式
+    sessionStorage.setItem(this.STORAGE_KEY, encryptionKey.toString(CryptoJS.enc.Hex));
     sessionStorage.setItem(this.SALT_KEY, encryptionSalt);
 
     // 存储到localStorage（验证信息）
@@ -277,7 +284,7 @@ export class KeyManager {
       );
 
       sessionStorage.setItem(this.SALT_KEY, encryptionSalt);
-      sessionStorage.setItem(this.STORAGE_KEY, encryptionKey.toString());
+      sessionStorage.setItem(this.STORAGE_KEY, encryptionKey.toString(CryptoJS.enc.Hex));
     }
 
     return isValid;
@@ -300,6 +307,67 @@ export class KeyManager {
  * 数据加密服务 - 修正版本
  */
 export class DataEncryptionService {
+  /**
+   * 旧版本的解密逻辑（有问题的版本）
+   */
+  private static decryptLegacy(ciphertext: string, key: CryptoJS.lib.WordArray): string {
+    if (!ciphertext) return "";
+    if (!key) {
+      throw new Error("解密密钥不能为空");
+    }
+
+    try {
+      const combined = CryptoJS.enc.Base64.parse(ciphertext);
+      const ivWords = 16 / 4; // 旧版本的错误逻辑
+      
+      if (combined.words.length < ivWords) {
+        throw new Error("密文数据长度不足");
+      }
+
+      const iv = CryptoJS.lib.WordArray.create(combined.words.slice(0, ivWords));
+      const encrypted = CryptoJS.lib.WordArray.create(combined.words.slice(ivWords));
+
+      const decrypted = CryptoJS.AES.decrypt(
+        { ciphertext: encrypted } as any,
+        key,
+        {
+          iv: iv,
+          mode: CryptoJS.mode.CBC,
+          padding: CryptoJS.pad.Pkcs7,
+        }
+      );
+
+      return decrypted.toString(CryptoJS.enc.Utf8);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * 智能解密（先用新逻辑，失败后用旧逻辑）
+   */
+  private static smartDecrypt(ciphertext: string, key: CryptoJS.lib.WordArray): string {
+    if (!ciphertext) return "";
+    
+    try {
+      return PasswordCrypto.decrypt(ciphertext, key);
+    } catch (newError: any) {
+      console.warn("新解密逻辑失败，尝试旧逻辑:", newError.message);
+      
+      try {
+        const result = this.decryptLegacy(ciphertext, key);
+        console.log("旧逻辑解密成功，建议重新加密数据");
+        return result;
+      } catch (legacyError: any) {
+        console.error("新旧解密逻辑都失败:", {
+          newError: newError.message,
+          legacyError: legacyError.message
+        });
+        throw new Error(`解密失败: ${newError.message}`);
+      }
+    }
+  }
+
   /**
    * 加密密码条目的敏感数据
    * @param data 密码条目数据
@@ -350,12 +418,12 @@ export class DataEncryptionService {
 
     try {
       return {
-        username: PasswordCrypto.decrypt(encryptedData.usernameEncrypted, key),
-        password: PasswordCrypto.decrypt(encryptedData.passwordEncrypted, key),
-        notes: PasswordCrypto.decrypt(encryptedData.notesEncrypted, key),
+        username: this.smartDecrypt(encryptedData.usernameEncrypted, key),
+        password: this.smartDecrypt(encryptedData.passwordEncrypted, key),
+        notes: this.smartDecrypt(encryptedData.notesEncrypted, key),
         customFields: encryptedData.customFieldsEncrypted.map((field) => ({
           name: field.name,
-          value: PasswordCrypto.decrypt(field.valueEncrypted, key),
+          value: this.smartDecrypt(field.valueEncrypted, key),
         })),
       };
     } catch (error) {
@@ -365,8 +433,129 @@ export class DataEncryptionService {
   }
 }
 
+/**
+ * 加密解密测试工具
+ */
+export class CryptoTestUtils {
+  /**
+   * 测试加密解密流程
+   */
+  static testEncryptionFlow(testData: string = "测试数据123"): boolean {
+    try {
+      console.log("开始加密解密测试...");
+      
+      // 1. 生成测试密钥
+      const testPassword = "testPassword123";
+      const salt = PasswordCrypto.generateSalt();
+      const key = PasswordCrypto.generateKey(testPassword, salt);
+      
+      console.log("生成的密钥:", key.toString(CryptoJS.enc.Hex));
+      console.log("盐值:", salt);
+      
+      // 2. 加密测试
+      const encrypted = PasswordCrypto.encrypt(testData, key);
+      console.log("加密结果:", encrypted);
+      console.log("加密数据长度:", encrypted.length);
+      
+      // 3. 解密测试
+      const decrypted = PasswordCrypto.decrypt(encrypted, key);
+      console.log("解密结果:", decrypted);
+      
+      // 4. 验证结果
+      const success = decrypted === testData;
+      console.log("测试结果:", success ? "成功" : "失败");
+      
+      if (!success) {
+        console.error("期望:", testData);
+        console.error("实际:", decrypted);
+      }
+      
+      return success;
+    } catch (error) {
+      console.error("测试失败:", error);
+      return false;
+    }
+  }
+
+  /**
+   * 测试密钥管理器
+   */
+  static testKeyManager(): boolean {
+    try {
+      console.log("开始密钥管理器测试...");
+      
+      const testPassword = "testMasterPassword123";
+      
+      // 清除现有数据
+      KeyManager.clearAllKeys();
+      
+      // 设置主密码
+      KeyManager.setMasterPassword(testPassword);
+      console.log("主密码设置完成");
+      
+      // 验证密钥存在
+      const hasKey = KeyManager.hasKey();
+      console.log("密钥存在:", hasKey);
+      
+      // 获取密钥
+      const key = KeyManager.getEncryptionKey();
+      console.log("获取到密钥:", !!key);
+      
+      if (key) {
+        // 测试加密解密
+        const testData = "密钥管理器测试数据";
+        const encrypted = PasswordCrypto.encrypt(testData, key);
+        const decrypted = PasswordCrypto.decrypt(encrypted, key);
+        
+        const success = decrypted === testData;
+        console.log("密钥管理器测试结果:", success ? "成功" : "失败");
+        return success;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error("密钥管理器测试失败:", error);
+      return false;
+    }
+  }
+
+  /**
+   * 诊断现有数据
+   */
+  static diagnoseExistingData(): void {
+    console.log("=== 诊断现有数据 ===");
+    
+    // 检查存储的数据
+    const keyStr = sessionStorage.getItem(KeyManager['STORAGE_KEY']);
+    const salt = sessionStorage.getItem(KeyManager['SALT_KEY']);
+    const masterHash = localStorage.getItem(KeyManager['MASTER_PASSWORD_HASH_KEY']);
+    const masterSalt = localStorage.getItem(KeyManager['MASTER_PASSWORD_SALT_KEY']);
+    const encSalt = localStorage.getItem(KeyManager['ENCRYPTION_SALT_KEY']);
+    
+    console.log("会话存储:");
+    console.log("- 密钥:", keyStr ? "存在" : "不存在", keyStr?.substring(0, 20) + "...");
+    console.log("- 盐值:", salt ? "存在" : "不存在", salt);
+    
+    console.log("本地存储:");
+    console.log("- 主密码哈希:", masterHash ? "存在" : "不存在");
+    console.log("- 主密码盐值:", masterSalt ? "存在" : "不存在");
+    console.log("- 加密盐值:", encSalt ? "存在" : "不存在");
+    
+    // 尝试解析密钥
+    if (keyStr) {
+      try {
+        const key = CryptoJS.enc.Hex.parse(keyStr);
+        console.log("密钥解析:", "成功", key.sigBytes, "字节");
+      } catch (error) {
+        console.error("密钥解析失败:", error);
+      }
+    }
+  }
+}
+
 export default {
   PasswordCrypto,
   KeyManager,
   DataEncryptionService,
+  CryptoTestUtils,
 };
