@@ -42,9 +42,8 @@ export class TokenManager {
         localStorage.setItem(STORAGE_KEYS.TOKEN_EXPIRES_AT, expiresAt.toString())
       }
       
-      console.log('🔐 Token已安全存储')
     } catch (error) {
-      console.error('❌ Token存储失败:', error)
+      // 静默处理存储错误
     }
   }
 
@@ -55,7 +54,6 @@ export class TokenManager {
     try {
       return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)
     } catch (error) {
-      console.error('❌ 获取访问token失败:', error)
       return null
     }
   }
@@ -67,7 +65,6 @@ export class TokenManager {
     try {
       return localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN)
     } catch (error) {
-      console.error('❌ 获取刷新token失败:', error)
       return null
     }
   }
@@ -95,7 +92,6 @@ export class TokenManager {
       
       return (expirationTime - currentTime) <= tenMinutes
     } catch (error) {
-      console.error('❌ 检查token过期时间失败:', error)
       return false
     }
   }
@@ -111,7 +107,6 @@ export class TokenManager {
       const expirationTime = parseInt(expiresAt)
       return Date.now() >= expirationTime
     } catch (error) {
-      console.error('❌ 检查token过期状态失败:', error)
       return true // 出错时认为已过期，更安全
     }
   }
@@ -130,7 +125,6 @@ export class TokenManager {
       const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
       return JSON.parse(decoded)
     } catch (error) {
-      console.error('❌ 解析JWT失败:', error)
       return null
     }
   }
@@ -157,7 +151,6 @@ export class TokenManager {
       
       return true
     } catch (error) {
-      console.error('❌ Token格式验证失败:', error)
       return false
     }
   }
@@ -175,10 +168,8 @@ export class TokenManager {
       
       // 清除刷新Promise
       this.refreshPromise = null
-      
-      console.log('🧹 所有token已清除')
     } catch (error) {
-      console.error('❌ 清除token失败:', error)
+      // 静默处理清除错误
     }
   }
 
@@ -196,16 +187,14 @@ export class TokenManager {
       }
     }
 
-    // 检查刷新频率限制（10秒内最多刷新一次，减少限制时间）
+    // 检查刷新频率限制（10秒内最多刷新一次）
     const now = Date.now()
     if (now - this.lastRefreshTime < 10000) {
-      console.warn('⚠️ Token刷新过于频繁，跳过本次刷新')
       throw new Error('Token refresh rate limited')
     }
 
     // 检查重试次数限制
     if (this.refreshAttempts >= this.maxRefreshAttempts) {
-      console.error('❌ Token刷新重试次数超限，清除认证信息')
       this.clearTokens()
       throw new Error('Max refresh attempts exceeded')
     }
@@ -260,18 +249,11 @@ export class TokenManager {
         
         // 存储新的token
         this.setTokens(token, newRefreshToken, expiresIn)
-        
-        console.log('🔄 Token刷新成功')
-        
-        // 通知其他组件token已刷新（如果需要的话）
-        // 这里可以触发事件或调用回调
-        
         return token
       } else {
         throw new Error(data.msg || 'Token refresh failed')
       }
     } catch (error) {
-      console.error('❌ Token刷新失败:', error)
       // 刷新失败，清除所有token
       this.clearTokens()
       throw error
@@ -289,20 +271,17 @@ export class TokenManager {
 
       // 如果token已过期，不尝试刷新，直接返回false让调用方处理
       if (this.isTokenExpired()) {
-        console.log('🔄 Token已过期，需要重新登录')
         return false
       }
 
-      // 只有在token即将过期（5分钟内）且当前没有刷新请求时才刷新
+      // 只有在token即将过期且当前没有刷新请求时才刷新
       if (this.isTokenExpiringSoon() && !this.refreshPromise) {
-        console.log('🔄 Token即将过期，提前刷新...')
         await this.refreshToken()
         return true
       }
 
       return false
     } catch (error) {
-      console.error('❌ 自动刷新token失败:', error)
       return false
     }
   }

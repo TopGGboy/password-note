@@ -45,35 +45,20 @@
 
     <!-- 密码条目列表 -->
     <div class="content-section">
-      <PasswordEntriesList
-        @add-password="showAddModal = true"
-        @view-entry="handleViewEntry"
-        @edit-entry="handleEditEntry"
-      />
+      <PasswordEntriesList @add-password="showAddModal = true" @view-entry="handleViewEntry"
+        @edit-entry="handleEditEntry" />
     </div>
 
     <!-- 添加密码弹窗 -->
-    <AddPasswordModal
-      v-if="showAddModal"
-      @close="showAddModal = false"
-      @success="handleAddSuccess"
-    />
+    <AddPasswordModal v-if="showAddModal" @close="showAddModal = false" @success="handleAddSuccess" />
 
     <!-- 密码详情弹窗 -->
-    <PasswordEntryDetail
-      v-if="showDetailModal && selectedEntry"
-      :entry="selectedEntry"
-      @close="showDetailModal = false"
-      @edit="handleEditFromDetail"
-    />
+    <PasswordEntryDetail v-if="showDetailModal && selectedEntry" :entry="selectedEntry" @close="showDetailModal = false"
+      @edit="handleEditFromDetail" />
 
     <!-- 编辑密码弹窗 -->
-    <EditPasswordModal
-      v-if="showEditModal && selectedEntry"
-      :entry="selectedEntry"
-      @close="showEditModal = false"
-      @success="handleEditSuccess"
-    />
+    <EditPasswordModal v-if="showEditModal && selectedEntry" :entry="selectedEntry" @close="showEditModal = false"
+      @success="handleEditSuccess" />
 
     <!-- 加载遮罩 -->
     <div v-if="loading && entries.length === 0" class="loading-overlay">
@@ -117,7 +102,7 @@ export default defineComponent({
   setup() {
     // 认证状态
     const { userId, isAuthenticated, initialize } = useAuth()
-    
+
     // 密码条目管理
     const {
       loading,
@@ -137,10 +122,10 @@ export default defineComponent({
     const categories = ref<Category[]>([])
 
     // 计算属性
-    const favoriteCount = computed(() => 
+    const favoriteCount = computed(() =>
       entries.value.filter(entry => entry.favorite).length
     )
-    
+
     const categoriesCount = computed(() => categories.value.length)
 
     // 方法
@@ -188,10 +173,10 @@ export default defineComponent({
         console.warn('用户ID无效，跳过加载分类')
         return
       }
-      
+
       try {
         const response = await categoriesAPI.getAll()
-        if (response.code === 200 && response.data) {
+        if (response.code === 1 && response.data) {
           categories.value = response.data
         }
       } catch (err) {
@@ -207,7 +192,7 @@ export default defineComponent({
       }
     })
 
-        // 添加简单的 toast 函数
+    // 添加简单的 toast 函数
     const showToast = (message: string, type: string) => {
       // 使用现有的 error 状态显示错误信息
       if (type === 'error') {
@@ -245,7 +230,20 @@ export default defineComponent({
         ])
       } catch (error) {
         console.error('初始化数据加载失败:', error)
-        showToast('数据加载失败，请刷新页面重试', 'error')
+        
+        // 根据错误类型提供不同的处理
+        let errorMessage = '数据加载失败，请刷新页面重试'
+        if (error instanceof Error) {
+          if (error.message.includes('解密失败') || error.message.includes('密钥')) {
+            errorMessage = '数据解密失败，请重新登录以刷新密钥'
+            // 可以考虑自动跳转到登录页面
+            // router.push('/login')
+          } else if (error.message.includes('网络') || error.message.includes('请求')) {
+            errorMessage = '网络连接失败，请检查网络后重试'
+          }
+        }
+        
+        showToast(errorMessage, 'error')
       }
     })
 
@@ -259,11 +257,11 @@ export default defineComponent({
       showDetailModal,
       showEditModal,
       selectedEntry,
-      
+
       // 计算属性
       favoriteCount,
       categoriesCount,
-      
+
       // 方法
       refreshEntries,
       handleViewEntry,
@@ -323,7 +321,8 @@ export default defineComponent({
   gap: 12px;
 }
 
-.add-btn, .refresh-btn {
+.add-btn,
+.refresh-btn {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -463,8 +462,13 @@ export default defineComponent({
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* 错误提示 */
@@ -516,31 +520,32 @@ export default defineComponent({
   .passwords-page {
     padding: 15px;
   }
-  
+
   .page-header {
     flex-direction: column;
     gap: 20px;
     padding: 20px;
   }
-  
+
   .header-actions {
     width: 100%;
     justify-content: stretch;
   }
-  
-  .add-btn, .refresh-btn {
+
+  .add-btn,
+  .refresh-btn {
     flex: 1;
     justify-content: center;
   }
-  
+
   .page-title {
     font-size: 2rem;
   }
-  
+
   .stats-section {
     grid-template-columns: 1fr;
   }
-  
+
   .content-section {
     padding: 20px;
   }

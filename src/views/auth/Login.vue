@@ -211,15 +211,9 @@ export default defineComponent({
           sessionId: this.sessionId
         })
 
-        console.log('登录结果：', result)
-
         if (result.success) {
-          console.log('登录成功，接下来检验是否需要双因素认证')
-          console.log('登录结果：', result.twoFactorEnabled)
-
           if ((result as any).twoFactorEnabled) {
             // 需要双因素认证，发送验证码
-            console.log('需要双因素认证，发送验证码到邮箱')
 
             try {
               const send2FAResult = await this.authStore.send2FACode(result.data?.email)
@@ -232,25 +226,19 @@ export default defineComponent({
                 this.errorMessage = '发送验证码失败，请重试'
               }
             } catch (error) {
-              console.error('发送2FA验证码失败:', error)
               this.errorMessage = '发送验证码失败，请重试'
             }
           } else {
             // 登录成功，跳转到home
-            console.log('登录成功，准备跳转到home')
             try {
               // 确保状态已经更新
               await this.$nextTick()
               await this.router.push(ROUTES.HOME)
-              console.log('跳转成功')
             } catch (error) {
-              console.error('跳转失败:', error)
               // 使用window.location作为备选方案
               window.location.href = ROUTES.HOME
             }
           }
-        } else {
-          console.log('登录失败，result.success为false')
         }
 
       } catch (error) {
@@ -281,7 +269,6 @@ export default defineComponent({
             await this.$nextTick()
             await this.router.push(ROUTES.HOME)
           } catch (error) {
-            console.error('跳转失败:', error)
              // 使用window.location作为备选方案
             window.location.href = ROUTES.HOME
           }
@@ -289,7 +276,6 @@ export default defineComponent({
           this.errorMessage = '验证码错误，请重新输入'
         }
       } catch (error: any) {
-        console.error('2FA验证失败:', error)
         this.errorMessage = error.response?.data?.msg || '验证失败，请重试'
       }
     },

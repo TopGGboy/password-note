@@ -1,65 +1,76 @@
-import { ref, reactive, computed } from 'vue'
-import { passwordEntriesAPI } from '../services/api'
-import { DataEncryptionService, KeyManager } from '../utils/encryption/crypto'
-import { authManager } from '../utils/auth/authManager'
-import type { 
-  GetPasswordEntriesRequest, 
-  GetPasswordEntriesResponse, 
+import { ref, reactive, computed } from "vue";
+import { passwordEntriesAPI } from "../services/api";
+import { DataEncryptionService, KeyManager } from "../utils/encryption/crypto";
+import { tokenManager } from "../utils/auth/tokenManager";
+import type {
+  GetPasswordEntriesRequest,
+  GetPasswordEntriesResponse,
   PasswordEntry,
-  CreatePasswordEntryRequest 
-} from '../types/api'
-import { createDefaultPasswordEntriesQuery, validatePasswordEntriesQuery } from '../types/api'
+  CreatePasswordEntryRequest,
+} from "../types/api";
+import {
+  createDefaultPasswordEntriesQuery,
+  validatePasswordEntriesQuery,
+} from "../types/api";
 
 // 查询参数接口（继承API请求参数）
 export interface PasswordEntriesQuery extends GetPasswordEntriesRequest {}
 
 // 解密后的密码条目
-export interface DecryptedPasswordEntry extends Omit<PasswordEntry, 'usernameEncrypted' | 'passwordEncrypted' | 'notesEncrypted'> {
-  username: string
-  password: string
-  notes: string
-  icon?: string
-  tags?: string[]
+export interface DecryptedPasswordEntry
+  extends Omit<
+    PasswordEntry,
+    "usernameEncrypted" | "passwordEncrypted" | "notesEncrypted"
+  > {
+  username: string;
+  password: string;
+  notes: string;
+  icon?: string;
+  tags?: string[];
 }
 
 export function usePasswordEntries() {
   // 响应式数据
-  const loading = ref(false)
-  const error = ref<string | null>(null)
-  const entries = ref<DecryptedPasswordEntry[]>([])
-  const total = ref(0)
-  const totalPages = ref(0)
-  
+  const loading = ref(false);
+  const error = ref<string | null>(null);
+  const entries = ref<DecryptedPasswordEntry[]>([]);
+  const total = ref(0);
+  const totalPages = ref(0);
+
   // 查询参数
-  const query = reactive<PasswordEntriesQuery>(createDefaultPasswordEntriesQuery())
+  const query = reactive<PasswordEntriesQuery>(
+    createDefaultPasswordEntriesQuery()
+  );
 
   // 计算属性
-  const hasData = computed(() => entries.value.length > 0)
-  const isEmpty = computed(() => !loading.value && entries.value.length === 0)
-  const hasMore = computed(() => query.page < totalPages.value)
+  const hasData = computed(() => entries.value.length > 0);
+  const isEmpty = computed(() => !loading.value && entries.value.length === 0);
+  const hasMore = computed(() => query.page < totalPages.value);
 
   // 解密密码条目数据
-  const decryptPasswordEntry = (entry: PasswordEntry): DecryptedPasswordEntry => {
+  const decryptPasswordEntry = (
+    entry: PasswordEntry
+  ): DecryptedPasswordEntry => {
     try {
       if (!KeyManager.hasKey()) {
-        throw new Error('未找到加密密钥')
+        throw new Error("未找到加密密钥");
       }
 
       const decryptedData = DataEncryptionService.decryptPasswordEntry({
         usernameEncrypted: entry.usernameEncrypted,
         passwordEncrypted: entry.passwordEncrypted,
-        notesEncrypted: entry.notesEncrypted || '',
-        customFieldsEncrypted: []
-      })
+        notesEncrypted: entry.notesEncrypted || "",
+        customFieldsEncrypted: entry.customFields || [],
+      });
 
       // 从自定义字段中提取图标和标签
-      let icon = '🔐'
-      let tags: string[] = []
-      
+      let icon = "🔐";
+      let tags: string[] = [];
+
       if (entry.customFields) {
-        if (typeof entry.customFields === 'object') {
-          icon = entry.customFields.icon || '🔐'
-          tags = entry.customFields.tags || []
+        if (typeof entry.customFields === "object") {
+          icon = entry.customFields.icon || "🔐";
+          tags = entry.customFields.tags || [];
         }
       }
 
@@ -69,219 +80,333 @@ export function usePasswordEntries() {
         password: decryptedData.password,
         notes: decryptedData.notes,
         icon,
-        tags
-      }
+        tags,
+      };
     } catch (err) {
-      console.error('解密密码条目失败:', err)
+      console.error("解密密码条目失败:", err);
       // 返回部分数据，密码相关字段为空
       return {
         ...entry,
-        username: '解密失败',
-        password: '解密失败',
-        notes: '解密失败',
-        icon: '🔐',
-        tags: []
-      }
+        username: "解密失败",
+        password: "解密失败",
+        notes: "解密失败",
+        icon: "🔐",
+        tags: [],
+      };
     }
-  }
+  };
 
   // 获取密码条目列表
   const fetchEntries = async (resetPage = false) => {
     // 检查认证状态
-    if (!authManager.isAuthenticated()) {
-      console.warn('用户未认证，无法获取密码条目')
-      error.value = '用户未认证，请重新登录'
-      return
+    if (!tokenManager.hasValidToken() || tokenManager.isTokenExpired()) {
+      console.warn("用户未认证或token已过期，无法获取密码条目");
+      error.value = "用户未认证，请重新登录";
+      return;
+    }
+
+        // 检查是否有加密密钥
+    if (!KeyManager.hasKey()) {
+      console.warn('未找到加密密钥，请先输入主密码');
+      error.value = '未找到加密密钥，请先输入主密码';
+      // 触发主密码输入事件
+      window.dispatchEvent(new CustomEvent('requireMasterPassword'));
+      return;
     }
 
     if (resetPage) {
-      query.page = 1
+      query.page = 1;
     }
 
-    loading.value = true
-    error.value = null
+    loading.value = true;
+    error.value = null;
 
     try {
       // 验证并规范化查询参数
-      const validatedQuery = validatePasswordEntriesQuery(query)
-      Object.assign(query, validatedQuery)
-      
-      const response = await passwordEntriesAPI.page(validatedQuery)
-      
+      const validatedQuery = validatePasswordEntriesQuery(query);
+      Object.assign(query, validatedQuery);
+
+      const response = await passwordEntriesAPI.page(validatedQuery);
+
       if (response.code === 1 && response.data) {
-        const entriesList = Array.isArray(response.data) ? response.data : []
-        
+        const entriesList = Array.isArray(response.data) ? response.data : [];
+
         // 解密所有条目
-        const decryptedEntries = entriesList.map(decryptPasswordEntry)
-        
+        const decryptedEntries = entriesList.map(decryptPasswordEntry);
+
         if (resetPage || query.page === 1) {
-          entries.value = decryptedEntries
+          entries.value = decryptedEntries;
         } else {
           // 追加数据（用于无限滚动）
-          entries.value.push(...decryptedEntries)
+          entries.value.push(...decryptedEntries);
         }
-        
-        total.value = entriesList.length
-        totalPages.value = Math.ceil(total.value / validatedQuery.pageSize)
+
+        total.value = entriesList.length;
+        totalPages.value = Math.ceil(total.value / validatedQuery.pageSize);
       } else {
-        throw new Error(response.msg || '获取密码条目失败')
+        throw new Error(response.msg || "获取密码条目失败");
       }
     } catch (err: any) {
-      error.value = err.message || '获取密码条目失败'
-      console.error('获取密码条目失败:', err)
+      error.value = err.message || "获取密码条目失败";
+      console.error("获取密码条目失败:", err);
     } finally {
-      loading.value = false
+      loading.value = false;
     }
-  }
+  };
 
   // 搜索密码条目
   const searchEntries = async (keyword: string) => {
-    query.keyword = keyword
-    await fetchEntries(true)
-  }
+    query.keyword = keyword;
+    await fetchEntries(true);
+  };
 
   // 按分类筛选
   const filterByCategory = async (categoryId?: number) => {
-    query.categoryId = categoryId
-    await fetchEntries(true)
-  }
+    query.categoryId = categoryId;
+    await fetchEntries(true);
+  };
 
   // 筛选收藏
   const filterFavorites = async (favorite?: boolean) => {
-    query.favorite = favorite
-    await fetchEntries(true)
-  }
+    query.favorite = favorite;
+    await fetchEntries(true);
+  };
 
   // 排序
-  const sortEntries = async (sortBy: PasswordEntriesQuery['sortBy'], sortOrder: PasswordEntriesQuery['sortOrder'] = 'desc') => {
-    query.sortBy = sortBy
-    query.sortOrder = sortOrder
-    await fetchEntries(true)
-  }
+  const sortEntries = async (
+    sortBy: PasswordEntriesQuery["sortBy"],
+    sortOrder: PasswordEntriesQuery["sortOrder"] = "desc"
+  ) => {
+    query.sortBy = sortBy;
+    query.sortOrder = sortOrder;
+    await fetchEntries(true);
+  };
 
   // 加载更多（分页）
   const loadMore = async () => {
     if (hasMore.value && !loading.value) {
-      query.page += 1
-      await fetchEntries(false)
+      query.page += 1;
+      await fetchEntries(false);
     }
-  }
+  };
 
   // 刷新数据
   const refresh = async () => {
-    await fetchEntries(true)
-  }
+    await fetchEntries(true);
+  };
 
   // 重置查询条件
   const resetQuery = () => {
-    Object.assign(query, createDefaultPasswordEntriesQuery())
-  }
+    Object.assign(query, createDefaultPasswordEntriesQuery());
+  };
 
   // 创建新密码条目
-  const createEntry = async (data: CreatePasswordEntryRequest): Promise<PasswordEntry> => {
-    loading.value = true
-    error.value = null
+  const createEntry = async (
+    data: CreatePasswordEntryRequest
+  ): Promise<PasswordEntry> => {
+    loading.value = true;
+    error.value = null;
 
     try {
-      const response = await passwordEntriesAPI.create(data)
-      
-      if (response.code === 200 && response.data) {
+      const response = await passwordEntriesAPI.create(data);
+      console.log("创建密码条目API响应:", response);
+
+      // 修复：检查code为1而不是200
+      if (response.code === 1 && response.data) {
         // 刷新列表
-        await fetchEntries(true)
-        return response.data
+        await fetchEntries(true);
+        console.log("密码条目创建成功:", response.data);
+        return response.data;
       } else {
-        throw new Error(response.msg || '创建密码条目失败')
+        throw new Error(response.msg || "创建密码条目失败");
       }
     } catch (err: any) {
-      error.value = err.message || '创建密码条目失败'
-      throw err
+      console.error("创建密码条目失败:", err);
+      error.value = err.message || "创建密码条目失败";
+      throw err;
     } finally {
-      loading.value = false
+      loading.value = false;
     }
-  }
+  };
 
   // 更新密码条目
-  const updateEntry = async (id: number, data: Partial<CreatePasswordEntryRequest>): Promise<PasswordEntry> => {
-    loading.value = true
-    error.value = null
+  const updateEntry = async (
+    id: number,
+    data: Partial<CreatePasswordEntryRequest>
+  ): Promise<PasswordEntry> => {
+    loading.value = true;
+    error.value = null;
 
     try {
-      const response = await passwordEntriesAPI.update(id, data)
-      
-      if (response.code === 200 && response.data) {
+      const response = await passwordEntriesAPI.update(id, data);
+      console.log("更新密码条目API响应:", response);
+
+      // 修复：检查code为1而不是200
+      if (response.code === 1 && response.data) {
         // 刷新列表
-        await fetchEntries(true)
-        return response.data
+        await fetchEntries(true);
+        console.log("密码条目更新成功:", response.data);
+        return response.data;
       } else {
-        throw new Error(response.msg || '更新密码条目失败')
+        throw new Error(response.msg || "更新密码条目失败");
       }
     } catch (err: any) {
-      error.value = err.message || '更新密码条目失败'
-      throw err
+      console.error("更新密码条目失败:", err);
+      error.value = err.message || "更新密码条目失败";
+      throw err;
     } finally {
-      loading.value = false
+      loading.value = false;
     }
-  }
+  };
 
   // 删除密码条目
   const deleteEntry = async (id: number): Promise<void> => {
-    loading.value = true
-    error.value = null
+    // 详细的认证状态检查和调试信息
+    console.log("=== 删除密码条目调试信息 ===");
+
+    // 获取token详细信息
+    const token = tokenManager.getAccessToken();
+    const userId = localStorage.getItem("userId");
+    const hasValidToken = tokenManager.hasValidToken();
+    const isTokenExpired = tokenManager.isTokenExpired();
+
+    console.log(
+      "本地存储token:",
+      token ? `${token.substring(0, 20)}...` : "null"
+    );
+    console.log("本地存储userId:", userId);
+    console.log("Token有效性:", hasValidToken);
+    console.log("Token是否过期:", isTokenExpired);
+
+    if (!hasValidToken || isTokenExpired) {
+      const errorMsg = "用户未认证或token已过期，无法删除密码条目";
+      console.warn(errorMsg);
+      error.value = errorMsg;
+      throw new Error(errorMsg);
+    }
+
+    loading.value = true;
+    error.value = null;
 
     try {
-      const response = await passwordEntriesAPI.delete(id)
-      
-      if (response.code === 200) {
+      console.log("正在删除密码条目，ID:", id);
+      console.log("请求URL:", `/api/password-entries/${id}`);
+
+      const response = await passwordEntriesAPI.delete(id);
+      console.log("删除密码条目API响应:", response);
+
+      // 修复：检查code为1而不是200
+      if (response.code === 1) {
         // 从本地列表中移除
-        entries.value = entries.value.filter(entry => entry.id !== id)
-        total.value -= 1
+        entries.value = entries.value.filter((entry) => entry.id !== id);
+        total.value -= 1;
+        console.log("密码条目删除成功，ID:", id);
       } else {
-        throw new Error(response.msg || '删除密码条目失败')
+        throw new Error(response.msg || "删除密码条目失败");
       }
     } catch (err: any) {
-      error.value = err.message || '删除密码条目失败'
-      throw err
+      console.error("删除密码条目失败:", err);
+
+      // 提供更详细的错误信息
+      let errorMessage = "删除密码条目失败";
+      if (err.response) {
+        switch (err.response.status) {
+          case 401:
+            errorMessage = "认证已过期，请重新登录";
+            break;
+          case 403:
+            errorMessage = "权限不足，无法删除此密码条目";
+            break;
+          case 404:
+            errorMessage = "密码条目不存在或已被删除";
+            break;
+          case 500:
+            errorMessage = "服务器内部错误，请稍后重试";
+            break;
+          default:
+            errorMessage = err.response.data?.msg || err.message || "删除失败";
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      error.value = errorMessage;
+      throw new Error(errorMessage);
     } finally {
-      loading.value = false
+      loading.value = false;
     }
-  }
+  };
 
   // 切换收藏状态
   const toggleFavorite = async (id: number): Promise<void> => {
+    // 检查认证状态
+    if (!tokenManager.hasValidToken() || tokenManager.isTokenExpired()) {
+      const errorMsg = "用户未认证或token已过期，无法切换收藏状态";
+      console.warn(errorMsg);
+      error.value = errorMsg;
+      throw new Error(errorMsg);
+    }
+
     try {
-      const response = await passwordEntriesAPI.toggleFavorite(id)
-      
-      if (response.code === 200 && response.data) {
+      console.log("正在切换收藏状态，ID:", id);
+      const response = await passwordEntriesAPI.toggleFavorite(id);
+      console.log("切换收藏状态API响应:", response);
+
+      // 修复：检查code为1而不是200
+      if (response.code === 1 && response.data) {
         // 更新本地数据
-        const index = entries.value.findIndex(entry => entry.id === id)
+        const index = entries.value.findIndex((entry) => entry.id === id);
         if (index !== -1) {
-          entries.value[index].favorite = response.data.favorite
+          entries.value[index].favorite = response.data.favorite;
         }
+        console.log("收藏状态切换成功，ID:", id);
       } else {
-        throw new Error(response.msg || '切换收藏状态失败')
+        throw new Error(response.msg || "切换收藏状态失败");
       }
     } catch (err: any) {
-      error.value = err.message || '切换收藏状态失败'
-      throw err
+      console.error("切换收藏状态失败:", err);
+
+      // 提供更详细的错误信息
+      let errorMessage = "切换收藏状态失败";
+      if (err.response) {
+        switch (err.response.status) {
+          case 401:
+            errorMessage = "认证已过期，请重新登录";
+            break;
+          case 403:
+            errorMessage = "权限不足，无法修改收藏状态";
+            break;
+          case 404:
+            errorMessage = "密码条目不存在";
+            break;
+          default:
+            errorMessage = err.response.data?.msg || err.message || "操作失败";
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      error.value = errorMessage;
+      throw new Error(errorMessage);
     }
-  }
+  };
 
   // 记录使用次数
   const recordUsage = async (id: number): Promise<void> => {
     try {
-      await passwordEntriesAPI.recordUsage(id)
-      
+      await passwordEntriesAPI.recordUsage(id);
+
       // 更新本地数据
-      const index = entries.value.findIndex(entry => entry.id === id)
+      const index = entries.value.findIndex((entry) => entry.id === id);
       if (index !== -1) {
-        entries.value[index].timesUsed += 1
-        entries.value[index].lastUsed = new Date().toISOString()
+        entries.value[index].timesUsed += 1;
+        entries.value[index].lastUsed = new Date().toISOString();
       }
     } catch (err: any) {
-      console.error('记录使用次数失败:', err)
+      console.error("记录使用次数失败:", err);
       // 不抛出错误，因为这不是关键功能
     }
-  }
+  };
 
   return {
     // 响应式数据
@@ -291,12 +416,12 @@ export function usePasswordEntries() {
     total,
     totalPages,
     query,
-    
+
     // 计算属性
     hasData,
     isEmpty,
     hasMore,
-    
+
     // 方法
     fetchEntries,
     searchEntries,
@@ -310,6 +435,6 @@ export function usePasswordEntries() {
     updateEntry,
     deleteEntry,
     toggleFavorite,
-    recordUsage
-  }
+    recordUsage,
+  };
 }

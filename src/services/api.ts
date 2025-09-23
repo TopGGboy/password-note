@@ -18,7 +18,7 @@ import type {
   ChangePasswordRequest,
   ResetPasswordRequest,
   ForgotPasswordRequest,
-  CategoriesResponse
+  CategoriesResponse,
 } from "../types/api";
 
 // 用户相关API（根据API接口文档）
@@ -40,11 +40,6 @@ export const userAPI = {
     });
   },
 
-  // 刷新Token
-  refreshToken: (): Promise<ApiResponse<any>> => {
-    return http.post(API_ENDPOINTS.USER.REFRESH);
-  },
-
   // 登出
   logout: (): Promise<ApiResponse<null>> => {
     return http.post(API_ENDPOINTS.USER.LOGOUT);
@@ -54,12 +49,6 @@ export const userAPI = {
   register: (data: RegisterRequest): Promise<ApiResponse<RegisterResponse>> => {
     return http.post(API_ENDPOINTS.USER.REGISTER, data);
   },
-
-
-
-
-
-  
 
   // 忘记密码
   forgotPassword: (data: ForgotPasswordRequest) => {
@@ -98,8 +87,8 @@ export const captchaAPI = {
       withCredentials: true,
       // 添加时间戳避免缓存
       params: {
-        t: Date.now()
-      }
+        t: Date.now(),
+      },
     });
   },
 
@@ -109,7 +98,6 @@ export const captchaAPI = {
     return `${baseURL}${API_ENDPOINTS.CAPTCHA.IMAGE}?t=${Date.now()}`;
   },
 };
-
 
 // 邮箱验证码相关API
 export const emailAPI = {
@@ -127,47 +115,54 @@ export const emailAPI = {
 export const categoriesAPI = {
   // 获取用户的所有分类
   getAll: (): Promise<ApiResponse<CategoriesResponse>> => {
-    return http.get(API_ENDPOINTS.CATEGORIES.BASE)
+    return http.get(API_ENDPOINTS.CATEGORIES.BASE);
   },
-}
+};
 
 // 密码条目相关API
 export const passwordEntriesAPI = {
   // 创建密码条目
-  create: (data: CreatePasswordEntryRequest): Promise<ApiResponse<PasswordEntry>> => {
-    return http.post(API_ENDPOINTS.PASSWORDENTRIES.BASE, data)
+  create: (
+    data: CreatePasswordEntryRequest
+  ): Promise<ApiResponse<PasswordEntry>> => {
+    return http.post(API_ENDPOINTS.PASSWORDENTRIES.BASE, data);
   },
-  
+
   // 分页查询密码条目
-  page: (params: GetPasswordEntriesRequest): Promise<ApiResponse<GetPasswordEntriesResponse>> => {
-    return http.get(API_ENDPOINTS.PASSWORDENTRIES.PAGE, { params })
+  page: (
+    params: GetPasswordEntriesRequest
+  ): Promise<ApiResponse<GetPasswordEntriesResponse>> => {
+    return http.get(API_ENDPOINTS.PASSWORDENTRIES.PAGE, { params });
   },
-  
+
+  // 删除密码条目
+  delete: (id: number): Promise<ApiResponse<string>> => {
+    return http.delete(`${API_ENDPOINTS.PASSWORDENTRIES.BASE}/${id}`);
+  },
+
   // 获取单个密码条目
   getById: (id: number): Promise<ApiResponse<PasswordEntry>> => {
-    return http.get(`${API_ENDPOINTS.PASSWORDENTRIES.BASE}/${id}`)
+    return http.get(`${API_ENDPOINTS.PASSWORDENTRIES.BASE}/${id}`);
   },
-  
+
   // 更新密码条目
-  update: (id: number, data: Partial<CreatePasswordEntryRequest>): Promise<ApiResponse<PasswordEntry>> => {
-    return http.put(`${API_ENDPOINTS.PASSWORDENTRIES.BASE}/${id}`, data)
+  update: (
+    id: number,
+    data: Partial<CreatePasswordEntryRequest>
+  ): Promise<ApiResponse<PasswordEntry>> => {
+    return http.put(`${API_ENDPOINTS.PASSWORDENTRIES.BASE}/${id}`, data);
   },
-  
-  // 删除密码条目
-  delete: (id: number): Promise<ApiResponse<null>> => {
-    return http.delete(`${API_ENDPOINTS.PASSWORDENTRIES.BASE}/${id}`)
-  },
-  
+
   // 切换收藏状态
   toggleFavorite: (id: number): Promise<ApiResponse<PasswordEntry>> => {
-    return http.patch(`${API_ENDPOINTS.PASSWORDENTRIES.BASE}/${id}/favorite`)
+    return http.patch(`${API_ENDPOINTS.PASSWORDENTRIES.BASE}/${id}/favorite`);
   },
-  
+
   // 记录使用次数
   recordUsage: (id: number): Promise<ApiResponse<null>> => {
-    return http.patch(`${API_ENDPOINTS.PASSWORDENTRIES.BASE}/${id}/usage`)
-  }
-}
+    return http.patch(`${API_ENDPOINTS.PASSWORDENTRIES.BASE}/${id}/usage`);
+  },
+};
 
 export default {
   user: userAPI,

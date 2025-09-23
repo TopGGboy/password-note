@@ -60,18 +60,9 @@ export const useAuthStore = defineStore("auth", {
 
   getters: {
     isLoggedIn: (state): boolean => {
-      // 检查是否有有效的访问token和用户信息
       const hasValidToken = tokenManager.hasValidToken();
       const hasUser = !!state.user;
       const tokenNotExpired = !tokenManager.isTokenExpired();
-
-      console.log("🔍 登录状态检查:", {
-        hasValidToken,
-        hasUser,
-        tokenNotExpired,
-        result: hasValidToken && hasUser && tokenNotExpired,
-      });
-
       return hasValidToken && hasUser && tokenNotExpired;
     },
     userInfo: (state): User | null => state.user,
@@ -107,9 +98,6 @@ export const useAuthStore = defineStore("auth", {
         const response: ApiResponse<LoginResponse> = await userAPI.login(
           credentials
         );
-        console.log("响应数据:", response);
-        console.log("登录码:", response.code);
-        // 输出：登录码: undefined
 
         // 检查响应是否成功
         if (response.code === 1) {
@@ -133,7 +121,6 @@ export const useAuthStore = defineStore("auth", {
             token,
             twoFactorEnabled: false,
           };
-          console.log("用户信息:", user);
 
           // 解析token获取过期时间
           const tokenPayload = tokenManager.parseJWTPayload(token);
@@ -314,30 +301,24 @@ export const useAuthStore = defineStore("auth", {
       try {
         // 使用token管理器检查token有效性
         if (!tokenManager.hasValidToken()) {
-          console.log("🔍 Token无效或不存在");
           this.clearAuth();
           return false;
         }
 
         // 检查token是否过期
         if (tokenManager.isTokenExpired()) {
-          console.log("🔍 Token已过期，尝试刷新...");
-
           // 尝试使用刷新token获取新的访问token
           const refreshToken = tokenManager.getRefreshToken();
           if (refreshToken) {
             try {
               await tokenManager.refreshToken();
-              console.log("🔄 Token刷新成功");
               // 更新store中的token
               this.token = tokenManager.getAccessToken();
             } catch (error) {
-              console.log("🔄 Token刷新失败，清除认证状态");
               this.clearAuth();
               return false;
             }
           } else {
-            console.log("🔍 没有刷新token，清除认证状态");
             this.clearAuth();
             return false;
           }
@@ -356,7 +337,6 @@ export const useAuthStore = defineStore("auth", {
               token: this.token,
               twoFactorEnabled: false,
             };
-            console.log("🔍 从本地存储恢复用户信息:", username);
           } else {
             // 尝试从API获取用户信息
             try {
@@ -379,10 +359,8 @@ export const useAuthStore = defineStore("auth", {
                 if (this.user.email) {
                   localStorage.setItem("email", this.user.email);
                 }
-                console.log("🔍 从API获取用户信息成功:", this.user.username);
               }
             } catch (error) {
-              console.error("🔍 获取用户信息失败:", error);
               this.clearAuth();
               return false;
             }
@@ -396,7 +374,6 @@ export const useAuthStore = defineStore("auth", {
 
         return false;
       } catch (error: any) {
-        console.error("🔍 认证状态检查失败:", error);
         this.clearAuth();
         return false;
       }
@@ -413,8 +390,6 @@ export const useAuthStore = defineStore("auth", {
       this.refreshToken = null;
       this.user = null;
       this.isAuthenticated = false;
-
-      console.log("🧹 认证信息已清除");
     },
 
     // 处理登录错误

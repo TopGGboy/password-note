@@ -201,9 +201,7 @@ export default defineComponent({
       return
     }
     
-    console.log('Dashboard加载完成')
-    console.log('当前用户:', this.username)
-    console.log('Token存在:', !!this.authStore.token)
+
     
     // 初始化调试信息
     this.refreshDebugInfo()
@@ -221,7 +219,6 @@ export default defineComponent({
         await this.authStore.logout()
         this.router.push('/login')
       } catch (error) {
-        console.error('退出登录失败:', error)
         // 即使API调用失败，也清除本地数据并跳转
         this.authStore.clearAuth()
         this.router.push('/login')
@@ -305,7 +302,6 @@ export default defineComponent({
         await navigator.clipboard.writeText(fullToken || text)
         alert('已复制到剪贴板')
       } catch (error) {
-        console.error('复制失败:', error)
         alert('复制失败')
       }
     },
@@ -313,12 +309,12 @@ export default defineComponent({
     // 测试 token 刷新
     async testTokenRefresh() {
       try {
-        console.log('🔄 开始测试 Token 刷新...')
+
         await tokenManager.refreshToken()
         alert('Token 刷新成功！')
         this.refreshDebugInfo()
       } catch (error: any) {
-        console.error('Token 刷新失败:', error)
+
         alert(`Token 刷新失败: ${error?.message || '未知错误'}`)
       }
     },

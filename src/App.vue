@@ -32,7 +32,14 @@ const checkMasterPasswordRequired = () => {
     currentPath.startsWith(path)      // 检查是否是受保护路由
   )
 
+  console.log('=== 主密码检查 ===')
+  console.log('当前路径:', currentPath)
+  console.log('是否受保护路由:', isProtectedRoute)
+  console.log('是否有会话密钥:', KeyManager.hasKey())
+  console.log('是否有主密码设置:', KeyManager.hasMasterPassword())
+
   if (isProtectedRoute && !KeyManager.hasKey()) {
+    console.log('需要显示主密码模态框')
     showMasterPasswordModal.value = true     // 显示主密码模态框
   }
 }
@@ -42,6 +49,12 @@ const handleMasterPasswordSuccess = () => {
   showMasterPasswordModal.value = false
   hasMasterPassword.value = true
   console.log('主密码验证成功')
+  
+  // 验证密钥是否正确设置
+  console.log('验证后是否有密钥:', KeyManager.hasKey())
+  
+  // 触发页面刷新以重新加载数据
+  window.location.reload()
 }
 
 // 处理主密码模态框关闭
@@ -64,6 +77,12 @@ onMounted(() => {
 
   // 检查当前路由是否需要主密码
   checkMasterPasswordRequired()
+
+  // 监听需要主密码的自定义事件
+  window.addEventListener('requireMasterPassword', (event: any) => {
+    console.log('收到需要主密码的事件:', event.detail)
+    showMasterPasswordModal.value = true
+  })
 })
 </script>
 

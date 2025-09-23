@@ -4,7 +4,8 @@ import axios, {
   AxiosResponse,
 } from "axios";
 import { HTTP_STATUS, API_ENDPOINTS } from "../constants/constants";
-import { authManager } from "./auth/authManager";
+import { useAuthStore } from "../store/auth";
+import { tokenManager } from "./auth/tokenManager";
 
 /**
  * 优化后的HTTP客户端
@@ -43,9 +44,6 @@ function isPublicEndpoint(url?: string): boolean {
 // 请求拦截器
 http.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    // 更新用户活动时间
-    authManager.updateActivity();
-
     // 添加安全头
     if (config.headers) {
       config.headers["X-Timestamp"] = Date.now().toString();
@@ -54,57 +52,65 @@ http.interceptors.request.use(
 
     // 为需要认证的接口添加token
     if (!isPublicEndpoint(config.url)) {
-      console.log("🚀 正在处理需要认证的请求:", config.url);
+      console.log('=== HTTP请求拦截器调试 ===')
+      console.log('请求URL:', config.url)
+      console.log('请求方法:', config.method)
+      
+      // 获取token
+      const token = tokenManager.getAccessToken();
+      console.log('获取到的token:', token ? `${token.substring(0, 20)}...` : 'null')
+      
+      // 检查token有效性
+      const hasValidToken = tokenManager.hasValidToken();
+      const isTokenExpired = tokenManager.isTokenExpired();
+      console.log('Token有效性:', hasValidToken)
+      console.log('Token是否过期:', isTokenExpired)
 
-      let authHeader = authManager.getAuthHeader();
-
-      // 打印当前认证状态
-      console.log("🔐 认证状态:", {
-        isAuthenticated: authManager.isAuthenticated(),
-        tokenExists: !!authHeader,
-        token: authHeader ? "存在" : "不存在",
-      });
-
-      // 如果有认证头且格式正确，直接使用
-      if (authHeader && config.headers) {
-        config.headers.Authorization = authHeader;
-        console.log("✅ 已添加 Authorization 头:", authHeader);
-      } else if (authManager.isAuthenticated()) {
-        // 有认证状态但没有有效token，可能需要刷新
-        console.warn("⚠️ 认证状态异常，尝试刷新token");
+      if (token && hasValidToken && !isTokenExpired && config.headers) {
+        // Token有效，直接使用
+        config.headers.Authorization = `Bearer ${token}`;
+        
+        // 添加额外的认证相关头部
+        config.headers['X-Auth-Token'] = token;
+        config.headers['X-User-ID'] = localStorage.getItem('userId') || '';
+        
+        console.log('✅ 已添加有效token到请求头')
+        console.log('Authorization头:', config.headers.Authorization)
+        console.log('X-Auth-Token头:', config.headers['X-Auth-Token'])
+        console.log('X-User-ID头:', config.headers['X-User-ID'])
+      } else if (token && hasValidToken && isTokenExpired) {
+        // Token过期，尝试刷新
+        console.log('⚠️ Token已过期，尝试刷新')
         try {
-          const refreshSuccess = await authManager.refreshToken();
-          if (refreshSuccess) {
-            authHeader = authManager.getAuthHeader();
-            if (authHeader && config.headers) {
-              config.headers.Authorization = authHeader;
-              console.log("🔄 成功刷新token并添加到请求头:", authHeader);
-            }
+          const newToken = await tokenManager.refreshToken();
+          if (newToken && config.headers) {
+            config.headers.Authorization = `Bearer ${newToken}`;
+            config.headers['X-Auth-Token'] = newToken;
+            config.headers['X-User-ID'] = localStorage.getItem('userId') || '';
+            console.log('✅ Token刷新成功，已添加新token到请求头')
+            console.log('新Authorization头:', config.headers.Authorization)
           } else {
-            console.error("❌ Token刷新失败，执行登出");
-            authManager.logout("Token刷新失败");
-            return Promise.reject(new Error("Authentication failed"));
+            console.log('❌ Token刷新失败')
+            tokenManager.clearTokens();
+            return Promise.reject(new Error("Token refresh failed"));
           }
         } catch (error) {
-          console.error('❌ 请求前token刷新失败:', error)
-          authManager.logout('Token刷新异常')
-          return Promise.reject(new Error('Authentication failed'))
+          console.log('❌ Token刷新异常:', error)
+          tokenManager.clearTokens();
+          return Promise.reject(new Error('Token refresh error'))
         }
+      } else {
+        console.log('❌ 没有有效token，无法添加认证头')
+        // 对于需要认证的接口，如果没有token，直接拒绝请求
+        return Promise.reject(new Error("No valid token available"));
       }
+      
+      console.log('最终请求头Authorization:', config.headers?.Authorization)
     }
-
-    // 打印最终的请求配置
-    console.log('📤 最终请求配置:', {
-      url: config.url,
-      method: config.method,
-      headers: config.headers,
-      data: config.data ? '存在数据' : '无数据'
-    })
 
     return config;
   },
   (error) => {
-    console.error("❌ 请求配置错误:", error);
     return Promise.reject(error);
   }
 );
@@ -118,8 +124,8 @@ http.interceptors.response.use(
     const expiresIn = response.headers["x-token-expires-in"];
 
     if (newToken) {
-      console.log("🔄 收到服务器下发的新token");
-      authManager.login(
+      console.log('🔄 收到新token，更新存储')
+      tokenManager.setTokens(
         newToken,
         newRefreshToken,
         expiresIn ? parseInt(expiresIn) : undefined
@@ -131,42 +137,35 @@ http.interceptors.response.use(
   async (error) => {
     const { response, config } = error;
 
+    console.log('=== HTTP响应拦截器错误处理 ===')
+    console.log('请求URL:', config?.url)
+    console.log('响应状态:', response?.status)
+    console.log('错误信息:', error.message)
+
     if (!response) {
-      // 网络错误
-      if (error.code === "NETWORK_ERROR" || error.message === "Network Error") {
-        console.error("🌐 网络连接失败，请检查网络设置");
-      } else if (error.code === "ECONNABORTED") {
-        console.error("⏰ 请求超时，请稍后重试");
-      } else {
-        console.error("❌ 请求异常:", error.message);
-      }
+      console.log('❌ 没有响应对象，可能是网络错误')
       return Promise.reject(error);
     }
 
     // 处理HTTP错误状态码
     switch (response.status) {
       case HTTP_STATUS.UNAUTHORIZED:
+        console.log('🔒 收到401未授权错误，开始处理')
         await handleUnauthorizedError(config, error);
         break;
 
       case HTTP_STATUS.FORBIDDEN:
-        console.error("🚫 访问被拒绝 - 权限不足");
-        authManager.handleAuthError(error, "权限不足");
+        console.log('🚫 收到403权限不足错误')
+        // 权限不足，清除认证信息
+        tokenManager.clearTokens();
         break;
 
       case HTTP_STATUS.TOO_MANY_REQUESTS:
-        console.error("⏰ 请求过于频繁，请稍后重试");
-        break;
-
       case HTTP_STATUS.INTERNAL_SERVER_ERROR:
-        console.error("💥 服务器内部错误");
-        break;
-
       default:
-        console.error(
-          "❌ 请求失败:",
-          response.data?.msg || response.data?.message || "未知错误"
-        );
+        console.log('⚠️ 收到其他HTTP错误:', response.status)
+        // 统一错误处理，不打印日志
+        break;
     }
 
     return Promise.reject(error);
@@ -177,48 +176,48 @@ http.interceptors.response.use(
  * 处理401未授权错误
  */
 async function handleUnauthorizedError(config: any, error: any): Promise<any> {
-  console.log("🔒 收到401未授权响应，URL:", config.url);
-
-  // 如果是刷新token的请求失败，直接登出
+  console.log('=== 处理401未授权错误 ===')
+  console.log('请求URL:', config.url)
+  console.log('重试次数:', config._retryCount || 0)
+  
+  // 如果是刷新token的请求失败，直接清除token
   if (config.url?.includes("/refresh")) {
-    console.log("🧹 刷新token请求失败，执行登出");
-    authManager.handleAuthError(error, "Token刷新失败");
+    console.log('❌ 刷新token请求失败，清除所有token')
+    tokenManager.clearTokens();
     return Promise.reject(error);
   }
 
   // 如果是公开接口返回401，直接抛出错误
   if (isPublicEndpoint(config.url)) {
-    console.log("🔒 公开接口返回401，可能是凭据错误");
+    console.log('❌ 公开接口返回401，直接抛出错误')
     return Promise.reject(error);
   }
 
   // 检查是否已经在刷新token，避免重复刷新
   if (config._retryCount && config._retryCount >= 1) {
-    console.log("🚫 请求已重试过，避免无限循环");
-    authManager.handleAuthError(error, "重试次数超限");
+    console.log('❌ 重试次数超限，停止重试')
+    tokenManager.clearTokens();
     return Promise.reject(error);
   }
 
   // 尝试刷新token并重试请求
   try {
-    console.log("🔄 尝试刷新token后重试请求:", config.url);
-    const refreshSuccess = await authManager.refreshToken();
+    console.log('🔄 尝试刷新token并重试请求')
+    const newToken = await tokenManager.refreshToken();
 
-    if (refreshSuccess) {
+    if (newToken && config.headers) {
       // 更新请求头中的token
-      const newAuthHeader = authManager.getAuthHeader();
-      if (newAuthHeader && config.headers) {
-        config.headers.Authorization = newAuthHeader;
-        config._retryCount = (config._retryCount || 0) + 1;
-        console.log("🔄 使用新token重试请求");
-        return http.request(config);
-      }
+      config.headers.Authorization = `Bearer ${newToken}`;
+      config._retryCount = (config._retryCount || 0) + 1;
+      console.log('✅ Token刷新成功，重新发送请求，重试次数:', config._retryCount)
+      return http.request(config);
     }
 
-    throw new Error("Token刷新后仍无有效认证信息");
+    console.log('❌ Token刷新失败')
+    throw new Error("Token刷新失败");
   } catch (refreshError) {
-    console.error("🔄 Token刷新失败:", refreshError);
-    authManager.handleAuthError(error, "Token刷新重试失败");
+    console.log('❌ Token刷新重试失败:', refreshError)
+    tokenManager.clearTokens();
     return Promise.reject(error);
   }
 }
