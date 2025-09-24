@@ -18,6 +18,8 @@ export const API_ENDPOINTS = {
     BASE: "/api/password-entries",
     PAGE: "/api/password-entries/page",
     DELETE: "/api/password-entries/:id",
+    PUT: "/api/password-entries/:id",
+    
 
 
     SEARCH: "/api/password-entries/search",

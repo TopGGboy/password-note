@@ -105,12 +105,12 @@ export function usePasswordEntries() {
       return;
     }
 
-        // 检查是否有加密密钥
+    // 检查是否有加密密钥
     if (!KeyManager.hasKey()) {
-      console.warn('未找到加密密钥，请先输入主密码');
-      error.value = '未找到加密密钥，请先输入主密码';
+      console.warn("未找到加密密钥，请先输入主密码");
+      error.value = "未找到加密密钥，请先输入主密码";
       // 触发主密码输入事件
-      window.dispatchEvent(new CustomEvent('requireMasterPassword'));
+      window.dispatchEvent(new CustomEvent("requireMasterPassword"));
       return;
     }
 
@@ -233,7 +233,7 @@ export function usePasswordEntries() {
   const updateEntry = async (
     id: number,
     data: Partial<CreatePasswordEntryRequest>
-  ): Promise<PasswordEntry> => {
+  ): Promise<void> => {
     loading.value = true;
     error.value = null;
 
@@ -246,7 +246,6 @@ export function usePasswordEntries() {
         // 刷新列表
         await fetchEntries(true);
         console.log("密码条目更新成功:", response.data);
-        return response.data;
       } else {
         throw new Error(response.msg || "更新密码条目失败");
       }

@@ -140,18 +140,22 @@ export const passwordEntriesAPI = {
     return http.delete(`${API_ENDPOINTS.PASSWORDENTRIES.BASE}/${id}`);
   },
 
-  // 获取单个密码条目
-  getById: (id: number): Promise<ApiResponse<PasswordEntry>> => {
-    return http.get(`${API_ENDPOINTS.PASSWORDENTRIES.BASE}/${id}`);
-  },
-
-  // 更新密码条目
+    // 更新密码条目
   update: (
     id: number,
     data: Partial<CreatePasswordEntryRequest>
   ): Promise<ApiResponse<PasswordEntry>> => {
     return http.put(`${API_ENDPOINTS.PASSWORDENTRIES.BASE}/${id}`, data);
   },
+
+
+
+
+  // 获取单个密码条目
+  getById: (id: number): Promise<ApiResponse<PasswordEntry>> => {
+    return http.get(`${API_ENDPOINTS.PASSWORDENTRIES.BASE}/${id}`);
+  },
+
 
   // 切换收藏状态
   toggleFavorite: (id: number): Promise<ApiResponse<PasswordEntry>> => {

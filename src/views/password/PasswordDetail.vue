@@ -99,7 +99,7 @@
     <!-- 编辑模态框 -->
     <EditPasswordModal
       v-if="showEditModal"
-      :password="password"
+      :entry="password"
       @close="showEditModal = false"
       @success="handlePasswordUpdated"
     />
@@ -117,7 +117,6 @@ import type { DecryptedPasswordEntry } from '../../composables/usePasswordEntrie
 
 // 使用与 Passwords.vue 相同的类型定义
 type PasswordItem = DecryptedPasswordEntry & {
-  id: string
   category: string
 }
 
@@ -196,32 +195,18 @@ const loadPassword = async () => {
       
       // 构造符合 PasswordItem 类型的对象
       password.value = {
-        id: entry.id.toString(),
-        userId: entry.userId,
-        categoryId: entry.categoryId,
-        title: entry.title,
-        url: entry.url || '',
+        ...entry,
         username: decryptedData.username,
         password: decryptedData.password,
         notes: decryptedData.notes,
         category: '其他', // 这里需要根据 categoryId 获取分类名称
-        usernameEncrypted: entry.usernameEncrypted,
-        passwordEncrypted: entry.passwordEncrypted,
-        notesEncrypted: entry.notesEncrypted,
-        customFields: entry.customFields,
-        strengthScore: entry.strengthScore,
-        favorite: entry.favorite,
-        timesUsed: entry.timesUsed,
-        lastUsed: entry.lastUsed,
-        createdAt: entry.createdAt,
-        updatedAt: entry.updatedAt,
         icon: '🔐',
         tags: []
-      }
+      } as PasswordItem
     } else {
       throw new Error(response.msg || '获取密码详情失败')
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('加载密码详情失败:', error)
     
     // 检查是否是认证相关的错误
@@ -268,7 +253,7 @@ const copyToClipboard = async (text: string) => {
   }
 }
 
-const formatDate = (date: Date): string => {
+const formatDate = (date: string | Date): string => {
   return new Intl.DateTimeFormat('zh-CN', {
     year: 'numeric',
     month: 'long',

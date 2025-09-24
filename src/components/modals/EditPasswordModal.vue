@@ -110,6 +110,9 @@
 <script lang="ts">
 import { defineComponent, PropType } from 'vue'
 import type { DecryptedPasswordEntry } from '../../composables/usePasswordEntries'
+import { DataEncryptionService, KeyManager } from '../../utils/encryption/crypto'
+import { passwordEntriesAPI } from '../../services/api'
+import type { CreatePasswordEntryRequest } from '../../types/api'
 
 export default defineComponent({
   name: 'EditPasswordModal',
@@ -171,18 +174,54 @@ export default defineComponent({
     async handleSubmit() {
       this.loading = true
       try {
-        // 这里应该调用实际的API来保存密码
-        console.log(this.isEdit ? '更新密码:' : '添加密码:', this.form)
-        
-        // 触发成功事件，让父组件处理实际的保存逻辑
-        this.$emit('success', {
-          ...this.form,
-          id: this.entry?.id || undefined
+        // 检查是否有加密密钥
+        if (!KeyManager.hasKey()) {
+          alert('未找到加密密钥，请先输入主密码')
+          this.$emit('close')
+          return
+        }
+
+        // 加密敏感数据
+        const encryptedData = DataEncryptionService.encryptPasswordEntry({
+          username: this.form.username || '',
+          password: this.form.password || '',
+          notes: this.form.notes || '',
+          customFields: []
         })
+
+        // 准备请求数据
+        const requestData: Partial<CreatePasswordEntryRequest> = {
+          title: this.form.title,
+          url: this.form.url || undefined,
+          usernameEncrypted: encryptedData.usernameEncrypted,
+          passwordEncrypted: encryptedData.passwordEncrypted,
+          notesEncrypted: encryptedData.notesEncrypted,
+          categoryId: this.form.categoryId || undefined,
+          customFields: {}
+        }
+
+        let result
+        if (this.isEdit && this.entry?.id) {
+          // 更新现有密码条目
+          console.log('更新密码条目，ID:', this.entry.id)
+          result = await passwordEntriesAPI.update(this.entry.id, requestData)
+        } else {
+          // 创建新密码条目
+          console.log('创建新密码条目')
+          result = await passwordEntriesAPI.create(requestData as CreatePasswordEntryRequest)
+        }
+
+        if (result.code === 1) {
+          console.log(this.isEdit ? '密码条目更新成功' : '密码条目创建成功')
+          this.$emit('success', result.data)
+          this.$emit('close')
+        } else {
+          throw new Error(result.msg || '操作失败')
+        }
         
-      } catch (error) {
+      } catch (error: any) {
         console.error('保存失败:', error)
-        alert('保存失败，请重试')
+        alert(error.message || '保存失败，请重试')
       } finally {
         this.loading = false
       }
