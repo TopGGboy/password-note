@@ -4,12 +4,21 @@
     <div class="page-header">
       <div class="header-content">
         <div class="header-left">
-          <h1>安全中心</h1>
-          <p>检查和提升您的密码安全性</p>
+          <div class="header-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <div class="header-text">
+            <h1>安全中心</h1>
+            <p>全面检查和提升您的密码安全性</p>
+          </div>
         </div>
         <div class="header-actions">
           <button @click="runSecurityCheck" class="check-btn" :disabled="isChecking">
-            <span class="btn-icon">🛡️</span>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
             {{ isChecking ? '检查中...' : '安全检查' }}
           </button>
         </div>
@@ -37,7 +46,13 @@
 
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="stat-icon">🔐</div>
+          <div class="stat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <circle cx="12" cy="16" r="1"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
           <div class="stat-content">
             <div class="stat-number">{{ securityStats.totalPasswords }}</div>
             <div class="stat-label">总密码数</div>
@@ -45,7 +60,13 @@
         </div>
 
         <div class="stat-card weak">
-          <div class="stat-icon">⚠️</div>
+          <div class="stat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
           <div class="stat-content">
             <div class="stat-number">{{ securityStats.weakPasswords }}</div>
             <div class="stat-label">弱密码</div>
@@ -53,7 +74,12 @@
         </div>
 
         <div class="stat-card duplicate">
-          <div class="stat-icon">🔄</div>
+          <div class="stat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </div>
           <div class="stat-content">
             <div class="stat-number">{{ securityStats.duplicatePasswords }}</div>
             <div class="stat-label">重复密码</div>
@@ -61,7 +87,12 @@
         </div>
 
         <div class="stat-card expiring">
-          <div class="stat-icon">⏰</div>
+          <div class="stat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12,6 12,12 16,14"/>
+            </svg>
+          </div>
           <div class="stat-content">
             <div class="stat-number">{{ securityStats.expiringPasswords }}</div>
             <div class="stat-label">即将过期</div>
@@ -72,10 +103,18 @@
 
     <!-- 安全问题列表 -->
     <div class="security-issues">
-      <h2>安全问题</h2>
+      <div class="section-header">
+        <h2>安全问题</h2>
+        <span v-if="securityIssues.length > 0" class="issue-count">{{ securityIssues.length }} 个问题</span>
+      </div>
       
       <div v-if="securityIssues.length === 0" class="no-issues">
-        <div class="no-issues-icon">✅</div>
+        <div class="no-issues-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22,4 12,14.01 9,11.01"/>
+          </svg>
+        </div>
         <h3>太棒了！没有发现安全问题</h3>
         <p>您的密码安全性良好，继续保持！</p>
       </div>
@@ -89,7 +128,26 @@
         >
           <div class="issue-header">
             <div class="issue-info">
-              <span class="issue-icon">{{ getIssueIcon(issue.type) }}</span>
+              <div class="issue-icon">
+                <svg v-if="issue.type === 'weak'" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <svg v-else-if="issue.type === 'duplicate'" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+                <svg v-else-if="issue.type === 'expiring'" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12,6 12,12 16,14"/>
+                </svg>
+                <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="15" y1="9" x2="9" y2="15"/>
+                  <line x1="9" y1="9" x2="15" y2="15"/>
+                </svg>
+              </div>
               <div class="issue-details">
                 <h4>{{ issue.title }}</h4>
                 <p>{{ issue.description }}</p>
@@ -98,6 +156,9 @@
             <div class="issue-actions">
               <span class="issue-count">{{ issue.count }} 个</span>
               <button @click="fixIssue(issue)" class="fix-btn">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M20 6L9 17l-5-5"/>
+                </svg>
                 修复
               </button>
             </div>
@@ -110,10 +171,18 @@
               :key="password.id"
               class="affected-password"
             >
-              <span class="password-icon">{{ password.icon }}</span>
-              <span class="password-title">{{ password.title }}</span>
-              <span class="password-username">{{ password.username }}</span>
+              <div class="password-info">
+                <span class="password-icon">{{ password.icon }}</span>
+                <div class="password-details">
+                  <span class="password-title">{{ password.title }}</span>
+                  <span class="password-username">{{ password.username }}</span>
+                </div>
+              </div>
               <button @click="fixPassword(password)" class="fix-password-btn">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
                 修复
               </button>
             </div>
@@ -124,6 +193,9 @@
             @click="toggleIssueExpansion(issue)"
             class="toggle-btn"
           >
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <polyline :points="issue.expanded ? '18,15 12,9 6,15' : '6,9 12,15 18,9'"/>
+            </svg>
             {{ issue.expanded ? '收起' : '查看详情' }}
           </button>
         </div>
@@ -132,40 +204,81 @@
 
     <!-- 安全建议 -->
     <div class="security-recommendations">
-      <h2>安全建议</h2>
+      <div class="section-header">
+        <h2>安全建议</h2>
+        <p>提升密码安全性的最佳实践</p>
+      </div>
       <div class="recommendations-grid">
         <div class="recommendation-card">
-          <div class="recommendation-icon">🔒</div>
+          <div class="recommendation-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <circle cx="12" cy="16" r="1"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
           <h3>使用强密码</h3>
           <p>密码应包含大小写字母、数字和特殊字符，长度至少12位</p>
           <button @click="generateStrongPassword" class="recommendation-btn">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M12 20h9"/>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
             生成强密码
           </button>
         </div>
 
         <div class="recommendation-card">
-          <div class="recommendation-icon">🔄</div>
+          <div class="recommendation-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M23 12a11.05 11.05 0 0 0-22 0zm-5 7a3 3 0 0 1-6 0v-7h6v7z"/>
+            </svg>
+          </div>
           <h3>定期更新密码</h3>
           <p>建议每3-6个月更新一次重要账户的密码</p>
           <button @click="showPasswordsToUpdate" class="recommendation-btn">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M1 4v6h6"/>
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+            </svg>
             查看需更新
           </button>
         </div>
 
         <div class="recommendation-card">
-          <div class="recommendation-icon">🛡️</div>
+          <div class="recommendation-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
           <h3>启用双因素认证</h3>
           <p>为重要账户启用双因素认证，提供额外的安全保护</p>
           <button @click="learn2FA" class="recommendation-btn">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              <polyline points="15,3 21,3 21,9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
             了解更多
           </button>
         </div>
 
         <div class="recommendation-card">
-          <div class="recommendation-icon">📱</div>
+          <div class="recommendation-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          </div>
           <h3>使用密码管理器</h3>
           <p>使用专业的密码管理器来生成和存储复杂密码</p>
           <button @click="learnPasswordManager" class="recommendation-btn">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              <polyline points="15,3 21,3 21,9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
             了解更多
           </button>
         </div>
@@ -174,15 +287,26 @@
 
     <!-- 安全设置 -->
     <div class="security-settings">
-      <h2>安全设置</h2>
+      <div class="section-header">
+        <h2>安全设置</h2>
+        <p>配置应用的安全选项</p>
+      </div>
       <div class="settings-list">
         <div class="setting-item">
           <div class="setting-info">
-            <h4>自动锁定</h4>
-            <p>在指定时间后自动锁定应用</p>
+            <div class="setting-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"/>
+              </svg>
+            </div>
+            <div class="setting-text">
+              <h4>自动锁定</h4>
+              <p>在指定时间后自动锁定应用</p>
+            </div>
           </div>
           <div class="setting-control">
-            <select v-model="settings.autoLockTime" @change="updateSettings">
+            <select v-model="settings.autoLockTime" @change="updateSettings" class="select-input">
               <option value="0">从不</option>
               <option value="5">5分钟</option>
               <option value="15">15分钟</option>
@@ -194,8 +318,18 @@
 
         <div class="setting-item">
           <div class="setting-info">
-            <h4>密码强度检查</h4>
-            <p>自动检查新密码的强度</p>
+            <div class="setting-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M9 12l2 2 4-4"/>
+                <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
+                <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
+                <path d="M13 12h1"/>
+              </svg>
+            </div>
+            <div class="setting-text">
+              <h4>密码强度检查</h4>
+              <p>自动检查新密码的强度</p>
+            </div>
           </div>
           <div class="setting-control">
             <label class="toggle-switch">
@@ -211,8 +345,17 @@
 
         <div class="setting-item">
           <div class="setting-info">
-            <h4>重复密码警告</h4>
-            <p>检测并警告重复使用的密码</p>
+            <div class="setting-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </div>
+            <div class="setting-text">
+              <h4>重复密码警告</h4>
+              <p>检测并警告重复使用的密码</p>
+            </div>
           </div>
           <div class="setting-control">
             <label class="toggle-switch">
@@ -228,11 +371,19 @@
 
         <div class="setting-item">
           <div class="setting-info">
-            <h4>密码过期提醒</h4>
-            <p>提醒更新长时间未更改的密码</p>
+            <div class="setting-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12,6 12,12 16,14"/>
+              </svg>
+            </div>
+            <div class="setting-text">
+              <h4>密码过期提醒</h4>
+              <p>提醒更新长时间未更改的密码</p>
+            </div>
           </div>
           <div class="setting-control">
-            <select v-model="settings.passwordExpiryReminder" @change="updateSettings">
+            <select v-model="settings.passwordExpiryReminder" @change="updateSettings" class="select-input">
               <option value="0">关闭</option>
               <option value="90">90天</option>
               <option value="180">180天</option>
@@ -417,17 +568,6 @@ export default defineComponent({
       }
     },
 
-    // 获取问题图标
-    getIssueIcon(type: string): string {
-      switch (type) {
-        case 'weak': return '⚠️'
-        case 'duplicate': return '🔄'
-        case 'expiring': return '⏰'
-        case 'breach': return '🚨'
-        default: return '❓'
-      }
-    },
-
     // 修复问题
     fixIssue(issue: SecurityIssue) {
       console.log('修复问题:', issue.title)
@@ -477,53 +617,86 @@ export default defineComponent({
 <style scoped>
 .security-container {
   min-height: 100vh;
-  background: #f8fafc;
-  padding: 24px;
+  background: var(--bg-secondary);
+  padding: var(--spacing-6);
 }
 
+.icon {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2;
+}
+
+/* 页面头部 */
 .page-header {
-  background: white;
-  border-radius: 16px;
-  padding: 32px;
-  margin-bottom: 24px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-8);
+  margin-bottom: var(--spacing-6);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
 }
 
 .header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--spacing-6);
 }
 
-.header-left h1 {
-  font-size: 32px;
-  font-weight: 700;
-  color: #1a202c;
-  margin: 0 0 8px 0;
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
 }
 
-.header-left p {
-  color: #718096;
+.header-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.header-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.header-text h1 {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-1) 0;
+}
+
+.header-text p {
+  color: var(--text-secondary);
   margin: 0;
-  font-size: 16px;
+  font-size: var(--text-base);
 }
 
 .check-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  background: #3182ce;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3) var(--spacing-6);
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
   color: white;
   border: none;
-  border-radius: 8px;
-  font-weight: 500;
+  border-radius: var(--radius-lg);
+  font-weight: var(--font-semibold);
   cursor: pointer;
   transition: all 0.2s;
+  box-shadow: var(--shadow-sm);
 }
 
 .check-btn:hover:not(:disabled) {
-  background: #2c5282;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .check-btn:disabled {
@@ -531,391 +704,550 @@ export default defineComponent({
   cursor: not-allowed;
 }
 
+/* 安全概览 */
 .security-overview {
   display: grid;
   grid-template-columns: 1fr 2fr;
-  gap: 24px;
-  margin-bottom: 32px;
+  gap: var(--spacing-6);
+  margin-bottom: var(--spacing-8);
 }
 
 .overview-card {
-  background: white;
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-8);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: var(--spacing-5);
 }
 
 .card-header h3 {
-  font-size: 20px;
-  font-weight: 600;
-  color: #2d3748;
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
   margin: 0;
 }
 
 .security-score {
-  font-size: 36px;
-  font-weight: 700;
+  font-size: var(--text-4xl);
+  font-weight: var(--font-bold);
 }
 
-.security-score.excellent { color: #38a169; }
-.security-score.good { color: #3182ce; }
-.security-score.fair { color: #d69e2e; }
-.security-score.poor { color: #e53e3e; }
+.security-score.excellent { color: var(--success-500); }
+.security-score.good { color: var(--primary-500); }
+.security-score.fair { color: var(--warning-500); }
+.security-score.poor { color: var(--danger-500); }
 
 .score-bar {
   height: 8px;
-  background: #e2e8f0;
-  border-radius: 4px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-full);
   overflow: hidden;
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-4);
 }
 
 .score-fill {
   height: 100%;
   transition: width 0.5s ease;
+  border-radius: var(--radius-full);
 }
 
-.score-fill.excellent { background: #38a169; }
-.score-fill.good { background: #3182ce; }
-.score-fill.fair { background: #d69e2e; }
-.score-fill.poor { background: #e53e3e; }
+.score-fill.excellent { background: var(--success-500); }
+.score-fill.good { background: var(--primary-500); }
+.score-fill.fair { background: var(--warning-500); }
+.score-fill.poor { background: var(--danger-500); }
 
 .score-description {
-  color: #718096;
+  color: var(--text-secondary);
   margin: 0;
-  font-size: 14px;
+  font-size: var(--text-sm);
+  line-height: 1.5;
 }
 
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  gap: var(--spacing-4);
 }
 
 .stat-card {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-5);
   display: flex;
   align-items: center;
-  gap: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  gap: var(--spacing-4);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s;
 }
 
-.stat-card.weak { border-left: 4px solid #e53e3e; }
-.stat-card.duplicate { border-left: 4px solid #d69e2e; }
-.stat-card.expiring { border-left: 4px solid #dd6b20; }
+.stat-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-card.weak { border-left: 4px solid var(--danger-500); }
+.stat-card.duplicate { border-left: 4px solid var(--warning-500); }
+.stat-card.expiring { border-left: 4px solid var(--warning-600); }
 
 .stat-icon {
-  font-size: 24px;
+  width: 40px;
+  height: 40px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.stat-icon svg {
+  width: 20px;
+  height: 20px;
 }
 
 .stat-number {
-  font-size: 24px;
-  font-weight: 700;
-  color: #2d3748;
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  display: block;
 }
 
 .stat-label {
-  font-size: 14px;
-  color: #718096;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
 }
 
+/* 通用部分样式 */
+.section-header {
+  margin-bottom: var(--spacing-6);
+}
+
+.section-header h2 {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-1) 0;
+}
+
+.section-header p {
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: var(--text-base);
+}
+
+.issue-count {
+  background: var(--danger-100);
+  color: var(--danger-700);
+  padding: var(--spacing-1) var(--spacing-3);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+}
+
+/* 安全问题 */
 .security-issues {
-  background: white;
-  border-radius: 16px;
-  padding: 32px;
-  margin-bottom: 32px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-8);
+  margin-bottom: var(--spacing-8);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
 }
 
-.security-issues h2 {
-  font-size: 24px;
-  font-weight: 600;
-  color: #2d3748;
-  margin: 0 0 24px 0;
+.security-issues .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .no-issues {
   text-align: center;
-  padding: 40px;
-  color: #718096;
+  padding: var(--spacing-12);
+  color: var(--text-secondary);
 }
 
 .no-issues-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto var(--spacing-6);
+  color: var(--success-500);
+}
+
+.no-issues-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .no-issues h3 {
-  color: #2d3748;
-  margin: 0 0 8px 0;
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-2) 0;
+  font-size: var(--text-xl);
 }
 
 .no-issues p {
   margin: 0;
+  line-height: 1.6;
 }
 
 .issues-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--spacing-4);
 }
 
 .issue-item {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 20px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-5);
   transition: all 0.2s;
 }
 
-.issue-item.high { border-left: 4px solid #e53e3e; }
-.issue-item.medium { border-left: 4px solid #d69e2e; }
-.issue-item.low { border-left: 4px solid #dd6b20; }
+.issue-item:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.issue-item.high { border-left: 4px solid var(--danger-500); }
+.issue-item.medium { border-left: 4px solid var(--warning-500); }
+.issue-item.low { border-left: 4px solid var(--warning-600); }
 
 .issue-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-4);
 }
 
 .issue-info {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--spacing-4);
   flex: 1;
 }
 
 .issue-icon {
-  font-size: 24px;
+  width: 40px;
+  height: 40px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.issue-icon svg {
+  width: 20px;
+  height: 20px;
 }
 
 .issue-details h4 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #2d3748;
-  margin: 0 0 4px 0;
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-1) 0;
 }
 
 .issue-details p {
-  font-size: 14px;
-  color: #718096;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
   margin: 0;
+  line-height: 1.4;
 }
 
 .issue-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--spacing-4);
 }
 
-.issue-count {
-  font-size: 14px;
-  color: #718096;
-  font-weight: 500;
+.issue-actions .issue-count {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-weight: var(--font-medium);
+  background: var(--bg-secondary);
+  padding: var(--spacing-1) var(--spacing-3);
+  border-radius: var(--radius-full);
 }
 
 .fix-btn {
-  background: #3182ce;
+  background: var(--primary-500);
   color: white;
   border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
+  padding: var(--spacing-2) var(--spacing-4);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: background-color 0.2s;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
 }
 
 .fix-btn:hover {
-  background: #2c5282;
+  background: var(--primary-600);
+  transform: translateY(-1px);
 }
 
 .affected-passwords {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-  padding: 16px;
-  background: #f7fafc;
-  border-radius: 8px;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-4);
+  padding: var(--spacing-4);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
 }
 
 .affected-password {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px;
-  background: white;
-  border-radius: 6px;
+  justify-content: space-between;
+  padding: var(--spacing-3);
+  background: var(--bg-primary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.password-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
 }
 
 .password-icon {
-  font-size: 16px;
+  font-size: var(--text-base);
+}
+
+.password-details {
+  display: flex;
+  flex-direction: column;
 }
 
 .password-title {
-  font-weight: 500;
-  color: #2d3748;
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
 }
 
 .password-username {
-  color: #718096;
-  font-size: 14px;
-  flex: 1;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
 }
 
 .fix-password-btn {
-  background: #f7fafc;
-  color: #4a5568;
-  border: 1px solid #e2e8f0;
-  padding: 4px 8px;
-  border-radius: 4px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--text-xs);
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
 }
 
 .fix-password-btn:hover {
-  background: #edf2f7;
-  border-color: #cbd5e0;
+  background: var(--bg-tertiary);
+  border-color: var(--border-hover);
 }
 
 .toggle-btn {
   background: none;
   border: none;
-  color: #3182ce;
+  color: var(--primary-500);
   cursor: pointer;
-  font-size: 14px;
-  text-decoration: underline;
+  font-size: var(--text-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2);
+  border-radius: var(--radius-md);
+  transition: all 0.2s;
 }
 
+.toggle-btn:hover {
+  background: var(--primary-50);
+}
+
+/* 安全建议 */
 .security-recommendations {
-  background: white;
-  border-radius: 16px;
-  padding: 32px;
-  margin-bottom: 32px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-}
-
-.security-recommendations h2 {
-  font-size: 24px;
-  font-weight: 600;
-  color: #2d3748;
-  margin: 0 0 24px 0;
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-8);
+  margin-bottom: var(--spacing-8);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
 }
 
 .recommendations-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
+  gap: var(--spacing-5);
 }
 
 .recommendation-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 24px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
   text-align: center;
   transition: all 0.2s;
 }
 
 .recommendation-card:hover {
-  border-color: #cbd5e0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 .recommendation-icon {
-  font-size: 32px;
-  margin-bottom: 16px;
+  width: 48px;
+  height: 48px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--spacing-4);
+  color: var(--primary-500);
+}
+
+.recommendation-icon svg {
+  width: 24px;
+  height: 24px;
 }
 
 .recommendation-card h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #2d3748;
-  margin: 0 0 12px 0;
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-3) 0;
 }
 
 .recommendation-card p {
-  font-size: 14px;
-  color: #718096;
-  margin: 0 0 20px 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin: 0 0 var(--spacing-5) 0;
   line-height: 1.5;
 }
 
 .recommendation-btn {
-  background: #f7fafc;
-  color: #4a5568;
-  border: 1px solid #e2e8f0;
-  padding: 8px 16px;
-  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  padding: var(--spacing-2) var(--spacing-4);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
   transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
 }
 
 .recommendation-btn:hover {
-  background: #edf2f7;
-  border-color: #cbd5e0;
+  background: var(--bg-tertiary);
+  border-color: var(--border-hover);
 }
 
+/* 安全设置 */
 .security-settings {
-  background: white;
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-}
-
-.security-settings h2 {
-  font-size: 24px;
-  font-weight: 600;
-  color: #2d3748;
-  margin: 0 0 24px 0;
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-8);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
 }
 
 .settings-list {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--spacing-4);
 }
 
 .setting-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  padding: var(--spacing-5);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  transition: all 0.2s;
 }
 
-.setting-info h4 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #2d3748;
-  margin: 0 0 4px 0;
+.setting-item:hover {
+  border-color: var(--border-hover);
+  background: var(--bg-secondary);
 }
 
-.setting-info p {
-  font-size: 14px;
-  color: #718096;
+.setting-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  flex: 1;
+}
+
+.setting-icon {
+  width: 40px;
+  height: 40px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.setting-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.setting-text h4 {
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-1) 0;
+}
+
+.setting-text p {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
   margin: 0;
+  line-height: 1.4;
 }
 
-.setting-control select {
-  padding: 8px 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  background: white;
+.setting-control {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+}
+
+.select-input {
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
   cursor: pointer;
+  min-width: 120px;
+  font-size: var(--text-sm);
+}
+
+.select-input:focus {
+  outline: none;
+  border-color: var(--primary-500);
 }
 
 .toggle-switch {
@@ -938,7 +1270,7 @@ export default defineComponent({
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #cbd5e0;
+  background-color: var(--bg-tertiary);
   transition: 0.4s;
   border-radius: 24px;
 }
@@ -956,21 +1288,22 @@ export default defineComponent({
 }
 
 input:checked + .toggle-slider {
-  background-color: #3182ce;
+  background-color: var(--primary-500);
 }
 
 input:checked + .toggle-slider:before {
   transform: translateX(26px);
 }
 
+/* 响应式设计 */
 @media (max-width: 768px) {
   .security-container {
-    padding: 16px;
+    padding: var(--spacing-4);
   }
   
   .header-content {
     flex-direction: column;
-    gap: 20px;
+    gap: var(--spacing-4);
     align-items: flex-start;
   }
   
@@ -989,7 +1322,12 @@ input:checked + .toggle-slider:before {
   .setting-item {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: var(--spacing-3);
+  }
+  
+  .setting-control {
+    width: 100%;
+    justify-content: flex-end;
   }
 }
 </style>

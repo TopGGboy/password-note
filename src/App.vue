@@ -1,6 +1,10 @@
 <template>
   <div id="app">
-    <router-view />
+    <!-- 根据路由决定是否使用布局 -->
+    <AppLayout v-if="shouldUseLayout">
+      <router-view />
+    </AppLayout>
+    <router-view v-else />
 
     <!-- 开发环境安全状态监控 -->
     <SecurityStatus />
@@ -12,8 +16,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import AppLayout from './components/common/AppLayout.vue'
 import SecurityStatus from './components/security/SecurityStatus.vue'
 import MasterPasswordModal from './components/modals/MasterPasswordModal.vue'
 import { KeyManager } from './utils/encryption/crypto'
@@ -24,6 +29,14 @@ const hasMasterPassword = ref(false)
 
 // 需要主密码的路由
 const protectedRoutes = ['/passwords', '/password-detail']
+
+// 不需要布局的路由（登录、注册等）
+const noLayoutRoutes = ['/login', '/register', '/reset-password']
+
+// 计算是否应该使用布局
+const shouldUseLayout = computed(() => {
+  return !noLayoutRoutes.includes(route.path)
+})
 
 // 检查是否需要主密码
 const checkMasterPasswordRequired = () => {
@@ -87,19 +100,7 @@ onMounted(() => {
 </script>
 
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+@import './styles/theme.css';
 
 #app {
   min-height: 100vh;

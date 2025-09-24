@@ -2,40 +2,70 @@
   <div class="passwords-page">
     <!-- 页面头部 -->
     <div class="page-header">
-      <div class="header-left">
-        <h1 class="page-title">密码管理</h1>
-        <p class="page-subtitle">安全管理您的所有账号密码</p>
-      </div>
-      <div class="header-actions">
-        <button @click="showAddModal = true" class="add-btn">
-          <span class="btn-icon">➕</span>
-          添加密码
-        </button>
-        <button @click="refreshEntries" class="refresh-btn" :disabled="loading">
-          <span class="btn-icon">🔄</span>
-          刷新
-        </button>
+      <div class="header-content">
+        <div class="header-left">
+          <h1 class="page-title">
+            <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <circle cx="12" cy="16" r="1"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            密码管理
+          </h1>
+          <p class="page-subtitle">安全管理您的所有账号密码</p>
+        </div>
+        <div class="header-actions">
+          <button @click="showAddModal = true" class="btn-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            添加密码
+          </button>
+          <button @click="refreshEntries" class="btn-secondary" :disabled="loading">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <polyline points="23 4 23 10 17 10"/>
+              <polyline points="1 20 1 14 7 14"/>
+              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+            </svg>
+            刷新
+          </button>
+        </div>
       </div>
     </div>
 
     <!-- 统计信息 -->
     <div class="stats-section">
       <div class="stat-card">
-        <div class="stat-icon">🔐</div>
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <circle cx="12" cy="16" r="1"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
         <div class="stat-info">
           <div class="stat-number">{{ total }}</div>
           <div class="stat-label">总密码数</div>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon">⭐</div>
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
+          </svg>
+        </div>
         <div class="stat-info">
           <div class="stat-number">{{ favoriteCount }}</div>
           <div class="stat-label">收藏密码</div>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon">📂</div>
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+          </svg>
+        </div>
         <div class="stat-info">
           <div class="stat-number">{{ categoriesCount }}</div>
           <div class="stat-label">分类数量</div>
@@ -45,25 +75,47 @@
 
     <!-- 密码条目列表 -->
     <div class="content-section">
-      <PasswordEntriesList @add-password="showAddModal = true" @view-entry="handleViewEntry"
-        @edit-entry="handleEditEntry" />
+      <PasswordEntriesList 
+        @add-password="showAddModal = true" 
+        @view-entry="handleViewEntry"
+        @edit-entry="handleEditEntry" 
+      />
     </div>
 
     <!-- 添加密码弹窗 -->
-    <AddPasswordModal v-if="showAddModal" @close="showAddModal = false" @success="handleAddSuccess" />
+    <AddPasswordModal 
+      v-if="showAddModal" 
+      @close="showAddModal = false" 
+      @success="handleAddSuccess" 
+    />
 
     <!-- 密码详情弹窗 -->
-    <PasswordEntryDetail v-if="showDetailModal && selectedEntry" :entry="selectedEntry" @close="showDetailModal = false"
-      @edit="handleEditFromDetail" />
+    <PasswordEntryDetail 
+      v-if="showDetailModal && selectedEntry" 
+      :entry="selectedEntry" 
+      @close="showDetailModal = false"
+      @edit="handleEditFromDetail" 
+    />
 
     <!-- 编辑密码弹窗 -->
-    <EditPasswordModal v-if="showEditModal && selectedEntry" :entry="selectedEntry" @close="showEditModal = false"
-      @success="handleEditSuccess" />
+    <EditPasswordModal 
+      v-if="showEditModal && selectedEntry" 
+      :entry="selectedEntry" 
+      @close="showEditModal = false"
+      @success="handleEditSuccess" 
+    />
 
     <!-- 加载遮罩 -->
     <div v-if="loading && entries.length === 0" class="loading-overlay">
       <div class="loading-spinner">
-        <div class="spinner"></div>
+        <div class="spinner">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="31.416" stroke-dashoffset="31.416">
+              <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416" repeatCount="indefinite"/>
+              <animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+        </div>
         <p>加载中...</p>
       </div>
     </div>
@@ -71,9 +123,18 @@
     <!-- 错误提示 -->
     <div v-if="error" class="error-message">
       <div class="error-content">
-        <span class="error-icon">⚠️</span>
+        <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="15" y1="9" x2="9" y2="15"/>
+          <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
         <span class="error-text">{{ error }}</span>
-        <button @click="clearError" class="error-close">✕</button>
+        <button @click="clearError" class="error-close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
     </div>
   </div>
@@ -112,7 +173,6 @@ export default defineComponent({
       fetchEntries,
       refresh
     } = usePasswordEntries()
-
 
     // 本地状态
     const showAddModal = ref(false)
@@ -236,8 +296,6 @@ export default defineComponent({
         if (error instanceof Error) {
           if (error.message.includes('解密失败') || error.message.includes('密钥')) {
             errorMessage = '数据解密失败，请重新登录以刷新密钥'
-            // 可以考虑自动跳转到登录页面
-            // router.push('/login')
           } else if (error.message.includes('网络') || error.message.includes('请求')) {
             errorMessage = '网络连接失败，请检查网络后重试'
           }
@@ -277,22 +335,26 @@ export default defineComponent({
 
 <style scoped>
 .passwords-page {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
+  padding: var(--spacing-xl);
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 /* 页面头部 */
 .page-header {
+  margin-bottom: var(--spacing-2xl);
+}
+
+.header-content {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 30px;
-  background: rgba(255, 255, 255, 0.95);
-  padding: 25px 30px;
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
+  gap: var(--spacing-xl);
+  background: white;
+  padding: var(--spacing-2xl);
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
 }
 
 .header-left {
@@ -300,106 +362,72 @@ export default defineComponent({
 }
 
 .page-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #2d3748;
-  margin: 0 0 8px 0;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.title-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--primary-color);
+  stroke-width: 2;
 }
 
 .page-subtitle {
-  font-size: 1.1rem;
-  color: #718096;
-  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
 }
 
 .header-actions {
   display: flex;
-  gap: 12px;
-}
-
-.add-btn,
-.refresh-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border: none;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.add-btn {
-  background: linear-gradient(135deg, #4facfe, #00f2fe);
-  color: white;
-}
-
-.add-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
-}
-
-.refresh-btn {
-  background: rgba(255, 255, 255, 0.9);
-  color: #4a5568;
-  border: 1px solid #e2e8f0;
-}
-
-.refresh-btn:hover:not(:disabled) {
-  background: white;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.refresh-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-icon {
-  font-size: 16px;
+  gap: var(--spacing-md);
 }
 
 /* 统计信息 */
 .stats-section {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-2xl);
 }
 
 .stat-card {
-  background: rgba(255, 255, 255, 0.95);
-  padding: 25px;
-  border-radius: 16px;
+  background: white;
+  padding: var(--spacing-2xl);
+  border-radius: var(--border-radius-xl);
   display: flex;
   align-items: center;
-  gap: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
-  transition: transform 0.3s ease;
+  gap: var(--spacing-xl);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
 }
 
 .stat-card:hover {
   transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
 }
 
 .stat-icon {
-  font-size: 2.5rem;
   width: 60px;
   height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  border-radius: 16px;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  border-radius: var(--border-radius-xl);
   color: white;
+}
+
+.stat-icon svg {
+  width: 30px;
+  height: 30px;
+  stroke-width: 2;
 }
 
 .stat-info {
@@ -407,25 +435,25 @@ export default defineComponent({
 }
 
 .stat-number {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #2d3748;
-  margin-bottom: 4px;
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
 }
 
 .stat-label {
-  font-size: 0.9rem;
-  color: #718096;
-  font-weight: 500;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
 }
 
 /* 内容区域 */
 .content-section {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 16px;
-  padding: 30px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
+  background: white;
+  border-radius: var(--border-radius-xl);
+  padding: var(--spacing-2xl);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
   min-height: 400px;
 }
 
@@ -437,6 +465,7 @@ export default defineComponent({
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -445,86 +474,158 @@ export default defineComponent({
 
 .loading-spinner {
   background: white;
-  padding: 40px;
-  border-radius: 16px;
+  padding: var(--spacing-3xl);
+  border-radius: var(--border-radius-xl);
   text-align: center;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-lg);
 }
 
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #667eea;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 20px;
 }
 
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
+.spinner svg {
+  width: 100%;
+  height: 100%;
+  color: var(--primary-color);
+}
 
-  100% {
-    transform: rotate(360deg);
-  }
+.loading-spinner p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
 }
 
 /* 错误提示 */
 .error-message {
   position: fixed;
-  top: 20px;
-  right: 20px;
+  top: var(--spacing-xl);
+  right: var(--spacing-xl);
   z-index: 1001;
+  animation: slideIn 0.3s ease;
 }
 
 .error-content {
-  background: #fed7d7;
-  color: #c53030;
-  padding: 16px 20px;
-  border-radius: 12px;
+  background: var(--error-bg);
+  color: var(--error-color);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-radius: var(--border-radius-lg);
   display: flex;
   align-items: center;
-  gap: 12px;
-  box-shadow: 0 8px 25px rgba(197, 48, 48, 0.2);
-  border-left: 4px solid #c53030;
+  gap: var(--spacing-md);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--error-border);
+  max-width: 400px;
 }
 
 .error-icon {
-  font-size: 18px;
+  width: 20px;
+  height: 20px;
+  stroke-width: 2;
+  flex-shrink: 0;
 }
 
 .error-text {
   flex: 1;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
 }
 
 .error-close {
   background: none;
   border: none;
-  color: #c53030;
+  color: var(--error-color);
   cursor: pointer;
-  font-size: 16px;
-  padding: 4px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
+  padding: var(--spacing-xs);
+  border-radius: var(--border-radius-sm);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .error-close:hover {
-  background: rgba(197, 48, 48, 0.1);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.error-close svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+/* 按钮样式 */
+.btn-primary, .btn-secondary {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-xl);
+  border: none;
+  border-radius: var(--border-radius-lg);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.btn-secondary {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+}
+
+.btn-primary:disabled, .btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.btn-primary svg, .btn-secondary svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
   .passwords-page {
-    padding: 15px;
+    padding: var(--spacing-lg);
   }
 
-  .page-header {
+  .header-content {
     flex-direction: column;
-    gap: 20px;
-    padding: 20px;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-xl);
   }
 
   .header-actions {
@@ -532,14 +633,13 @@ export default defineComponent({
     justify-content: stretch;
   }
 
-  .add-btn,
-  .refresh-btn {
+  .btn-primary, .btn-secondary {
     flex: 1;
     justify-content: center;
   }
 
   .page-title {
-    font-size: 2rem;
+    font-size: var(--font-size-2xl);
   }
 
   .stats-section {
@@ -547,7 +647,17 @@ export default defineComponent({
   }
 
   .content-section {
-    padding: 20px;
+    padding: var(--spacing-xl);
+  }
+
+  .error-message {
+    left: var(--spacing-md);
+    right: var(--spacing-md);
+    top: var(--spacing-md);
+  }
+
+  .error-content {
+    max-width: none;
   }
 }
 </style>
