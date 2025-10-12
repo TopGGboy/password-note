@@ -126,10 +126,24 @@ export function usePasswordEntries() {
       const validatedQuery = validatePasswordEntriesQuery(query);
       Object.assign(query, validatedQuery);
 
+      console.log('=== API请求调试信息 ===');
+      console.log('请求参数:', validatedQuery);
+      console.log('当前用户ID:', localStorage.getItem('userId'));
+      console.log('当前token:', localStorage.getItem('accessToken')?.substring(0, 20) + '...');
+
       const response = await passwordEntriesAPI.page(validatedQuery);
+      
+      console.log('API响应:', response);
+      console.log('响应code:', response.code);
+      console.log('响应data:', response.data);
 
       if (response.code === 1 && response.data) {
+        // 修复：根据实际API响应结构处理数据
+        // API直接返回数组在data字段中，分页信息在response的根级别
         const entriesList = Array.isArray(response.data) ? response.data : [];
+
+        console.log('API返回的条目列表:', entriesList);
+        console.log('条目数量:', entriesList.length);
 
         // 解密所有条目
         const decryptedEntries = entriesList.map(decryptPasswordEntry);
@@ -141,9 +155,14 @@ export function usePasswordEntries() {
           entries.value.push(...decryptedEntries);
         }
 
-        total.value = entriesList.length;
-        totalPages.value = Math.ceil(total.value / validatedQuery.pageSize);
+        // 修复：使用API响应根级别的分页信息（使用类型断言）
+        const responseWithPagination = response as any;
+        total.value = responseWithPagination.total || 0;
+        totalPages.value = responseWithPagination.totalPages || Math.ceil((responseWithPagination.total || 0) / validatedQuery.pageSize);
+        
+        console.log(`分页信息 - 当前页: ${query.page}, 每页大小: ${validatedQuery.pageSize}, 总记录数: ${total.value}, 总页数: ${totalPages.value}, 当前页记录数: ${entriesList.length}`);
       } else {
+        console.error('API响应错误:', response);
         throw new Error(response.msg || "获取密码条目失败");
       }
     } catch (err: any) {
@@ -154,10 +173,76 @@ export function usePasswordEntries() {
     }
   };
 
-  // 搜索密码条目
+  // 搜索密码条目 - 使用专门的搜索接口
   const searchEntries = async (keyword: string) => {
-    query.keyword = keyword;
-    await fetchEntries(true);
+    // 检查认证状态
+    if (!tokenManager.hasValidToken() || tokenManager.isTokenExpired()) {
+      console.warn("用户未认证或token已过期，无法搜索密码条目");
+      error.value = "用户未认证，请重新登录";
+      return;
+    }
+
+    // 检查是否有加密密钥
+    if (!KeyManager.hasKey()) {
+      console.warn("未找到加密密钥，请先输入主密码");
+      error.value = "未找到加密密钥，请先输入主密码";
+      window.dispatchEvent(new CustomEvent("requireMasterPassword"));
+      return;
+    }
+
+    // 如果关键词为空，则恢复正常列表
+    if (!keyword.trim()) {
+      query.keyword = undefined;
+      await fetchEntries(true);
+      return;
+    }
+
+    // 重置分页状态
+    query.page = 1;
+    query.keyword = keyword.trim();
+    
+    loading.value = true;
+    error.value = null;
+
+    try {
+      console.log('=== 搜索API请求调试信息 ===');
+      console.log('搜索关键词:', keyword);
+      console.log('页码:', query.page);
+      console.log('每页大小:', query.pageSize);
+
+      // 调用专门的搜索接口
+      const response = await passwordEntriesAPI.search(
+        keyword.trim(),
+        query.page,
+        query.pageSize
+      );
+
+      console.log('搜索API响应:', response);
+
+      if (response.code === 1 && response.data) {
+        // 处理搜索结果
+        const entriesList = Array.isArray(response.data) ? response.data : [];
+        console.log('搜索返回的条目列表:', entriesList);
+
+        // 解密所有条目
+        const decryptedEntries = entriesList.map(decryptPasswordEntry);
+        entries.value = decryptedEntries;
+
+        // 更新分页信息
+        const responseWithPagination = response as any;
+        total.value = responseWithPagination.total || 0;
+        totalPages.value = responseWithPagination.totalPages || Math.ceil((responseWithPagination.total || 0) / query.pageSize);
+
+        console.log(`搜索结果 - 关键词: "${keyword}", 找到: ${total.value} 条记录, 当前页: ${entriesList.length} 条`);
+      } else {
+        throw new Error(response.msg || "搜索密码条目失败");
+      }
+    } catch (err: any) {
+      error.value = err.message || "搜索密码条目失败";
+      console.error("搜索密码条目失败:", err);
+    } finally {
+      loading.value = false;
+    }
   };
 
   // 按分类筛选
@@ -187,6 +272,83 @@ export function usePasswordEntries() {
     if (hasMore.value && !loading.value) {
       query.page += 1;
       await fetchEntries(false);
+    }
+  };
+
+  // 无限滚动加载更多
+  const loadMoreOnScroll = async () => {
+    if (hasMore.value && !loading.value) {
+      query.page += 1;
+      
+      // 如果当前是搜索状态，使用搜索接口加载更多
+      if (query.keyword) {
+        await loadMoreSearchResults();
+      } else {
+        await fetchEntries(false);
+      }
+    }
+  };
+
+  // 搜索结果加载更多
+  const loadMoreSearchResults = async () => {
+    if (loading.value || !hasMore.value || !query.keyword) {
+      return;
+    }
+
+    loading.value = true;
+    error.value = null;
+
+    try {
+      console.log('=== 搜索加载更多调试信息 ===');
+      console.log('搜索关键词:', query.keyword);
+      console.log('页码:', query.page);
+
+      // 调用搜索接口获取更多结果
+      const response = await passwordEntriesAPI.search(
+        query.keyword,
+        query.page,
+        query.pageSize
+      );
+
+      if (response.code === 1 && response.data) {
+        const entriesList = Array.isArray(response.data) ? response.data : [];
+        console.log('搜索加载更多返回的条目列表:', entriesList);
+
+        // 解密新条目并追加到现有列表
+        const decryptedEntries = entriesList.map(decryptPasswordEntry);
+        entries.value = [...entries.value, ...decryptedEntries];
+
+        // 更新分页信息
+        const responseWithPagination = response as any;
+        total.value = responseWithPagination.total || 0;
+        totalPages.value = responseWithPagination.totalPages || Math.ceil((responseWithPagination.total || 0) / query.pageSize);
+
+        console.log(`搜索加载更多完成 - 新增: ${entriesList.length} 条, 总计: ${entries.value.length} 条`);
+      } else {
+        throw new Error(response.msg || "加载更多搜索结果失败");
+      }
+    } catch (err: any) {
+      error.value = err.message || "加载更多搜索结果失败";
+      console.error("加载更多搜索结果失败:", err);
+      // 加载失败时回退页码
+      query.page -= 1;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  // 检查是否需要自动加载更多（用于无限滚动）
+  const checkAndLoadMore = async (scrollElement?: HTMLElement) => {
+    if (!scrollElement || !hasMore.value || loading.value) {
+      return;
+    }
+
+    const { scrollTop, scrollHeight, clientHeight } = scrollElement;
+    const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
+    
+    // 当滚动到80%时自动加载更多
+    if (scrollPercentage >= 0.8) {
+      await loadMoreOnScroll();
     }
   };
 
@@ -337,7 +499,7 @@ export function usePasswordEntries() {
   };
 
   // 切换收藏状态
-  const toggleFavorite = async (id: number): Promise<void> => {
+  const toggleFavorite = async (id: number, favorite: boolean): Promise<void> => {
     // 检查认证状态
     if (!tokenManager.hasValidToken() || tokenManager.isTokenExpired()) {
       const errorMsg = "用户未认证或token已过期，无法切换收藏状态";
@@ -347,16 +509,16 @@ export function usePasswordEntries() {
     }
 
     try {
-      console.log("正在切换收藏状态，ID:", id);
-      const response = await passwordEntriesAPI.toggleFavorite(id);
+      console.log("正在切换收藏状态，ID:", id, "收藏状态:", favorite);
+      const response = await passwordEntriesAPI.toggleFavorite(id, favorite);
       console.log("切换收藏状态API响应:", response);
 
       // 修复：检查code为1而不是200
-      if (response.code === 1 && response.data) {
+      if (response.code === 1) {
         // 更新本地数据
         const index = entries.value.findIndex((entry) => entry.id === id);
         if (index !== -1) {
-          entries.value[index].favorite = response.data.favorite;
+          entries.value[index].favorite = favorite;
         }
         console.log("收藏状态切换成功，ID:", id);
       } else {
@@ -428,6 +590,9 @@ export function usePasswordEntries() {
     filterFavorites,
     sortEntries,
     loadMore,
+    loadMoreOnScroll,
+    loadMoreSearchResults,
+    checkAndLoadMore,
     refresh,
     resetQuery,
     createEntry,

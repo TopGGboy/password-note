@@ -213,6 +213,14 @@ export default defineComponent({
 
         if (result.code === 1) {
           console.log(this.isEdit ? '密码条目更新成功' : '密码条目创建成功')
+          
+          // 触发自定义事件，通知密码列表刷新
+          if (this.isEdit) {
+            window.dispatchEvent(new CustomEvent('passwordEntryUpdated'))
+          } else {
+            window.dispatchEvent(new CustomEvent('passwordEntryAdded'))
+          }
+          
           this.$emit('success', result.data)
           this.$emit('close')
         } else {

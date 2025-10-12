@@ -97,14 +97,6 @@
         </div>
 
         <div class="header-right">
-          <button @click="showSearchModal = true" class="header-action search-button">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <circle cx="11" cy="11" r="8"/>
-              <path d="M21 21l-4.35-4.35"/>
-            </svg>
-            <span class="action-text">搜索</span>
-          </button>
-
           <button @click="showAddModal = true" class="header-action add-button">
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path d="M12 5v14M5 12h14"/>
@@ -147,7 +139,7 @@
     ></div>
 
     <!-- 搜索模态框 -->
-    <SearchModal v-if="showSearchModal" @close="showSearchModal = false" />
+
 
     <!-- 添加密码模态框 -->
     <AddPasswordModal v-if="showAddModal" @close="showAddModal = false" @success="handleAddSuccess" />
@@ -158,7 +150,6 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../store/auth'
-import SearchModal from '../modals/SearchModal.vue'
 import AddPasswordModal from '../modals/AddPasswordModal.vue'
 
 interface NavItem {
@@ -180,7 +171,6 @@ const authStore = useAuthStore()
 // 响应式状态
 const sidebarCollapsed = ref(false)
 const showMobileSidebar = ref(false)
-const showSearchModal = ref(false)
 const showAddModal = ref(false)
 const isDarkMode = ref(false)
 
@@ -636,12 +626,6 @@ watch(() => route.path, () => {
 .header-action:hover {
   background: var(--gray-50);
   border-color: var(--gray-400);
-}
-
-.search-button:hover {
-  background: var(--primary-50);
-  border-color: var(--primary-300);
-  color: var(--primary-700);
 }
 
 .add-button {

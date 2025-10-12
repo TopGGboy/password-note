@@ -75,6 +75,13 @@ export interface GetPasswordEntriesRequest {
   sortOrder?: 'asc' | 'desc' // 排序方向
 }
 
+// 搜索密码条目请求参数
+export interface SearchPasswordEntriesRequest {
+  keyword: string // 搜索关键词（必需）
+  page: number // 页码，从1开始
+  pagesize: number // 每页条数（注意：后端使用pagesize而不是pageSize）
+}
+
 // 分页查询响应数据
 export interface PagedResponse<T> {
   list: T[]

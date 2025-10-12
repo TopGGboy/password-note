@@ -289,6 +289,9 @@ export default defineComponent({
           lastUsed: new Date()
         })
 
+        // 触发自定义事件，通知密码列表刷新
+        window.dispatchEvent(new CustomEvent('passwordEntryAdded'))
+
         // 关闭模态框
         this.$emit('close')
 

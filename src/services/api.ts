@@ -135,6 +135,17 @@ export const passwordEntriesAPI = {
     return http.get(API_ENDPOINTS.PASSWORDENTRIES.PAGE, { params });
   },
 
+  // 搜索密码条目
+  search: (
+    keyword: string,
+    page: number = 1,
+    pagesize: number = 10
+  ): Promise<ApiResponse<GetPasswordEntriesResponse>> => {
+    return http.get(API_ENDPOINTS.PASSWORDENTRIES.SEARCH, {
+      params: { keyword, page, pagesize }
+    });
+  },
+
   // 删除密码条目
   delete: (id: number): Promise<ApiResponse<string>> => {
     return http.delete(`${API_ENDPOINTS.PASSWORDENTRIES.BASE}/${id}`);
@@ -148,19 +159,19 @@ export const passwordEntriesAPI = {
     return http.put(`${API_ENDPOINTS.PASSWORDENTRIES.BASE}/${id}`, data);
   },
 
+    // 切换收藏状态
+  toggleFavorite: (id: number, favorite: boolean): Promise<ApiResponse<PasswordEntry>> => {
+    return http.put(`${API_ENDPOINTS.PASSWORDENTRIES.BASE}/${id}/favorite`, null, {
+      params: {favorite}
+    });
+  },
 
-
-
+  
   // 获取单个密码条目
   getById: (id: number): Promise<ApiResponse<PasswordEntry>> => {
     return http.get(`${API_ENDPOINTS.PASSWORDENTRIES.BASE}/${id}`);
   },
 
-
-  // 切换收藏状态
-  toggleFavorite: (id: number): Promise<ApiResponse<PasswordEntry>> => {
-    return http.patch(`${API_ENDPOINTS.PASSWORDENTRIES.BASE}/${id}/favorite`);
-  },
 
   // 记录使用次数
   recordUsage: (id: number): Promise<ApiResponse<null>> => {

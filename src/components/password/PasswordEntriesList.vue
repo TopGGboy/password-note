@@ -1,5 +1,5 @@
 <template>
-  <div class="password-entries-list">
+  <div class="password-entries-list" ref="scrollContainer">
     <!-- 搜索和筛选栏 -->
     <div class="search-filter-bar">
       <div class="search-box">
@@ -112,7 +112,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, watch } from 'vue'
+import { defineComponent, ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { usePasswordEntries } from '../../composables/usePasswordEntries'
 import { useAuth } from '../../composables/useAuth'
 import { categoriesAPI } from '../../services/api'
@@ -141,6 +141,7 @@ export default defineComponent({
       filterFavorites,
       sortEntries,
       loadMore,
+      checkAndLoadMore,
       refresh,
       deleteEntry,
       toggleFavorite,
@@ -153,6 +154,7 @@ export default defineComponent({
     const showFavoritesOnly = ref(false)
     const sortOption = ref('updatedAt-desc')
     const categories = ref<Category[]>([])
+    const scrollContainer = ref<HTMLElement>()
 
     // 搜索防抖
     let searchTimeout: number | null = null
@@ -186,7 +188,7 @@ export default defineComponent({
     // 切换收藏状态
     const handleToggleFavorite = async (id: number, currentFavorite: boolean) => {
       try {
-        await toggleFavorite(id)
+        await toggleFavorite(id, !currentFavorite)
       } catch (err) {
         console.error('切换收藏状态失败:', err)
       }
@@ -211,6 +213,8 @@ export default defineComponent({
       if (confirm(`确定要删除密码条目"${title}"吗？此操作不可撤销。`)) {
         try {
           await deleteEntry(id)
+          // 触发删除事件通知
+          window.dispatchEvent(new CustomEvent('passwordEntryDeleted'))
           showToast('密码条目已删除')
         } catch (err) {
           console.error('删除失败:', err)
@@ -279,10 +283,94 @@ export default defineComponent({
 
 
 
+    // 处理密码条目添加事件
+    const handlePasswordEntryAdded = async () => {
+      console.log('检测到密码条目添加事件，正在刷新列表...')
+      await refresh()
+    }
+
+    // 处理密码条目更新事件
+    const handlePasswordEntryUpdated = async () => {
+      console.log('检测到密码条目更新事件，正在刷新列表...')
+      await refresh()
+    }
+
+    // 处理密码条目删除事件
+    const handlePasswordEntryDeleted = async () => {
+      console.log('检测到密码条目删除事件，正在刷新列表...')
+      await refresh()
+    }
+
+    // 无限滚动处理 - 监听window滚动
+    const handleScroll = async () => {
+      // 检查是否需要加载更多
+      if (!hasMore.value || loading.value) {
+        return;
+      }
+
+      // 获取页面滚动信息
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      
+      // 计算滚动百分比
+      const scrollPercentage = (scrollTop + windowHeight) / documentHeight;
+      
+      console.log('滚动调试信息:', {
+        scrollTop,
+        windowHeight,
+        documentHeight,
+        scrollPercentage: (scrollPercentage * 100).toFixed(2) + '%',
+        hasMore: hasMore.value,
+        loading: loading.value
+      });
+      
+      // 当滚动到85%时自动加载更多
+      if (scrollPercentage >= 0.85) {
+        console.log('触发自动加载更多...');
+        await loadMore();
+      }
+    }
+
+    // 节流函数
+    const throttle = (func: Function, delay: number) => {
+      let timeoutId: number | null = null
+      let lastExecTime = 0
+      return function (this: any, ...args: any[]) {
+        const currentTime = Date.now()
+        
+        if (currentTime - lastExecTime > delay) {
+          func.apply(this, args)
+          lastExecTime = currentTime
+        } else {
+          if (timeoutId) {
+            clearTimeout(timeoutId)
+          }
+          timeoutId = setTimeout(() => {
+            func.apply(this, args)
+            lastExecTime = Date.now()
+          }, delay - (currentTime - lastExecTime))
+        }
+      }
+    }
+
+    // 节流后的滚动处理函数
+    const throttledHandleScroll = throttle(handleScroll, 200)
+
     // 组件挂载时初始化
     onMounted(async () => {
+      console.log('=== PasswordEntriesList 组件挂载调试信息 ===')
+      console.log('认证状态:', isAuthenticated.value)
+      console.log('用户ID:', userId.value)
+      console.log('当前entries数量:', entries.value.length)
+      console.log('loading状态:', loading.value)
+      console.log('error状态:', error.value)
+      console.log('isEmpty状态:', isEmpty.value)
+      console.log('hasData状态:', hasData.value)
+      
       // 先检查认证状态
       if (!isAuthenticated.value) {
+        console.log('用户未认证，尝试初始化认证状态...')
         // 尝试初始化认证状态
         await initialize()
         // 再次检查认证状态
@@ -290,6 +378,7 @@ export default defineComponent({
           console.warn('用户未认证，跳过数据加载')
           return
         }
+        console.log('认证状态初始化成功')
       }
 
       // 等待用户ID可用
@@ -298,16 +387,39 @@ export default defineComponent({
         return
       }
 
+      console.log('开始加载数据...')
       try {
         await Promise.all([
           loadCategories(),
           fetchEntries()
         ])
+        console.log('数据加载完成，entries数量:', entries.value.length)
+        console.log('total数量:', total.value)
       } catch (error) {
         console.error('初始化数据加载失败:', error)
         showToast('数据加载失败，请刷新页面重试', 'error')
       }
+
+      // 监听自定义事件，当有密码相关操作时，刷新列表
+      window.addEventListener('passwordEntryAdded', handlePasswordEntryAdded)
+      window.addEventListener('passwordEntryUpdated', handlePasswordEntryUpdated)
+      window.addEventListener('passwordEntryDeleted', handlePasswordEntryDeleted)
+
+      // 添加滚动监听 - 监听window滚动
+      await nextTick()
+      window.addEventListener('scroll', throttledHandleScroll, { passive: true })
     })
+
+    // 组件卸载时移除事件监听
+    onUnmounted(() => {
+      window.removeEventListener('passwordEntryAdded', handlePasswordEntryAdded)
+      window.removeEventListener('passwordEntryUpdated', handlePasswordEntryUpdated)
+      window.removeEventListener('passwordEntryDeleted', handlePasswordEntryDeleted)
+      
+      // 移除滚动监听
+      window.removeEventListener('scroll', throttledHandleScroll)
+    })
+
 
     return {
       // 响应式数据
@@ -323,6 +435,7 @@ export default defineComponent({
       showFavoritesOnly,
       sortOption,
       categories,
+      scrollContainer,
 
       // 方法
       handleSearch,
@@ -345,6 +458,7 @@ export default defineComponent({
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
+  scroll-behavior: smooth;
 }
 
 .search-filter-bar {

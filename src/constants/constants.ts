@@ -19,9 +19,6 @@ export const API_ENDPOINTS = {
     PAGE: "/api/password-entries/page",
     DELETE: "/api/password-entries/:id",
     PUT: "/api/password-entries/:id",
-    
-
-
     SEARCH: "/api/password-entries/search",
     FAVORITES: "/api/password-entries/favorites"
   },
