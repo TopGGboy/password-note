@@ -138,6 +138,17 @@ export interface Category {
 // 获取分类列表响应 - 后端直接返回Category数组
 export type CategoriesResponse = Category[]
 
+// 创建分类请求参数 - 匹配后端CreateCategoryDTO
+export interface CreateCategoryRequest {
+  name: string
+  color?: string
+  sortOrder?: number
+  icon?: number
+  isDefault?: boolean
+  description?: string
+  userId?: number
+}
+
 
 
 

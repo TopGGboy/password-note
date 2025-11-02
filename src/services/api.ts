@@ -19,6 +19,7 @@ import type {
   ResetPasswordRequest,
   ForgotPasswordRequest,
   CategoriesResponse,
+  CreateCategoryRequest,
 } from "../types/api";
 
 // 用户相关API（根据API接口文档）
@@ -116,6 +117,10 @@ export const categoriesAPI = {
   // 获取用户的所有分类
   getAll: (): Promise<ApiResponse<CategoriesResponse>> => {
     return http.get(API_ENDPOINTS.CATEGORIES.BASE);
+  },
+  // 创建分类
+  create: (data: CreateCategoryRequest): Promise<ApiResponse<boolean>> => {
+    return http.post(API_ENDPOINTS.CATEGORIES.BASE, data);
   },
 };
 

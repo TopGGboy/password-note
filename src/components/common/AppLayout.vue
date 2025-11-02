@@ -1,145 +1,190 @@
 <template>
-  <div class="app-layout" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
-    <!-- 侧边栏 -->
-    <aside class="sidebar" :class="{ 'collapsed': sidebarCollapsed }">
-      <div class="sidebar-header">
-        <div class="logo">
-          <div class="logo-icon">🔐</div>
-          <Transition name="fade">
-            <span v-if="!sidebarCollapsed" class="logo-text">密码笔记</span>
-          </Transition>
-        </div>
-        <button @click="toggleSidebar" class="sidebar-toggle">
+  <div class="app-shell" :class="{ dark: isDarkMode }">
+    <!-- 顶部导航 -->
+    <header class="nav">
+      <div class="nav-left">
+        <router-link to="/dashboard" class="brand">
+          <div class="brand-icon">🔐</div>
+          <div class="brand-text">
+            <div class="brand-title">密码笔记</div>
+            <div class="brand-sub">安全 · 私有 · 高效</div>
+          </div>
+        </router-link>
+
+        <nav class="nav-links">
+          <router-link to="/passwords" class="nav-link" :class="{ active: $route.path.startsWith('/passwords') }">密码</router-link>
+          <router-link to="/categories" class="nav-link" :class="{ active: $route.path.startsWith('/categories') }">分类</router-link>
+          <router-link to="/security" class="nav-link" :class="{ active: $route.path.startsWith('/security') }">安全中心</router-link>
+          <router-link to="/settings" class="nav-link" :class="{ active: $route.path.startsWith('/settings') }">设置</router-link>
+        </nav>
+      </div>
+
+      <div class="nav-right">
+        <div class="search-box" title="搜索（占位）">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path d="M3 12h18M3 6h18M3 18h18"/>
+            <circle cx="11" cy="11" r="7" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input type="text" placeholder="搜索条目..." @keydown.enter.prevent="goSearch" />
+        </div>
+
+        <button class="btn primary" @click="showAddModal = true">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          <span class="hide-sm">新增密码</span>
+        </button>
+
+        <button class="btn ghost" @click="toggleTheme" :title="isDarkMode ? '切换为浅色' : '切换为深色'">
+          <svg v-if="isDarkMode" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+          <svg v-else class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
           </svg>
         </button>
-      </div>
 
-      <nav class="sidebar-nav">
-        <div class="nav-section">
-          <div v-if="!sidebarCollapsed" class="nav-title">主要功能</div>
-          <router-link
-            v-for="item in mainNavItems"
-            :key="item.path"
-            :to="item.path"
-            class="nav-item"
-            :class="{ 'active': $route.path === item.path }"
-          >
-            <div class="nav-icon" v-html="item.icon"></div>
-            <Transition name="fade">
-              <span v-if="!sidebarCollapsed" class="nav-text">{{ item.name }}</span>
-            </Transition>
-            <div v-if="item.badge && !sidebarCollapsed" class="nav-badge">{{ item.badge }}</div>
-          </router-link>
-        </div>
-
-        <div class="nav-section">
-          <div v-if="!sidebarCollapsed" class="nav-title">设置</div>
-          <router-link
-            v-for="item in settingsNavItems"
-            :key="item.path"
-            :to="item.path"
-            class="nav-item"
-            :class="{ 'active': $route.path === item.path }"
-          >
-            <div class="nav-icon" v-html="item.icon"></div>
-            <Transition name="fade">
-              <span v-if="!sidebarCollapsed" class="nav-text">{{ item.name }}</span>
-            </Transition>
-          </router-link>
-        </div>
-      </nav>
-
-      <div class="sidebar-footer">
-        <div class="user-info" :class="{ 'collapsed': sidebarCollapsed }">
-          <div class="user-avatar">
-            <div class="avatar-icon">{{ userInitials }}</div>
-          </div>
-          <Transition name="fade">
-            <div v-if="!sidebarCollapsed" class="user-details">
-              <div class="user-name">{{ username }}</div>
-              <div class="user-email">{{ userEmail }}</div>
-            </div>
-          </Transition>
-          <button @click="handleLogout" class="logout-button" :title="sidebarCollapsed ? '退出登录' : ''">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16,17 21,12 16,7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-          </button>
+        <div class="user" :title="username">
+          <div class="avatar">{{ userInitials }}</div>
+          <span class="user-name hide-sm">{{ username }}</span>
+          <button class="btn danger outline hide-sm" @click="handleLogout">退出</button>
         </div>
       </div>
-    </aside>
+    </header>
 
-    <!-- 主内容区域 -->
-    <main class="main-content">
-      <!-- 顶部导航栏 -->
-      <header class="top-header">
-        <div class="header-left">
-          <button @click="toggleSidebar" class="mobile-menu-toggle">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M3 12h18M3 6h18M3 18h18"/>
-            </svg>
-          </button>
-          <div class="breadcrumb">
-            <router-link
-              v-for="(crumb, index) in breadcrumbs"
-              :key="index"
-              :to="crumb.path"
-              class="breadcrumb-item"
-              :class="{ 'current': index === breadcrumbs.length - 1 }"
-            >
-              {{ crumb.name }}
-            </router-link>
-          </div>
-        </div>
-
-        <div class="header-right">
-          <button @click="showAddModal = true" class="header-action add-button">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M12 5v14M5 12h14"/>
-            </svg>
-            <span class="action-text">添加</span>
-          </button>
-
-          <div class="theme-toggle">
-            <button @click="toggleTheme" class="theme-button">
-              <svg v-if="isDarkMode" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <circle cx="12" cy="12" r="5"/>
-                <line x1="12" y1="1" x2="12" y2="3"/>
-                <line x1="12" y1="21" x2="12" y2="23"/>
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-                <line x1="1" y1="12" x2="3" y2="12"/>
-                <line x1="21" y1="12" x2="23" y2="12"/>
-                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    <!-- 首页：仅在 /dashboard 渲染 -->
+    <section v-if="$route.path === '/dashboard'" class="home">
+      <!-- 首屏 -->
+      <div class="hero">
+        <div class="hero-content">
+          <h1>你的私人密码库</h1>
+          <p>端到端加密 · 本地优先 · 一键检索 · 分类管理。用简单安全的方式，管理你所有的账号与密钥。</p>
+          <div class="hero-actions">
+            <button class="btn primary lg" @click="showAddModal = true">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M12 5v14M5 12h14" />
               </svg>
-              <svg v-else class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-              </svg>
+              立即添加
             </button>
+            <router-link to="/passwords" class="btn ghost lg">浏览所有密码</router-link>
+          </div>
+          <div class="hero-note">
+            <span class="badge success">已登录</span>
+            <span class="muted">欢迎回来，{{ username }}！</span>
           </div>
         </div>
-      </header>
-
-      <!-- 页面内容 -->
-      <div class="page-content">
-        <router-view />
+        <div class="hero-visual" aria-hidden="true">
+          <div class="lock"></div>
+          <div class="shine"></div>
+        </div>
       </div>
-    </main>
 
-    <!-- 遮罩层（移动端） -->
-    <div
-      v-if="showMobileSidebar"
-      class="sidebar-overlay"
-      @click="closeMobileSidebar"
-    ></div>
+      <!-- 亮点功能 -->
+      <div class="features">
+        <div class="feature-card">
+          <div class="feature-icon gradient">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h3>本地加密</h3>
+          <p>敏感数据仅在本地加密，密钥不出设备，零信任设计。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon gradient2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+          </div>
+          <h3>极速检索</h3>
+          <p>键入即搜，多维度筛选与标签，秒级定位目标账号。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon gradient3">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><circle cx="12" cy="16" r="1"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <h3>分类与安全</h3>
+          <p>多层分类、强度检测、安全提醒，持续优化你的密码健康度。</p>
+        </div>
+      </div>
 
-    <!-- 搜索模态框 -->
+      <!-- 快速入口 -->
+      <div class="quick">
+        <div class="quick-card">
+          <div class="qc-icon blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
+          </div>
+          <div class="qc-info">
+            <h4>新增密码</h4>
+            <p>保存一个新的账号或密钥</p>
+          </div>
+          <button class="btn link" @click="showAddModal = true">开始</button>
+        </div>
 
+        <router-link class="quick-card" to="/passwords">
+          <div class="qc-icon green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </div>
+          <div class="qc-info">
+            <h4>全部密码</h4>
+            <p>查看与管理所有条目</p>
+          </div>
+          <span class="btn link">进入</span>
+        </router-link>
+
+        <router-link class="quick-card" to="/categories">
+          <div class="qc-icon purple">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2l5 0 2 3h9a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <div class="qc-info">
+            <h4>分类管理</h4>
+            <p>按类别整理与筛选</p>
+          </div>
+          <span class="btn link">进入</span>
+        </router-link>
+
+        <router-link class="quick-card" to="/security">
+          <div class="qc-icon orange">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 12l2 2 4-4"/></svg>
+          </div>
+          <div class="qc-info">
+            <h4>安全中心</h4>
+            <p>查看强度与安全建议</p>
+          </div>
+          <span class="btn link">进入</span>
+        </router-link>
+      </div>
+
+      <!-- 提示 -->
+      <div class="notice">
+        温馨提示：请定期更换重要账户密码并开启双因素认证。
+      </div>
+    </section>
+
+    <!-- 其他页面：直接渲染内容区域（无侧栏） -->
+    <section v-else class="content">
+      <router-view />
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+      <div class="footer-inner">
+        <div class="left">
+          <span class="muted">© {{ new Date().getFullYear() }} 密码笔记</span>
+          <span class="dot">·</span>
+          <a class="muted link" href="javascript:void(0)">隐私</a>
+          <span class="dot">·</span>
+          <a class="muted link" href="javascript:void(0)">协议</a>
+        </div>
+        <div class="right">
+          <span class="muted">v1.0.0</span>
+        </div>
+      </div>
+    </footer>
 
     <!-- 添加密码模态框 -->
     <AddPasswordModal v-if="showAddModal" @close="showAddModal = false" @success="handleAddSuccess" />
@@ -147,110 +192,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../store/auth'
 import AddPasswordModal from '../modals/AddPasswordModal.vue'
 
-interface NavItem {
-  name: string
-  path: string
-  icon: string
-  badge?: string
-}
-
-interface Breadcrumb {
-  name: string
-  path: string
-}
-
-const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
-// 响应式状态
-const sidebarCollapsed = ref(false)
-const showMobileSidebar = ref(false)
 const showAddModal = ref(false)
 const isDarkMode = ref(false)
 
-// 导航项配置
-const mainNavItems: NavItem[] = [
-  {
-    name: '首页',
-    path: '/dashboard',
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>'
-  },
-  {
-    name: '密码管理',
-    path: '/passwords',
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><circle cx="12" cy="16" r="1"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
-    badge: '42'
-  },
-  {
-    name: '分类管理',
-    path: '/categories',
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2l5 0 2 3h9a2 2 0 0 1 2 2z"/></svg>'
-  },
-  {
-    name: '安全中心',
-    path: '/security',
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'
-  }
-]
-
-const settingsNavItems: NavItem[] = [
-  {
-    name: '设置',
-    path: '/settings',
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>'
-  }
-]
-
-// 计算属性
 const username = computed(() => authStore.user?.username || '用户')
-const userEmail = computed(() => authStore.user?.email || 'user@example.com')
-const userInitials = computed(() => {
-  const name = username.value
-  return name.charAt(0).toUpperCase()
-})
-
-const breadcrumbs = computed((): Breadcrumb[] => {
-  const path = route.path
-  const breadcrumbs: Breadcrumb[] = []
-
-  if (path === '/dashboard') {
-    breadcrumbs.push({ name: '首页', path: '/dashboard' })
-  } else if (path === '/passwords') {
-    breadcrumbs.push({ name: '首页', path: '/dashboard' })
-    breadcrumbs.push({ name: '密码管理', path: '/passwords' })
-  } else if (path.startsWith('/passwords/')) {
-    breadcrumbs.push({ name: '首页', path: '/dashboard' })
-    breadcrumbs.push({ name: '密码管理', path: '/passwords' })
-    breadcrumbs.push({ name: '密码详情', path: path })
-  } else if (path === '/categories') {
-    breadcrumbs.push({ name: '首页', path: '/dashboard' })
-    breadcrumbs.push({ name: '分类管理', path: '/categories' })
-  } else if (path === '/security') {
-    breadcrumbs.push({ name: '首页', path: '/dashboard' })
-    breadcrumbs.push({ name: '安全中心', path: '/security' })
-  } else if (path === '/settings') {
-    breadcrumbs.push({ name: '首页', path: '/dashboard' })
-    breadcrumbs.push({ name: '设置', path: '/settings' })
-  }
-
-  return breadcrumbs
-})
-
-// 方法
-const toggleSidebar = () => {
-  sidebarCollapsed.value = !sidebarCollapsed.value
-  localStorage.setItem('sidebarCollapsed', String(sidebarCollapsed.value))
-}
-
-const closeMobileSidebar = () => {
-  showMobileSidebar.value = false
-}
+const userInitials = computed(() => username.value.charAt(0).toUpperCase())
 
 const toggleTheme = () => {
   isDarkMode.value = !isDarkMode.value
@@ -262,9 +216,7 @@ const handleLogout = async () => {
   try {
     await authStore.logout()
     router.push('/login')
-  } catch (error) {
-    console.error('退出登录失败:', error)
-    // 强制清除本地状态并跳转
+  } catch (e) {
     authStore.clearAuth()
     router.push('/login')
   }
@@ -272,480 +224,487 @@ const handleLogout = async () => {
 
 const handleAddSuccess = () => {
   showAddModal.value = false
-  // 可以触发数据刷新等操作
 }
 
-// 响应式处理
-const handleResize = () => {
-  if (window.innerWidth < 768) {
-    sidebarCollapsed.value = true
-  }
+const goSearch = () => {
+  // 可在此触发搜索弹窗或跳转到搜索页
+  router.push('/passwords')
 }
 
-// 生命周期
 onMounted(() => {
-  // 恢复侧边栏状态
-  const savedCollapsed = localStorage.getItem('sidebarCollapsed')
-  if (savedCollapsed !== null) {
-    sidebarCollapsed.value = savedCollapsed === 'true'
-  }
-
-  // 恢复主题设置
   const savedTheme = localStorage.getItem('theme')
   if (savedTheme) {
     isDarkMode.value = savedTheme === 'dark'
     document.documentElement.setAttribute('data-theme', savedTheme)
   }
-
-  // 响应式处理
-  handleResize()
-  window.addEventListener('resize', handleResize)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', handleResize)
-})
-
-// 监听路由变化，在移动端自动关闭侧边栏
-watch(() => route.path, () => {
-  if (window.innerWidth < 768) {
-    showMobileSidebar.value = false
-  }
 })
 </script>
 
 <style scoped>
-.app-layout {
-  display: flex;
+/* 基础布局 */
+.app-shell {
   min-height: 100vh;
-  background: var(--gradient-background);
-}
-
-/* 侧边栏 */
-.sidebar {
-  width: 280px;
-  background: white;
-  border-right: 1px solid var(--gray-200);
   display: flex;
   flex-direction: column;
-  transition: width var(--transition-normal);
-  position: fixed;
-  left: 0;
+  background: var(--bg-secondary);
+}
+
+/* 顶部导航 */
+.nav {
+  position: sticky;
   top: 0;
-  bottom: 0;
-  z-index: var(--z-fixed);
-  box-shadow: var(--shadow-lg);
-}
-
-.sidebar.collapsed {
-  width: 80px;
-}
-
-.sidebar-header {
-  padding: var(--spacing-lg);
+  z-index: var(--z-sticky);
+  background: #fff;
   border-bottom: 1px solid var(--gray-200);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 80px;
+  padding: var(--spacing-md) var(--spacing-xl);
+  box-shadow: var(--shadow-sm);
 }
 
-.logo {
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xl);
+}
+
+.brand {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
+  color: inherit;
+  text-decoration: none;
 }
 
-.logo-icon {
+.brand-icon {
   width: 40px;
   height: 40px;
-  background: var(--gradient-primary);
   border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--text-xl);
-  color: white;
+  background: var(--gradient-primary);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: var(--text-lg);
+  box-shadow: var(--shadow-md);
 }
 
-.logo-text {
-  font-size: var(--text-xl);
+.brand-text {
+  line-height: 1.1;
+}
+
+.brand-title {
   font-weight: var(--font-bold);
   color: var(--secondary-800);
 }
 
-.sidebar-toggle {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: var(--spacing-sm);
-  border-radius: var(--radius-md);
-  color: var(--secondary-600);
-  transition: all var(--transition-fast);
-}
-
-.sidebar-toggle:hover {
-  background: var(--gray-100);
-  color: var(--secondary-800);
-}
-
-.sidebar-nav {
-  flex: 1;
-  padding: var(--spacing-lg);
-  overflow-y: auto;
-}
-
-.nav-section {
-  margin-bottom: var(--spacing-xl);
-}
-
-.nav-title {
+.brand-sub {
   font-size: var(--text-xs);
-  font-weight: var(--font-semibold);
   color: var(--secondary-500);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: var(--spacing-md);
-  padding: 0 var(--spacing-md);
 }
 
-.nav-item {
+.nav-links {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
-  padding: var(--spacing-md);
-  border-radius: var(--radius-lg);
+}
+
+.nav-link {
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
   color: var(--secondary-700);
   text-decoration: none;
-  transition: all var(--transition-fast);
-  margin-bottom: var(--spacing-xs);
-  position: relative;
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 
-.nav-item:hover {
-  background: var(--primary-50);
-  color: var(--primary-700);
+.nav-link:hover {
+  background: var(--gray-100);
+  color: var(--secondary-900);
 }
 
-.nav-item.active {
+.nav-link.active {
   background: var(--primary-100);
   color: var(--primary-800);
   font-weight: var(--font-medium);
 }
 
-.nav-icon {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-}
-
-.nav-icon svg {
-  width: 100%;
-  height: 100%;
-  stroke-width: 2;
-}
-
-.nav-text {
-  flex: 1;
-  font-size: var(--text-sm);
-}
-
-.nav-badge {
-  background: var(--primary-500);
-  color: white;
-  font-size: var(--text-xs);
-  font-weight: var(--font-medium);
-  padding: 2px 6px;
-  border-radius: var(--radius-full);
-  min-width: 20px;
-  text-align: center;
-}
-
-.sidebar-footer {
-  padding: var(--spacing-lg);
-  border-top: 1px solid var(--gray-200);
-}
-
-.user-info {
+.nav-right {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
-  padding: var(--spacing-md);
-  border-radius: var(--radius-lg);
-  background: var(--gray-50);
-  transition: all var(--transition-fast);
 }
 
-.user-info.collapsed {
-  justify-content: center;
-}
-
-.user-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-full);
-  background: var(--gradient-primary);
+.search-box {
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  gap: 6px;
+  border: 1px solid var(--gray-300);
+  background: var(--bg-primary, #fff);
+  padding: 6px 10px;
+  border-radius: var(--radius-lg);
+  min-width: 220px;
 }
 
-.avatar-icon {
-  color: white;
+.search-box input {
+  border: none;
+  outline: none;
+  width: 160px;
+  background: transparent;
+  color: var(--secondary-800);
+  font-size: var(--text-sm);
+}
+
+.user {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: var(--gradient-primary);
+  color: #fff;
+  display: grid;
+  place-items: center;
   font-weight: var(--font-bold);
-  font-size: var(--text-lg);
-}
-
-.user-details {
-  flex: 1;
-  min-width: 0;
 }
 
 .user-name {
+  color: var(--secondary-700);
   font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  color: var(--secondary-800);
-  margin-bottom: 2px;
 }
 
-.user-email {
-  font-size: var(--text-xs);
-  color: var(--secondary-500);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.logout-button {
-  background: none;
-  border: none;
+/* 按钮 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-lg);
+  font-size: var(--text-sm);
   cursor: pointer;
-  padding: var(--spacing-sm);
-  border-radius: var(--radius-md);
-  color: var(--secondary-500);
-  transition: all var(--transition-fast);
+  border: 1px solid var(--gray-300);
+  color: var(--secondary-700);
+  background: #fff;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast), border var(--transition-fast);
+  text-decoration: none;
 }
 
-.logout-button:hover {
-  background: var(--error-100);
+.btn.ghost:hover {
+  background: var(--gray-50);
+  border-color: var(--gray-400);
+}
+
+.btn.primary {
+  background: var(--primary-500);
+  border-color: var(--primary-500);
+  color: #fff;
+}
+
+.btn.primary:hover {
+  background: var(--primary-600);
+  border-color: var(--primary-600);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn.outline {
+  background: transparent;
+}
+
+.btn.danger {
+  border-color: var(--error-400);
   color: var(--error-600);
 }
 
-/* 主内容区域 */
-.main-content {
-  flex: 1;
-  margin-left: 280px;
-  display: flex;
-  flex-direction: column;
-  transition: margin-left var(--transition-normal);
+.btn.danger:hover {
+  background: var(--error-50);
+  border-color: var(--error-500);
 }
 
-.sidebar-collapsed .main-content {
-  margin-left: 80px;
-}
-
-.top-header {
-  background: white;
-  border-bottom: 1px solid var(--gray-200);
-  padding: 0 var(--spacing-xl);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 80px;
-  box-shadow: var(--shadow-sm);
-  position: sticky;
-  top: 0;
-  z-index: var(--z-sticky);
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-lg);
-}
-
-.mobile-menu-toggle {
-  display: none;
-  background: none;
+.btn.link {
+  background: transparent;
   border: none;
-  cursor: pointer;
-  padding: var(--spacing-sm);
-  border-radius: var(--radius-md);
-  color: var(--secondary-600);
+  color: var(--primary-700);
+  padding: 0;
 }
 
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.breadcrumb-item {
-  color: var(--secondary-600);
-  text-decoration: none;
-  font-size: var(--text-sm);
-  transition: color var(--transition-fast);
-}
-
-.breadcrumb-item:hover:not(.current) {
-  color: var(--primary-600);
-}
-
-.breadcrumb-item.current {
-  color: var(--secondary-800);
+.btn.lg {
+  padding: 12px 16px;
   font-weight: var(--font-medium);
 }
 
-.breadcrumb-item:not(:last-child)::after {
-  content: '/';
-  margin-left: var(--spacing-sm);
-  color: var(--secondary-400);
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-}
-
-.header-action {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  background: none;
-  border: 1px solid var(--gray-300);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-lg);
-  cursor: pointer;
-  color: var(--secondary-700);
-  font-size: var(--text-sm);
-  transition: all var(--transition-fast);
-}
-
-.header-action:hover {
-  background: var(--gray-50);
-  border-color: var(--gray-400);
-}
-
-.add-button {
-  background: var(--primary-500);
-  border-color: var(--primary-500);
-  color: white;
-}
-
-.add-button:hover {
-  background: var(--primary-600);
-  border-color: var(--primary-600);
-}
-
-.theme-button {
-  background: none;
-  border: 1px solid var(--gray-300);
-  padding: var(--spacing-sm);
-  border-radius: var(--radius-lg);
-  cursor: pointer;
-  color: var(--secondary-600);
-  transition: all var(--transition-fast);
-}
-
-.theme-button:hover {
-  background: var(--gray-50);
-  border-color: var(--gray-400);
-}
-
 .icon {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   stroke-width: 2;
 }
 
-.page-content {
+/* 首页 hero */
+.home {
+  flex: 1;
+  padding: var(--spacing-2xl) var(--spacing-xl);
+}
+
+.hero {
+  background: linear-gradient(135deg, var(--primary-50), #fff);
+  border: 1px solid var(--border-color, var(--gray-200));
+  border-radius: 16px;
+  padding: var(--spacing-2xl);
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: var(--spacing-2xl);
+  box-shadow: var(--shadow-sm);
+}
+
+.hero-content h1 {
+  font-size: clamp(24px, 4vw, 36px);
+  color: var(--secondary-900);
+  margin-bottom: var(--spacing-md);
+}
+
+.hero-content p {
+  color: var(--secondary-600);
+  margin-bottom: var(--spacing-xl);
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.hero-note {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.badge.success {
+  background: #e6f9f0;
+  color: #16a34a;
+  border: 1px solid #86efac;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.muted {
+  color: var(--secondary-500);
+  font-size: 12px;
+}
+
+.hero-visual {
+  position: relative;
+  min-height: 220px;
+  background: radial-gradient(120px 120px at 70% 30%, rgba(59,130,246,0.15), transparent 60%),
+              radial-gradient(140px 140px at 30% 70%, rgba(99,102,241,0.15), transparent 60%);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px dashed var(--gray-200);
+}
+
+.hero-visual .lock {
+  position: absolute;
+  inset: 24px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fff, var(--primary-50));
+  box-shadow: inset 0 0 0 1px var(--gray-200), var(--shadow-sm);
+}
+
+.hero-visual .shine {
+  position: absolute;
+  top: -40%;
+  left: -20%;
+  width: 140%;
+  height: 80%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  transform: rotate(20deg);
+  filter: blur(10px);
+  animation: shine 5s linear infinite;
+}
+
+@keyframes shine {
+  0% { transform: translateX(-60%) rotate(20deg); }
+  100% { transform: translateX(60%) rotate(20deg); }
+}
+
+/* 功能亮点 */
+.features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-xl);
+  margin-top: var(--spacing-2xl);
+}
+
+.feature-card {
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border var(--transition-fast);
+}
+
+.feature-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--gray-300);
+}
+
+.feature-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  margin-bottom: var(--spacing-md);
+  border: 1px solid var(--gray-200);
+}
+
+.feature-icon.gradient {
+  background: linear-gradient(135deg, #dbeafe, #eef2ff);
+}
+.feature-icon.gradient2 {
+  background: linear-gradient(135deg, #dcfce7, #f0fdf4);
+}
+.feature-icon.gradient3 {
+  background: linear-gradient(135deg, #fee2e2, #fff7ed);
+}
+
+.feature-card h3 {
+  margin-bottom: 6px;
+  color: var(--secondary-900);
+}
+
+.feature-card p {
+  color: var(--secondary-600);
+  font-size: var(--text-sm);
+}
+
+/* 快速入口 */
+.quick {
+  margin-top: var(--spacing-2xl);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-lg);
+}
+
+.quick-card {
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  padding: var(--spacing-lg);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--spacing-md);
+  text-decoration: none;
+  color: inherit;
+  transition: border var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+.quick-card:hover {
+  border-color: var(--gray-300);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.qc-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--gray-200);
+}
+
+.qc-icon.blue { background: #eff6ff; color: #2563eb; }
+.qc-icon.green { background: #ecfeff; color: #0891b2; }
+.qc-icon.purple { background: #f5f3ff; color: #7c3aed; }
+.qc-icon.orange { background: #fff7ed; color: #ea580c; }
+
+.qc-info h4 {
+  margin: 0 0 4px 0;
+  color: var(--secondary-900);
+}
+
+.qc-info p {
+  margin: 0;
+  color: var(--secondary-500);
+  font-size: var(--text-sm);
+}
+
+/* 提示 */
+.notice {
+  margin-top: var(--spacing-xl);
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+  padding: 12px 14px;
+  border-radius: 10px;
+  box-shadow: var(--shadow-xs);
+}
+
+/* 其他页面容器 */
+.content {
   flex: 1;
   padding: var(--spacing-xl);
-  overflow-y: auto;
 }
 
-/* 遮罩层 */
-.sidebar-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: var(--z-modal-backdrop);
-  display: none;
+/* 页脚 */
+.footer {
+  border-top: 1px solid var(--gray-200);
+  background: #fff;
 }
 
-/* 动画 */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity var(--transition-fast);
+.footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-md) var(--spacing-xl);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
+.link {
+  text-decoration: none;
+  color: var(--secondary-600);
 }
 
-/* 响应式设计 */
+.link:hover {
+  color: var(--secondary-900);
+}
+
+.dot {
+  margin: 0 8px;
+  color: var(--secondary-400);
+}
+
+/* 响应式 */
+.hide-sm {
+  display: inline;
+}
+
 @media (max-width: 1024px) {
-  .action-text {
-    display: none;
-  }
+  .features { grid-template-columns: repeat(2, 1fr); }
+  .quick { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 768px) {
-  .sidebar {
-    transform: translateX(-100%);
-    transition: transform var(--transition-normal);
-  }
-
-  .sidebar.show {
-    transform: translateX(0);
-  }
-
-  .main-content {
-    margin-left: 0;
-  }
-
-  .sidebar-collapsed .main-content {
-    margin-left: 0;
-  }
-
-  .mobile-menu-toggle {
-    display: block;
-  }
-
-  .sidebar-overlay {
-    display: block;
-  }
-
-  .breadcrumb {
-    display: none;
-  }
-
-  .page-content {
-    padding: var(--spacing-lg);
-  }
+  .nav { padding: var(--spacing-md) var(--spacing-lg); }
+  .nav-links { display: none; }
+  .search-box { min-width: 0; }
+  .search-box input { width: 100px; }
+  .hero { grid-template-columns: 1fr; }
+  .hide-sm { display: none; }
 }
 
 @media (max-width: 480px) {
-  .top-header {
-    padding: 0 var(--spacing-lg);
-  }
-
-  .header-right {
-    gap: var(--spacing-sm);
-  }
-
-  .header-action {
-    padding: var(--spacing-sm);
-  }
-
-  .page-content {
-    padding: var(--spacing-md);
-  }
+  .features { grid-template-columns: 1fr; }
+  .quick { grid-template-columns: 1fr; }
 }
 </style>

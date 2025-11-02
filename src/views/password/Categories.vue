@@ -35,7 +35,7 @@
           </svg>
         </div>
         <div class="stat-content">
-          <div class="stat-number">{{ categories.length }}</div>
+          <div class="stat-number">{{ categoriesList.length }}</div>
           <div class="stat-label">总分类数</div>
         </div>
       </div>
@@ -49,7 +49,7 @@
           </svg>
         </div>
         <div class="stat-content">
-          <div class="stat-number">{{ totalPasswords }}</div>
+          <div class="stat-number">{{ totalPasswordsCount }}</div>
           <div class="stat-label">总密码数</div>
         </div>
       </div>
@@ -102,7 +102,24 @@
         </div>
       </div>
 
-      <div class="categories-grid" :class="{ 'list-view': viewMode === 'list' }">
+      <div v-if="loadingCategories" class="loading-state">
+        <div class="loading-spinner">
+          <svg class="icon spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M21 12a9 9 0 11-6.219-8.56"/>
+          </svg>
+        </div>
+        <p>正在加载分类...</p>
+      </div>
+
+      <div v-else-if="categories.length === 0" class="empty-state">
+        <div class="empty-icon">📂</div>
+        <p>暂无分类</p>
+        <button @click="showAddModal = true" class="add-category-btn">
+          添加第一个分类
+        </button>
+      </div>
+
+      <div v-else class="categories-grid" :class="{ 'list-view': viewMode === 'list' }">
         <div 
           v-for="category in categories" 
           :key="category.id" 
@@ -118,7 +135,7 @@
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                 </svg>
               </button>
-              <button @click.stop="deleteCategory(category)" class="action-btn delete-btn">
+              <button @click.stop="handleDeleteCategory(category)" class="action-btn delete-btn">
                 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <polyline points="3,6 5,6 21,6"/>
                   <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
@@ -170,8 +187,11 @@
           </div>
 
           <form @submit.prevent="handleSubmit" class="modal-body">
+            <!-- 分类名称 -->
             <div class="form-group">
-              <label>分类名称 *</label>
+              <label class="form-label">
+                分类名称 <span class="required">*</span>
+              </label>
               <input 
                 v-model="form.name" 
                 type="text" 
@@ -182,31 +202,118 @@
               />
             </div>
 
-            <div class="form-group">
-              <label>图标</label>
-              <div class="icon-selector">
-                <div 
-                  v-for="icon in availableIcons" 
-                  :key="icon" 
-                  class="icon-option"
-                  :class="{ selected: form.icon === icon }" 
-                  @click="form.icon = icon"
-                >
-                  {{ icon }}
+            <!-- 图标和颜色（并排显示） -->
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label class="form-label">图标</label>
+                <div class="icon-selector">
+                  <div 
+                    v-for="icon in availableIcons" 
+                    :key="icon" 
+                    class="icon-option"
+                    :class="{ selected: form.icon === icon }" 
+                    @click="form.icon = icon"
+                    :title="icon"
+                  >
+                    {{ icon }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group flex-1">
+                <label class="form-label">主题颜色</label>
+                <div class="color-selector">
+                  <div 
+                    v-for="color in presetColors" 
+                    :key="color.value"
+                    class="color-option"
+                    :class="{ selected: form.color === color.value }"
+                    :style="{ backgroundColor: color.value }"
+                    @click="form.color = color.value; customColor = color.value"
+                    :title="color.name"
+                  >
+                    <svg v-if="form.color === color.value" class="check-icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+                      <polyline points="20,6 9,17 4,12"/>
+                    </svg>
+                  </div>
+                  <div class="color-custom">
+                    <input 
+                      type="color" 
+                      v-model="customColor" 
+                      @input="form.color = customColor"
+                      class="color-picker"
+                      title="自定义颜色"
+                    />
+                    <span class="color-custom-label">自定义</span>
+                  </div>
                 </div>
               </div>
             </div>
 
+            <!-- 排序和默认设置（并排显示） -->
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label class="form-label">
+                  排序顺序
+                  <span class="label-hint">（数字越小越靠前）</span>
+                </label>
+                <input 
+                  v-model.number="form.sortOrder" 
+                  type="number" 
+                  class="form-input" 
+                  placeholder="0"
+                  min="0"
+                  max="999"
+                />
+              </div>
+
+              <div class="form-group flex-1">
+                <label class="form-label">设置</label>
+                <div class="toggle-group">
+                  <label class="toggle-label">
+                    <input 
+                      type="checkbox" 
+                      v-model="form.isDefault"
+                      class="toggle-input"
+                    />
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">设为默认分类</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- 描述 -->
             <div class="form-group">
-              <label>描述</label>
+              <label class="form-label">描述</label>
               <textarea 
                 v-model="form.description" 
                 class="form-textarea" 
                 rows="3" 
-                placeholder="添加分类描述..."
+                placeholder="添加分类描述（可选）..."
                 maxlength="100"
               ></textarea>
-              <div class="char-count">{{ form.description.length }}/100</div>
+              <div class="char-count">{{ (form.description || '').length }}/100</div>
+            </div>
+
+            <!-- 预览 -->
+            <div class="form-group">
+              <label class="form-label">预览</label>
+              <div class="category-preview">
+                <div 
+                  class="preview-card"
+                  :style="{ 
+                    borderLeftColor: form.color || '#6366f1',
+                    backgroundColor: form.color ? `${form.color}15` : 'transparent'
+                  }"
+                >
+                  <div class="preview-icon">{{ form.icon }}</div>
+                  <div class="preview-content">
+                    <div class="preview-name">{{ form.name || '分类名称' }}</div>
+                    <div class="preview-desc">{{ form.description || '分类描述' }}</div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="modal-actions">
@@ -244,27 +351,22 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-
-interface Category {
-  id: string
-  name: string
-  icon: string
-  description: string
-  passwordCount: number
-  lastUpdated: string
-}
-
-interface CategoryForm {
-  name: string
-  icon: string
-  description: string
-}
+import { useCategories, type Category, type CategoryForm } from '../../composables/useCategories'
+import { CATEGORY_ICONS, getDefaultCategoryIcon } from '../../utils/categoryUtils'
 
 export default defineComponent({
   name: 'Categories',
+  setup() {
+    // 使用分类管理的 composable
+    const categoriesComposable = useCategories()
+
+    return {
+      ...categoriesComposable,
+      availableIcons: CATEGORY_ICONS
+    }
+  },
   data() {
     return {
-      loading: false,
       showAddModal: false,
       showEditModal: false,
       editingCategory: null as Category | null,
@@ -276,71 +378,54 @@ export default defineComponent({
 
       form: {
         name: '',
-        icon: '📁',
-        description: ''
+        icon: getDefaultCategoryIcon(),
+        description: '',
+        color: '#6366f1',
+        sortOrder: undefined,
+        isDefault: false
       } as CategoryForm,
 
-      availableIcons: [
-        '📁', '🔐', '💼', '🏦', '🛒', '📧', '🎮', '📱',
-        '💻', '🌐', '🎵', '📺', '🏠', '🚗', '✈️', '🏥',
-        '🎓', '💳', '🔧', '📚', '🎨', '🏃', '🍔', '☕'
+      // 预设颜色
+      presetColors: [
+        { name: '蓝色', value: '#6366f1' },
+        { name: '绿色', value: '#10b981' },
+        { name: '红色', value: '#ef4444' },
+        { name: '黄色', value: '#f59e0b' },
+        { name: '紫色', value: '#8b5cf6' },
+        { name: '粉色', value: '#ec4899' },
+        { name: '青色', value: '#06b6d4' },
+        { name: '橙色', value: '#f97316' },
+        { name: '灰色', value: '#6b7280' },
+        { name: '靛蓝', value: '#4f46e5' }
       ],
 
-      categories: [
-        {
-          id: '1',
-          name: '社交媒体',
-          icon: '📱',
-          description: '各种社交平台账户',
-          passwordCount: 8,
-          lastUpdated: '2天前'
-        },
-        {
-          id: '2',
-          name: '邮箱',
-          icon: '📧',
-          description: '邮箱服务账户',
-          passwordCount: 5,
-          lastUpdated: '1周前'
-        },
-        {
-          id: '3',
-          name: '购物',
-          icon: '🛒',
-          description: '电商和购物网站',
-          passwordCount: 12,
-          lastUpdated: '3天前'
-        },
-        {
-          id: '4',
-          name: '银行',
-          icon: '🏦',
-          description: '银行和金融服务',
-          passwordCount: 3,
-          lastUpdated: '1天前'
-        },
-        {
-          id: '5',
-          name: '工作',
-          icon: '💼',
-          description: '工作相关账户',
-          passwordCount: 15,
-          lastUpdated: '5小时前'
-        },
-        {
-          id: '6',
-          name: '娱乐',
-          icon: '🎮',
-          description: '游戏和娱乐平台',
-          passwordCount: 7,
-          lastUpdated: '1周前'
-        }
-      ] as Category[]
+      customColor: '#6366f1'
     }
   },
+  watch: {
+    'form.color'(newColor) {
+      // 如果颜色不在预设列表中，同步到自定义颜色选择器
+      const isPresetColor = this.presetColors.some(c => c.value === newColor)
+      if (!isPresetColor && newColor) {
+        this.customColor = newColor
+      }
+    }
+  },
+  mounted() {
+    this.handleLoadCategories()
+  },
   computed: {
-    totalPasswords(): number {
-      return this.categories.reduce((sum, cat) => sum + cat.passwordCount, 0)
+    // 从 composable 获取分类列表
+    categoriesList(): Category[] {
+      return this.categories
+    },
+    // 从 composable 获取加载状态
+    loadingCategories(): boolean {
+      return this.loading
+    },
+    // 从 composable 获取总数
+    totalPasswordsCount(): number {
+      return this.totalPasswords
     },
     recentlyUpdated(): number {
       return this.categories.filter(cat => 
@@ -362,12 +447,16 @@ export default defineComponent({
       this.form = {
         name: category.name,
         icon: category.icon,
-        description: category.description
+        description: category.description,
+        color: '#6366f1', // TODO: 从API获取颜色信息
+        sortOrder: undefined, // TODO: 从API获取排序信息
+        isDefault: false // TODO: 从API获取默认状态
       }
+      this.customColor = this.form.color || '#6366f1'
       this.showEditModal = true
     },
 
-    async deleteCategory(category: Category) {
+    async handleDeleteCategory(category: Category) {
       if (category.passwordCount > 0) {
         if (!confirm(`分类 "${category.name}" 中还有 ${category.passwordCount} 个密码。删除分类后，这些密码将移动到"未分类"。确定要删除吗？`)) {
           return
@@ -379,11 +468,12 @@ export default defineComponent({
       }
 
       try {
-        // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 500))
-
-        this.categories = this.categories.filter(c => c.id !== category.id)
-        this.showToastMessage('分类已删除')
+        const result = await this.deleteCategory(category.id)
+        if (result.success) {
+          this.showToastMessage(result.message || '分类已删除')
+        } else {
+          this.showToastMessage(result.message || '删除分类失败', 'error')
+        }
       } catch (error) {
         console.error('删除分类失败:', error)
         this.showToastMessage('删除分类失败，请重试', 'error')
@@ -393,43 +483,27 @@ export default defineComponent({
     async handleSubmit() {
       if (!this.form.name.trim()) return
 
-      this.loading = true
       try {
-        // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 1000))
-
         if (this.showEditModal && this.editingCategory) {
-          // 更新分类
-          const index = this.categories.findIndex(c => c.id === this.editingCategory!.id)
-          if (index !== -1) {
-            this.categories[index] = {
-              ...this.categories[index],
-              name: this.form.name,
-              icon: this.form.icon,
-              description: this.form.description
-            }
-          }
-          this.showToastMessage('分类已更新')
+          // 更新分类功能暂未实现（后端接口暂无）
+          this.showToastMessage('编辑分类功能暂未实现', 'error')
+          return
         } else {
-          // 添加新分类
-          const newCategory: Category = {
-            id: Date.now().toString(),
-            name: this.form.name,
-            icon: this.form.icon,
-            description: this.form.description,
-            passwordCount: 0,
-            lastUpdated: '刚刚'
+          // 使用 composable 创建分类（会自动刷新列表）
+          const result = await this.createCategory(this.form)
+          
+          if (result.success) {
+            this.showToastMessage(result.message || '分类创建成功')
+            this.closeModals()
+            // createCategory 内部已经调用了 loadCategories，无需再次调用
+          } else {
+            this.showToastMessage(result.message || '创建分类失败', 'error')
           }
-          this.categories.push(newCategory)
-          this.showToastMessage('分类已添加')
         }
-
-        this.closeModals()
-      } catch (error) {
+      } catch (error: any) {
         console.error('保存分类失败:', error)
-        this.showToastMessage('保存分类失败，请重试', 'error')
-      } finally {
-        this.loading = false
+        const errorMessage = error?.message || '保存分类失败，请重试'
+        this.showToastMessage(errorMessage, 'error')
       }
     },
 
@@ -439,8 +513,20 @@ export default defineComponent({
       this.editingCategory = null
       this.form = {
         name: '',
-        icon: '📁',
-        description: ''
+        icon: getDefaultCategoryIcon(),
+        description: '',
+        color: '#6366f1',
+        sortOrder: undefined,
+        isDefault: false
+      }
+      this.customColor = '#6366f1'
+    },
+
+    // 加载分类列表（使用 composable 的方法）
+    async handleLoadCategories() {
+      const success = await this.loadCategories()
+      if (!success && this.error) {
+        this.showToastMessage(this.error, 'error')
       }
     },
 
@@ -884,12 +970,24 @@ export default defineComponent({
   margin-bottom: var(--spacing-5);
 }
 
-.form-group label {
+.form-label {
   display: block;
   margin-bottom: var(--spacing-2);
   font-weight: var(--font-medium);
   color: var(--text-primary);
   font-size: var(--text-sm);
+}
+
+.form-label .required {
+  color: var(--danger-500);
+  margin-left: 2px;
+}
+
+.form-label .label-hint {
+  font-weight: var(--font-normal);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  margin-left: var(--spacing-1);
 }
 
 .form-input,
@@ -952,6 +1050,202 @@ export default defineComponent({
 .icon-option.selected {
   border-color: var(--primary-500);
   background: var(--primary-50);
+  transform: scale(1.05);
+}
+
+/* 表单行布局 */
+.form-row {
+  display: flex;
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-5);
+}
+
+.form-row .form-group {
+  margin-bottom: 0;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+/* 颜色选择器 */
+.color-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-2);
+}
+
+.color-option {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.color-option:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.color-option.selected {
+  border-color: var(--text-primary);
+  box-shadow: 0 0 0 2px var(--bg-primary), 0 2px 8px rgba(0, 0, 0, 0.2);
+  transform: scale(1.1);
+}
+
+.color-option .check-icon {
+  width: 16px;
+  height: 16px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.color-custom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+.color-picker {
+  width: 36px;
+  height: 36px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  padding: 0;
+  background: none;
+  overflow: hidden;
+}
+
+.color-picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.color-picker::-webkit-color-swatch {
+  border: none;
+  border-radius: var(--radius-sm);
+}
+
+.color-custom-label {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* 开关样式 */
+.toggle-group {
+  padding: var(--spacing-2) 0;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background-color: var(--bg-tertiary);
+  border-radius: 24px;
+  transition: all 0.3s;
+  border: 2px solid var(--border-color);
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: white;
+  top: 1px;
+  left: 1px;
+  transition: all 0.3s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-input:checked + .toggle-slider {
+  background-color: var(--primary-500);
+  border-color: var(--primary-500);
+}
+
+.toggle-input:checked + .toggle-slider::before {
+  transform: translateX(20px);
+}
+
+.toggle-text {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+
+/* 分类预览 */
+.category-preview {
+  margin-top: var(--spacing-2);
+}
+
+.preview-card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid;
+  transition: all 0.2s;
+}
+
+.preview-icon {
+  font-size: 32px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  flex-shrink: 0;
+}
+
+.preview-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.preview-name {
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.preview-desc {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .modal-actions {
@@ -1075,6 +1369,72 @@ export default defineComponent({
   transform: translateX(100%);
 }
 
+/* 加载状态 */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-12);
+  min-height: 300px;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  margin-bottom: var(--spacing-4);
+}
+
+.loading-spinner .icon {
+  width: 100%;
+  height: 100%;
+  color: var(--primary-500);
+}
+
+.loading-state p {
+  color: var(--text-secondary);
+  font-size: var(--text-base);
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-12);
+  min-height: 300px;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: var(--spacing-4);
+}
+
+.empty-state p {
+  color: var(--text-secondary);
+  font-size: var(--text-lg);
+  margin-bottom: var(--spacing-6);
+}
+
+.add-category-btn {
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  color: white;
+  border: none;
+  padding: var(--spacing-3) var(--spacing-6);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  font-weight: var(--font-semibold);
+  transition: all 0.2s;
+  box-shadow: var(--shadow-sm);
+}
+
+.add-category-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .categories-container {
@@ -1103,6 +1463,20 @@ export default defineComponent({
 
   .icon-selector {
     grid-template-columns: repeat(6, 1fr);
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: var(--spacing-4);
+  }
+
+  .color-selector {
+    justify-content: flex-start;
+  }
+
+  .preview-card {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .modal-content {

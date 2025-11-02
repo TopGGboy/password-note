@@ -24,7 +24,7 @@ export const API_ENDPOINTS = {
   },
 
   CATEGORIES: {
-    BASE: "/api/categories",
+    BASE: "/api/categories"
   },
 
   // 验证码相关接口
