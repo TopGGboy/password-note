@@ -6,7 +6,7 @@ import {
   LoginResponse,
   RegisterRequest,
   RegisterResponse,
-} from "src/types/api";
+} from "../types/api";
 import { tokenManager } from "../utils/auth/tokenManager";
 import { STORAGE_KEYS } from "../constants/constants";
 

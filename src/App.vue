@@ -1,10 +1,8 @@
 <template>
   <div id="app">
-    <!-- 根据路由决定是否使用布局 -->
-    <AppLayout v-if="shouldUseLayout">
-      <router-view />
-    </AppLayout>
-    <router-view v-else />
+
+    <router-view />
+
 
     <!-- 开发环境安全状态监控 -->
     <SecurityStatus />

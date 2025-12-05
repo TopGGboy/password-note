@@ -1,27 +1,30 @@
 <template>
   <div class="password-entries-list" ref="scrollContainer">
     <!-- 搜索和筛选栏 -->
-    <div class="search-filter-bar">
+    <div class="search-filter-bar card">
       <div class="search-box">
-        <input v-model="searchKeyword" type="text" placeholder="搜索密码条目..." class="search-input" @input="handleSearch" />
-        <button @click="handleSearch" class="search-btn">
-          🔍
+        <input v-model="searchKeyword" type="text" placeholder="搜索密码条目..." class="form-input search-input" @input="handleSearch" />
+        <button @click="handleSearch" class="btn btn-icon search-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
         </button>
       </div>
 
       <div class="filter-controls">
-        <select v-model="selectedCategory" @change="handleCategoryFilter" class="category-filter">
+        <select v-model="selectedCategory" @change="handleCategoryFilter" class="form-select category-filter">
           <option value="">所有分类</option>
           <option v-for="category in categories" :key="category.id" :value="category.id">
             {{ category.name }}
           </option>
         </select>
 
-        <button @click="handleFavoriteFilter" class="favorite-filter" :class="{ active: showFavoritesOnly }">
+        <button @click="handleFavoriteFilter" class="btn favorite-filter" :class="{ 'btn-primary': showFavoritesOnly, 'btn-secondary': !showFavoritesOnly }">
           ⭐ {{ showFavoritesOnly ? '显示全部' : '仅收藏' }}
         </button>
 
-        <select v-model="sortOption" @change="handleSort" class="sort-select">
+        <select v-model="sortOption" @change="handleSort" class="form-select sort-select">
           <option value="updatedAt-desc">最近更新</option>
           <option value="createdAt-desc">最近创建</option>
           <option value="title-asc">标题 A-Z</option>
@@ -39,24 +42,34 @@
     </div>
 
     <!-- 错误状态 -->
-    <div v-else-if="error" class="error-state">
-      <p class="error-message">{{ error }}</p>
-      <button @click="refresh" class="retry-btn">重试</button>
+    <div v-else-if="error" class="error-state card">
+      <div class="error-content">
+        <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <div class="error-info">
+          <h3 class="error-title">加载失败</h3>
+          <p class="error-description">{{ error }}</p>
+        </div>
+      </div>
+      <button @click="refresh" class="btn btn-primary retry-btn">重试</button>
     </div>
 
     <!-- 空状态 -->
-    <div v-else-if="isEmpty" class="empty-state">
+    <div v-else-if="isEmpty" class="empty-state card">
       <div class="empty-icon">🔐</div>
-      <h3>暂无密码条目</h3>
-      <p>{{ searchKeyword ? '没有找到匹配的密码条目' : '开始添加你的第一个密码吧！' }}</p>
-      <button v-if="!searchKeyword" @click="$emit('add-password')" class="add-first-btn">
+      <h3 class="empty-title">暂无密码条目</h3>
+      <p class="empty-description">{{ searchKeyword ? '没有找到匹配的密码条目' : '开始添加你的第一个密码吧！' }}</p>
+      <button v-if="!searchKeyword" @click="$emit('add-password')" class="btn btn-primary add-first-btn">
         添加密码
       </button>
     </div>
 
     <!-- 密码条目列表 -->
     <div v-else class="entries-grid">
-      <div v-for="entry in entries" :key="entry.id" class="entry-card" @click="$emit('view-entry', entry)">
+      <div v-for="entry in entries" :key="entry.id" class="entry-card card" @click="$emit('view-entry', entry)">
         <div class="entry-header">
           <div class="entry-icon">{{ entry.icon || '🔐' }}</div>
           <div class="entry-info">
@@ -64,18 +77,26 @@
             <p class="entry-username">{{ entry.username }}</p>
           </div>
           <div class="entry-actions">
-            <button @click.stop="handleToggleFavorite(entry.id, entry.favorite)" class="favorite-btn"
-              :class="{ active: entry.favorite }">
+            <button @click.stop="handleToggleFavorite(entry.id, entry.favorite)" class="btn btn-icon favorite-btn"
+              :class="{ 'btn-primary': entry.favorite, 'btn-secondary': !entry.favorite }">
               {{ entry.favorite ? '⭐' : '☆' }}
             </button>
-            <button @click.stop="handleCopyPassword(entry)" class="copy-btn" title="复制密码">
-              📋
+            <button @click.stop="handleCopyPassword(entry)" class="btn btn-icon copy-btn" title="复制密码">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
             </button>
-            <button @click.stop="$emit('edit-entry', entry)" class="edit-btn" title="编辑">
-              ✏️
+            <button @click.stop="$emit('edit-entry', entry)" class="btn btn-icon edit-btn" title="编辑">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
             </button>
-            <button @click.stop="handleDeleteEntry(entry.id, entry.title)" class="delete-btn" title="删除">
-              🗑️
+            <button @click.stop="handleDeleteEntry(entry.id, entry.title)" class="btn btn-icon delete-btn" title="删除">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
             </button>
           </div>
         </div>
@@ -85,13 +106,13 @@
             <a :href="entry.url" target="_blank" @click.stop>{{ entry.url }}</a>
           </div>
           <div class="entry-meta">
-            <span class="usage-count">使用 {{ entry.timesUsed }} 次</span>
+            <span class="usage-count badge badge-primary">使用 {{ entry.timesUsed }} 次</span>
             <span class="last-used">
               {{ entry.lastUsed ? formatDate(entry.lastUsed) : '从未使用' }}
             </span>
           </div>
           <div v-if="entry.tags && entry.tags.length > 0" class="entry-tags">
-            <span v-for="tag in entry.tags" :key="tag" class="tag">{{ tag }}</span>
+            <span v-for="tag in entry.tags" :key="tag" class="tag badge badge-secondary">{{ tag }}</span>
           </div>
         </div>
       </div>
@@ -99,7 +120,7 @@
 
     <!-- 加载更多 -->
     <div v-if="hasMore" class="load-more-section">
-      <button @click="loadMore" :disabled="loading" class="load-more-btn">
+      <button @click="loadMore" :disabled="loading" class="btn btn-primary load-more-btn">
         {{ loading ? '加载中...' : '加载更多' }}
       </button>
     </div>
@@ -281,8 +302,6 @@ export default defineComponent({
       }
     }
 
-
-
     // 处理密码条目添加事件
     const handlePasswordEntryAdded = async () => {
       console.log('检测到密码条目添加事件，正在刷新列表...')
@@ -420,7 +439,6 @@ export default defineComponent({
       window.removeEventListener('scroll', throttledHandleScroll)
     })
 
-
     return {
       // 响应式数据
       loading,
@@ -455,102 +473,127 @@ export default defineComponent({
 
 <style scoped>
 .password-entries-list {
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-  scroll-behavior: smooth;
+  padding: var(--spacing-xl);
 }
 
 .search-filter-bar {
   display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-2xl);
   flex-wrap: wrap;
   align-items: center;
+  padding: var(--spacing-xl);
+  background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s ease;
+}
+
+.search-filter-bar:hover {
+  box-shadow: var(--shadow-lg);
 }
 
 .search-box {
   display: flex;
   flex: 1;
   min-width: 300px;
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 
 .search-input {
   flex: 1;
-  padding: 12px 16px;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px 0 0 8px;
-  font-size: 16px;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: none;
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  font-size: var(--text-base);
   outline: none;
-  transition: border-color 0.2s;
+  transition: all var(--transition-fast);
+  background: transparent;
 }
 
 .search-input:focus {
-  border-color: #3182ce;
+  box-shadow: none;
 }
 
 .search-btn {
-  padding: 12px 16px;
-  background: #3182ce;
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  background: var(--primary-500);
   color: white;
   border: none;
-  border-radius: 0 8px 8px 0;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background-color 0.2s;
+  padding: 0 var(--spacing-lg);
+  transition: all 0.3s ease;
 }
 
-.search-btn:hover {
-  background: #2c5282;
+.search-btn:hover:not(:disabled) {
+  background: var(--primary-600);
+  transform: scale(1.05);
 }
 
 .filter-controls {
   display: flex;
-  gap: 12px;
+  gap: var(--spacing-md);
   flex-wrap: wrap;
 }
 
 .category-filter,
 .sort-select {
-  padding: 8px 12px;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  background: white;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-primary);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--text-sm);
+  min-width: 120px;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.category-filter:hover,
+.sort-select:hover {
+  border-color: var(--primary-300);
+  box-shadow: var(--shadow-md);
+}
+
+.category-filter:focus,
+.sort-select:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
 .favorite-filter {
-  padding: 8px 16px;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  background: white;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s;
-}
-
-.favorite-filter.active {
-  background: #ffd700;
-  border-color: #ffd700;
-  color: #333;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  transition: all 0.3s ease;
 }
 
 .loading-state,
-.error-state,
-.empty-state {
+.empty-state,
+.error-state {
   text-align: center;
-  padding: 60px 20px;
+  padding: var(--spacing-4xl) var(--spacing-xl);
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--spacing-2xl);
 }
 
 .loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #e2e8f0;
-  border-top: 4px solid #3182ce;
+  width: 60px;
+  height: 60px;
+  border: 4px solid var(--gray-200);
+  border-top: 4px solid var(--primary-500);
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin: 0 auto 16px;
+  margin: 0 auto var(--spacing-lg);
 }
 
 @keyframes spin {
@@ -563,207 +606,371 @@ export default defineComponent({
   }
 }
 
-.error-message {
-  color: #e53e3e;
-  margin-bottom: 16px;
+.error-content {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+  text-align: left;
+  justify-content: center;
+}
+
+.error-icon {
+  width: 64px;
+  height: 64px;
+  color: var(--error-500);
+  stroke-width: 1.5;
+  flex-shrink: 0;
+}
+
+.error-title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  margin: 0 0 var(--spacing-xs);
+  color: var(--error-800);
+}
+
+.error-description {
+  color: var(--error-600);
+  margin: 0;
+  font-size: var(--text-base);
 }
 
 .retry-btn,
 .add-first-btn {
-  padding: 12px 24px;
-  background: #3182ce;
+  padding: var(--spacing-md) var(--spacing-2xl);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
   color: white;
   border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background-color 0.2s;
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s ease;
 }
 
 .retry-btn:hover,
 .add-first-btn:hover {
-  background: #2c5282;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 .empty-icon {
-  font-size: 64px;
-  margin-bottom: 16px;
+  font-size: 5rem;
+  margin-bottom: var(--spacing-xl);
+  opacity: 0.7;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-20px);
+  }
+  60% {
+    transform: translateY(-10px);
+  }
+}
+
+.empty-title {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  margin-bottom: var(--spacing-md);
+  color: var(--secondary-900);
+  background: linear-gradient(135deg, var(--primary-500), var(--secondary-700));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.empty-description {
+  color: var(--secondary-500);
+  margin-bottom: var(--spacing-xl);
+  font-size: var(--text-lg);
 }
 
 .entries-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 20px;
-  margin-bottom: 24px;
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-2xl);
 }
 
 .entry-card {
-  background: white;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 20px;
+  padding: var(--spacing-xl);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border-color);
+  background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.entry-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.entry-card:hover::before {
+  left: 100%;
 }
 
 .entry-card:hover {
-  border-color: #3182ce;
-  box-shadow: 0 4px 12px rgba(49, 130, 206, 0.1);
+  border-color: var(--primary-300);
+  box-shadow: var(--shadow-xl);
+  transform: translateY(-4px);
 }
 
 .entry-header {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  position: relative;
+  z-index: 1;
 }
 
 .entry-icon {
-  font-size: 32px;
+  font-size: 2.5rem;
   flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  border-radius: var(--radius-lg);
+  color: white;
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s ease;
+}
+
+.entry-card:hover .entry-icon {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: var(--shadow-lg);
 }
 
 .entry-info {
   flex: 1;
   min-width: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .entry-title {
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0 0 4px 0;
-  color: #1a202c;
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  margin: 0 0 var(--spacing-xs);
+  color: var(--secondary-900);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.entry-card:hover .entry-title {
+  color: var(--primary-600);
 }
 
 .entry-username {
-  font-size: 14px;
-  color: #718096;
+  font-size: var(--text-sm);
+  color: var(--secondary-500);
   margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.entry-card:hover .entry-username {
+  color: var(--secondary-700);
 }
 
 .entry-actions {
   display: flex;
-  gap: 4px;
+  gap: var(--spacing-xs);
   flex-shrink: 0;
+  opacity: 0.7;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
 }
 
-.entry-actions button {
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 6px;
-  background: #f7fafc;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.entry-card:hover .entry-actions {
+  opacity: 1;
 }
 
-.entry-actions button:hover {
-  background: #edf2f7;
+.entry-actions .btn-icon {
+  width: 36px;
+  height: 36px;
+  padding: var(--spacing-sm);
+  transition: all 0.3s ease;
+  border-radius: var(--radius-lg);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--secondary-600);
 }
 
-.favorite-btn.active {
-  background: #ffd700;
+.entry-actions .btn-icon:hover {
+  transform: scale(1.1);
+  box-shadow: var(--shadow-md);
 }
 
-.delete-btn:hover {
-  background: #fed7d7;
-  color: #e53e3e;
+.entry-actions .favorite-btn:hover {
+  background: var(--warning-50);
+  color: var(--warning-600);
+  border-color: var(--warning-200);
+}
+
+.entry-actions .copy-btn:hover {
+  background: var(--success-50);
+  color: var(--success-600);
+  border-color: var(--success-200);
+}
+
+.entry-actions .edit-btn:hover {
+  background: var(--primary-50);
+  color: var(--primary-600);
+  border-color: var(--primary-200);
+}
+
+.entry-actions .delete-btn:hover:not(:disabled) {
+  background: var(--error-50);
+  color: var(--error-700);
+  border-color: var(--error-200);
+}
+
+.entry-actions svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
 }
 
 .entry-details {
-  font-size: 14px;
-  color: #718096;
+  font-size: var(--text-sm);
+  color: var(--secondary-600);
+  position: relative;
+  z-index: 1;
 }
 
 .entry-url {
-  margin-bottom: 8px;
+  margin-bottom: var(--spacing-sm);
+  word-break: break-all;
 }
 
 .entry-url a {
-  color: #3182ce;
+  color: var(--primary-600);
   text-decoration: none;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  display: block;
+  transition: all var(--transition-fast);
+  font-weight: var(--font-medium);
 }
 
 .entry-url a:hover {
+  color: var(--primary-800);
   text-decoration: underline;
 }
 
 .entry-meta {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 12px;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+  font-size: var(--text-xs);
+}
+
+.entry-meta .usage-count {
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  color: white;
+  border: none;
+}
+
+.entry-meta .last-used {
+  color: var(--secondary-500);
 }
 
 .entry-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--spacing-xs);
 }
 
 .tag {
-  background: #ebf8ff;
-  color: #3182ce;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 12px;
+  font-size: var(--text-xs);
+  padding: var(--spacing-xxs) var(--spacing-sm);
+  background: var(--bg-primary);
+  color: var(--secondary-600);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  transition: all 0.3s ease;
+}
+
+.tag:hover {
+  background: var(--primary-50);
+  color: var(--primary-600);
+  border-color: var(--primary-200);
+  transform: scale(1.05);
 }
 
 .load-more-section {
   text-align: center;
-  margin: 24px 0;
+  margin: var(--spacing-2xl) 0;
 }
 
 .load-more-btn {
-  padding: 12px 32px;
-  background: #3182ce;
+  padding: var(--spacing-md) var(--spacing-3xl);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
   color: white;
   border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background-color 0.2s;
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s ease;
 }
 
 .load-more-btn:hover:not(:disabled) {
-  background: #2c5282;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 .load-more-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: var(--shadow-sm);
 }
 
 .pagination-info {
   text-align: center;
-  color: #718096;
-  font-size: 14px;
-  padding: 16px 0;
-  border-top: 1px solid #e2e8f0;
+  color: var(--secondary-500);
+  font-size: var(--text-sm);
+  padding: var(--spacing-lg) 0;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  margin: 0 var(--spacing-xl);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  box-shadow: var(--shadow-md);
 }
 
 @media (max-width: 768px) {
   .password-entries-list {
-    padding: 16px;
+    padding: var(--spacing-lg);
   }
 
   .search-filter-bar {
     flex-direction: column;
     align-items: stretch;
+    padding: var(--spacing-lg);
   }
 
   .search-box {
@@ -776,7 +983,7 @@ export default defineComponent({
 
   .entries-grid {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: var(--spacing-md);
   }
 
   .entry-header {
@@ -787,7 +994,21 @@ export default defineComponent({
     order: 3;
     width: 100%;
     justify-content: flex-end;
-    margin-top: 8px;
+    margin-top: var(--spacing-sm);
+  }
+  
+  .entry-icon {
+    font-size: 2rem;
+    width: 50px;
+    height: 50px;
+  }
+  
+  .empty-title {
+    font-size: var(--text-2xl);
+  }
+  
+  .empty-icon {
+    font-size: 4rem;
   }
 }
 </style>

@@ -1,14 +1,8 @@
-import { createStore } from 'vuex'
+// Pinia store 统一导出
+// 导入所有store
+import { useAuthStore } from './auth'
 
-export default createStore({
-  state: {
-  },
-  getters: {
-  },
-  mutations: {
-  },
-  actions: {
-  },
-  modules: {
-  }
-})
+// 导出所有store
+export {
+  useAuthStore
+}

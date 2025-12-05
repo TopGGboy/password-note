@@ -619,6 +619,8 @@ export default defineComponent({
   min-height: 100vh;
   background: var(--bg-secondary);
   padding: var(--spacing-6);
+  background-image: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+  background-attachment: fixed;
 }
 
 .icon {
@@ -690,18 +692,46 @@ export default defineComponent({
   border-radius: var(--radius-lg);
   font-weight: var(--font-semibold);
   cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm), 0 2px 10px rgba(99, 102, 241, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.check-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.check-btn:hover:not(:disabled)::before {
+  width: 300px;
+  height: 300px;
 }
 
 .check-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-lg), 0 4px 20px rgba(99, 102, 241, 0.4);
 }
 
 .check-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.check-btn svg {
+  transition: transform 0.3s ease;
+}
+
+.check-btn:hover:not(:disabled) svg {
+  transform: rotate(180deg) scale(1.2);
 }
 
 /* 安全概览 */

@@ -3,16 +3,7 @@ import { ROUTES } from '../constants/constants'
 import { authManager } from '../utils/auth/authManager'
 
 const routes: Array<RouteRecordRaw> = [
-  {
-    path: ROUTES.HOME,
-    name: 'Home',
-    component: () => import('../views/dashboard/Home.vue'),
-    meta: {
-      requiresAuth: true,
-      title: '主页 - 密码笔记',
-      description: '密码管理主页面'
-    }
-  },
+  // 公共路由
   {
     path: ROUTES.LOGIN,
     name: 'Login',
@@ -34,66 +25,6 @@ const routes: Array<RouteRecordRaw> = [
     }
   },
   {
-    path: ROUTES.DASHBOARD,
-    name: 'Dashboard',
-    component: () => import('../views/dashboard/Dashboard.vue'),
-    meta: {
-      requiresAuth: true,
-      title: '控制台 - 密码笔记',
-      description: '用户主控制台，管理密码笔记'
-    }
-  },
-  {
-    path: '/passwords',
-    name: 'Passwords',
-    component: () => import('../views/password/Passwords.vue'),
-    meta: {
-      requiresAuth: true,
-      title: '密码管理 - 密码笔记',
-      description: '管理所有密码记录'
-    }
-  },
-  {
-    path: '/passwords/:id',
-    name: 'PasswordDetail',
-    component: () => import('../views/password/PasswordDetail.vue'),
-    meta: {
-      requiresAuth: true,
-      title: '密码详情 - 密码笔记',
-      description: '查看密码详细信息'
-    }
-  },
-  {
-    path: '/categories',
-    name: 'Categories',
-    component: () => import('../views/password/Categories.vue'),
-    meta: {
-      requiresAuth: true,
-      title: '分类管理 - 密码笔记',
-      description: '管理密码分类'
-    }
-  },
-  {
-    path: '/security',
-    name: 'Security',
-    component: () => import('../views/security/Security.vue'),
-    meta: {
-      requiresAuth: true,
-      title: '安全中心 - 密码笔记',
-      description: '安全检查和设置'
-    }
-  },
-  {
-    path: '/settings',
-    name: 'Settings',
-    component: () => import('../views/dashboard/Settings.vue'),
-    meta: {
-      requiresAuth: true,
-      title: '设置 - 密码笔记',
-      description: '应用设置和偏好'
-    }
-  },
-  {
     path: ROUTES.RESET_PASSWORD,
     name: 'ResetPassword',
     component: () => import('../views/auth/ResetPassword.vue'),
@@ -102,6 +33,81 @@ const routes: Array<RouteRecordRaw> = [
       title: '重置密码 - 密码笔记',
       description: '密码重置页面'
     }
+  },
+  
+  // 主应用布局（受保护路由的父组件）
+  {
+    path: '/',
+    name: 'AppLayout',
+    component: () => import('../components/common/AppLayout.vue'),
+    meta: {
+      requiresAuth: true
+    },
+    children: [
+      {
+        path: ROUTES.HOME,
+        name: 'Home',
+        redirect: ROUTES.DASHBOARD,
+        meta: {
+          title: '主页 - 密码笔记',
+          description: '密码管理主页面'
+        }
+      },
+      {
+        path: ROUTES.DASHBOARD,
+        name: 'Dashboard',
+        component: () => import('../views/dashboard/Dashboard.vue'),
+        meta: {
+          title: '控制台 - 密码笔记',
+          description: '用户主控制台，管理密码笔记'
+        }
+      },
+      {
+        path: '/passwords',
+        name: 'Passwords',
+        component: () => import('../views/password/Passwords.vue'),
+        meta: {
+          title: '密码管理 - 密码笔记',
+          description: '管理所有密码记录'
+        }
+      },
+      {
+        path: '/passwords/:id',
+        name: 'PasswordDetail',
+        component: () => import('../views/password/PasswordDetail.vue'),
+        meta: {
+          title: '密码详情 - 密码笔记',
+          description: '查看密码详细信息'
+        }
+      },
+      {
+        path: '/categories',
+        name: 'Categories',
+        component: () => import('../views/password/Categories.vue'),
+        meta: {
+          title: '分类管理 - 密码笔记',
+          description: '管理密码分类'
+        }
+      },
+      {
+        path: '/security',
+        name: 'Security',
+        component: () => import('../views/security/Security.vue'),
+        meta: {
+          title: '安全中心 - 密码笔记',
+          description: '安全检查和设置'
+        }
+      },
+      {
+        path: '/settings',
+        name: 'Settings',
+        component: () => import('../views/dashboard/Settings.vue'),
+        meta: {
+          title: '设置 - 密码笔记',
+          description: '应用设置和偏好'
+        }
+      }
+    ]
   },
 
   {

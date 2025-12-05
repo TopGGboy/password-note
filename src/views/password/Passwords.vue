@@ -1,7 +1,7 @@
 <template>
   <div class="passwords-page">
     <!-- 页面头部 -->
-    <div class="page-header">
+    <div class="page-header card">
       <div class="header-content">
         <div class="header-left">
           <h1 class="page-title">
@@ -15,14 +15,14 @@
           <p class="page-subtitle">安全管理您的所有账号密码</p>
         </div>
         <div class="header-actions">
-          <button @click="showAddModal = true" class="btn-primary">
+          <button @click="showAddModal = true" class="btn btn-primary">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <line x1="12" y1="5" x2="12" y2="19"/>
               <line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
             添加密码
           </button>
-          <button @click="refreshEntries" class="btn-secondary" :disabled="loading">
+          <button @click="refreshEntries" class="btn btn-secondary" :disabled="loading">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <polyline points="23 4 23 10 17 10"/>
               <polyline points="1 20 1 14 7 14"/>
@@ -36,7 +36,7 @@
 
     <!-- 统计信息 -->
     <div class="stats-section">
-      <div class="stat-card">
+      <div class="stat-card card">
         <div class="stat-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -49,7 +49,7 @@
           <div class="stat-label">总密码数</div>
         </div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card card">
         <div class="stat-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
@@ -60,7 +60,7 @@
           <div class="stat-label">收藏密码</div>
         </div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card card">
         <div class="stat-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
@@ -74,7 +74,7 @@
     </div>
 
     <!-- 密码条目列表 -->
-    <div class="content-section">
+    <div class="content-section card">
       <PasswordEntriesList 
         @add-password="showAddModal = true" 
         @view-entry="handleViewEntry"
@@ -122,14 +122,14 @@
 
     <!-- 错误提示 -->
     <div v-if="error" class="error-message">
-      <div class="error-content">
+      <div class="error-content card">
         <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
           <circle cx="12" cy="12" r="10"/>
           <line x1="15" y1="9" x2="9" y2="15"/>
           <line x1="9" y1="9" x2="15" y2="15"/>
         </svg>
         <span class="error-text">{{ error }}</span>
-        <button @click="clearError" class="error-close">
+        <button @click="clearError" class="error-close btn btn-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <line x1="18" y1="6" x2="6" y2="18"/>
             <line x1="6" y1="6" x2="18" y2="18"/>
@@ -335,7 +335,7 @@ export default defineComponent({
 
 <style scoped>
 .passwords-page {
-  padding: var(--spacing-xl);
+  padding: 0;
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -343,6 +343,8 @@ export default defineComponent({
 /* 页面头部 */
 .page-header {
   margin-bottom: var(--spacing-2xl);
+  padding: var(--spacing-2xl);
+  border: none;
 }
 
 .header-content {
@@ -350,11 +352,6 @@ export default defineComponent({
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--spacing-xl);
-  background: white;
-  padding: var(--spacing-2xl);
-  border-radius: var(--border-radius-xl);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
 }
 
 .header-left {
@@ -365,22 +362,22 @@ export default defineComponent({
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
-  font-size: var(--font-size-3xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--text-primary);
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--secondary-900);
   margin-bottom: var(--spacing-sm);
 }
 
 .title-icon {
   width: 32px;
   height: 32px;
-  color: var(--primary-color);
+  color: var(--primary-600);
   stroke-width: 2;
 }
 
 .page-subtitle {
-  color: var(--text-secondary);
-  font-size: var(--font-size-base);
+  color: var(--secondary-600);
+  font-size: var(--text-base);
 }
 
 .header-actions {
@@ -397,15 +394,12 @@ export default defineComponent({
 }
 
 .stat-card {
-  background: white;
   padding: var(--spacing-2xl);
-  border-radius: var(--border-radius-xl);
   display: flex;
   align-items: center;
   gap: var(--spacing-xl);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
   transition: all 0.3s ease;
+  border: none;
 }
 
 .stat-card:hover {
@@ -419,8 +413,8 @@ export default defineComponent({
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  border-radius: var(--border-radius-xl);
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
+  border-radius: var(--radius-xl);
   color: white;
 }
 
@@ -435,25 +429,22 @@ export default defineComponent({
 }
 
 .stat-number {
-  font-size: var(--font-size-3xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--text-primary);
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--secondary-900);
   margin-bottom: var(--spacing-xs);
 }
 
 .stat-label {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-  font-weight: var(--font-weight-medium);
+  font-size: var(--text-sm);
+  color: var(--secondary-600);
+  font-weight: var(--font-medium);
 }
 
 /* 内容区域 */
 .content-section {
-  background: white;
-  border-radius: var(--border-radius-xl);
-  padding: var(--spacing-2xl);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
+  padding: 0;
+  border: none;
   min-height: 400px;
 }
 
@@ -469,15 +460,15 @@ export default defineComponent({
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: var(--z-modal);
 }
 
 .loading-spinner {
   background: white;
   padding: var(--spacing-3xl);
-  border-radius: var(--border-radius-xl);
+  border-radius: var(--radius-2xl);
   text-align: center;
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--shadow-2xl);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -492,13 +483,13 @@ export default defineComponent({
 .spinner svg {
   width: 100%;
   height: 100%;
-  color: var(--primary-color);
+  color: var(--primary-600);
 }
 
 .loading-spinner p {
   margin: 0;
-  color: var(--text-secondary);
-  font-weight: var(--font-weight-medium);
+  color: var(--secondary-600);
+  font-weight: var(--font-medium);
 }
 
 /* 错误提示 */
@@ -506,20 +497,18 @@ export default defineComponent({
   position: fixed;
   top: var(--spacing-xl);
   right: var(--spacing-xl);
-  z-index: 1001;
+  z-index: var(--z-toast);
   animation: slideIn 0.3s ease;
 }
 
 .error-content {
-  background: var(--error-bg);
-  color: var(--error-color);
-  padding: var(--spacing-lg) var(--spacing-xl);
-  border-radius: var(--border-radius-lg);
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--error-border);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  background: var(--error-50);
+  color: var(--error-700);
+  border: 1px solid var(--error-200);
   max-width: 400px;
 }
 
@@ -532,19 +521,21 @@ export default defineComponent({
 
 .error-text {
   flex: 1;
-  font-weight: var(--font-weight-medium);
-  font-size: var(--font-size-sm);
+  font-weight: var(--font-medium);
+  font-size: var(--text-sm);
 }
 
 .error-close {
   background: none;
   border: none;
-  color: var(--error-color);
+  color: var(--error-700);
   cursor: pointer;
   padding: var(--spacing-xs);
-  border-radius: var(--border-radius-sm);
+  border-radius: var(--radius-sm);
   transition: all 0.2s ease;
   flex-shrink: 0;
+  width: 32px;
+  height: 32px;
 }
 
 .error-close:hover {
@@ -558,22 +549,28 @@ export default defineComponent({
 }
 
 /* 按钮样式 */
-.btn-primary, .btn-secondary {
-  display: flex;
+.btn {
+  display: inline-flex;
   align-items: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-md) var(--spacing-xl);
   border: none;
-  border-radius: var(--border-radius-lg);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
   cursor: pointer;
   transition: all 0.3s ease;
   text-decoration: none;
 }
 
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
   color: white;
   box-shadow: var(--shadow-md);
 }
@@ -581,25 +578,29 @@ export default defineComponent({
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-800));
 }
 
 .btn-secondary {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
+  background: var(--secondary-100);
+  color: var(--secondary-800);
+  border: 1px solid var(--secondary-200);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: var(--bg-tertiary);
+  background: var(--secondary-200);
+  transform: translateY(-1px);
 }
 
-.btn-primary:disabled, .btn-secondary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none !important;
+.btn-icon {
+  padding: var(--spacing-sm);
+  width: 36px;
+  height: 36px;
 }
 
-.btn-primary svg, .btn-secondary svg {
+.btn-primary svg, 
+.btn-secondary svg,
+.btn-icon svg {
   width: 18px;
   height: 18px;
   stroke-width: 2;
@@ -633,13 +634,13 @@ export default defineComponent({
     justify-content: stretch;
   }
 
-  .btn-primary, .btn-secondary {
+  .btn {
     flex: 1;
     justify-content: center;
   }
 
   .page-title {
-    font-size: var(--font-size-2xl);
+    font-size: var(--text-2xl);
   }
 
   .stats-section {
@@ -647,7 +648,7 @@ export default defineComponent({
   }
 
   .content-section {
-    padding: var(--spacing-xl);
+    padding: 0;
   }
 
   .error-message {

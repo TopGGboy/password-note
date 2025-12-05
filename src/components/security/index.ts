@@ -1,3 +1,8 @@
-// 安全组件统一导出
-export { default as SecurityMiddleware } from './SecurityMiddleware.vue'
-export { default as SecurityStatus } from './SecurityStatus.vue'
+// 安全相关组件统一导出
+import SecurityMiddleware from './SecurityMiddleware.vue'
+import SecurityStatus from './SecurityStatus.vue'
+
+export {
+  SecurityMiddleware,
+  SecurityStatus
+}

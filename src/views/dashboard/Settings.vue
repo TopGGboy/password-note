@@ -888,9 +888,8 @@ export default defineComponent({
 
 <style scoped>
 .settings-container {
-  min-height: 100vh;
-  background: var(--bg-secondary);
-  padding: var(--spacing-6);
+  padding: var(--spacing-2xl);
+  background: transparent;
 }
 
 .icon {

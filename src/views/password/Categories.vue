@@ -545,9 +545,8 @@ export default defineComponent({
 
 <style scoped>
 .categories-container {
-  min-height: 100vh;
-  background: var(--bg-secondary);
-  padding: var(--spacing-6);
+  padding: var(--spacing-2xl);
+  background: transparent;
 }
 
 .icon {
@@ -619,13 +618,41 @@ export default defineComponent({
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
-  transition: all 0.2s;
-  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm), 0 2px 10px rgba(99, 102, 241, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.add-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.add-btn:hover::before {
+  width: 300px;
+  height: 300px;
 }
 
 .add-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-lg), 0 4px 20px rgba(99, 102, 241, 0.4);
+}
+
+.add-btn svg {
+  transition: transform 0.3s ease;
+}
+
+.add-btn:hover svg {
+  transform: rotate(90deg) scale(1.2);
 }
 
 /* 分类统计 */
@@ -769,19 +796,37 @@ export default defineComponent({
 }
 
 .category-card {
-  background: var(--bg-primary);
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
   border-radius: var(--radius-lg);
   padding: var(--spacing-6);
   cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm), 0 2px 10px rgba(0, 0, 0, 0.05);
   border: 1px solid var(--border-color);
+  position: relative;
+  overflow: hidden;
+}
+
+.category-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-500), var(--primary-600), var(--primary-500));
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
 }
 
 .category-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--border-hover);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: var(--shadow-lg), 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-color: var(--primary-300);
+}
+
+.category-card:hover::before {
+  transform: scaleX(1);
 }
 
 .category-header {
@@ -793,7 +838,7 @@ export default defineComponent({
 
 .category-icon {
   font-size: var(--text-2xl);
-  background: var(--bg-secondary);
+  background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
   padding: var(--spacing-3);
   border-radius: var(--radius-lg);
   display: flex;
@@ -801,6 +846,17 @@ export default defineComponent({
   justify-content: center;
   width: 48px;
   height: 48px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.category-card:hover .category-icon {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-400);
 }
 
 .category-actions {

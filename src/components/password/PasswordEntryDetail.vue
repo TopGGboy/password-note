@@ -241,12 +241,25 @@ export default defineComponent({
 
 <style scoped>
 .password-entry-detail {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-2xl);
   overflow: hidden;
   max-width: 600px;
   margin: 0 auto;
+  border: 1px solid var(--border-color);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .detail-header {
@@ -254,32 +267,71 @@ export default defineComponent({
   align-items: flex-start;
   gap: 16px;
   padding: 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
   color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.detail-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.detail-header:hover::before {
+  left: 100%;
 }
 
 .entry-icon {
-  font-size: 48px;
+  font-size: 52px;
   flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.entry-icon:hover {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: var(--shadow-lg);
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .entry-info {
   flex: 1;
   min-width: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .entry-title {
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 28px;
+  font-weight: 700;
   margin: 0 0 8px 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: all 0.3s ease;
 }
 
 .entry-url {
   margin: 0;
   opacity: 0.9;
+  position: relative;
+  z-index: 1;
 }
 
 .entry-url a {
@@ -289,40 +341,50 @@ export default defineComponent({
   text-overflow: ellipsis;
   white-space: nowrap;
   display: block;
+  transition: all 0.3s ease;
+  font-weight: 500;
 }
 
 .entry-url a:hover {
   text-decoration: underline;
+  transform: translateX(5px);
 }
 
 .header-actions {
   display: flex;
   gap: 8px;
   flex-shrink: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .header-actions button {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   background: rgba(255, 255, 255, 0.2);
   color: white;
   cursor: pointer;
-  font-size: 16px;
-  transition: all 0.2s;
+  font-size: 18px;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(4px);
 }
 
 .header-actions button:hover {
   background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+  box-shadow: var(--shadow-md);
 }
 
 .favorite-btn.active {
-  background: #ffd700;
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
   color: #333;
+  box-shadow: var(--shadow-md);
 }
 
 .detail-content {
@@ -331,6 +393,17 @@ export default defineComponent({
 
 .info-section {
   margin-bottom: 32px;
+  padding: 20px;
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s ease;
+}
+
+.info-section:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
 }
 
 .info-section:last-child {
@@ -338,12 +411,16 @@ export default defineComponent({
 }
 
 .info-section h3 {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
-  color: #1a202c;
+  color: var(--text-primary);
   margin: 0 0 16px 0;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--border-color);
+  background: linear-gradient(90deg, var(--primary-500), var(--secondary-700));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .info-grid {
@@ -359,28 +436,37 @@ export default defineComponent({
 
 .info-item label {
   font-size: 14px;
-  font-weight: 500;
-  color: #4a5568;
+  font-weight: 600;
+  color: var(--text-primary);
+  transition: all 0.3s ease;
 }
 
 .value-with-copy {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 16px;
-  background: #f7fafc;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
+  padding: 14px 18px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.value-with-copy:hover {
+  border-color: var(--primary-300);
+  box-shadow: var(--shadow-md);
 }
 
 .value {
   flex: 1;
   font-size: 16px;
-  color: #1a202c;
+  color: var(--text-primary);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: 500;
 }
 
 .password-value.hidden {
@@ -390,48 +476,68 @@ export default defineComponent({
 
 .copy-btn,
 .toggle-btn {
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 6px;
-  background: white;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
   cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s;
+  font-size: 16px;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
 }
 
 .copy-btn:hover,
 .toggle-btn:hover {
-  background: #edf2f7;
+  background: var(--primary-50);
+  border-color: var(--primary-300);
+  transform: scale(1.1);
+  box-shadow: var(--shadow-md);
 }
 
 .notes-content {
-  padding: 16px;
-  background: #f7fafc;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
+  padding: 18px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-lg);
   white-space: pre-wrap;
-  line-height: 1.6;
-  color: #4a5568;
+  line-height: 1.7;
+  color: var(--text-primary);
+  font-size: 15px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+}
+
+.notes-content:hover {
+  border-color: var(--primary-300);
+  box-shadow: var(--shadow-md);
 }
 
 .tags-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 12px;
 }
 
 .tag {
-  background: #ebf8ff;
-  color: #3182ce;
-  padding: 6px 12px;
-  border-radius: 16px;
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  color: white;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+
+.tag:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-md);
 }
 
 .stats-grid {
@@ -443,67 +549,87 @@ export default defineComponent({
 .stat-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 16px;
-  background: #f7fafc;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
+  gap: 6px;
+  padding: 18px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-lg);
   text-align: center;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  border-color: var(--primary-300);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .stat-label {
   font-size: 12px;
-  color: #718096;
-  font-weight: 500;
+  color: var(--text-secondary);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .stat-value {
-  font-size: 16px;
-  color: #1a202c;
-  font-weight: 600;
+  font-size: 18px;
+  color: var(--text-primary);
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--primary-500), var(--secondary-700));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .strength-indicator {
   display: flex;
   align-items: center;
   gap: 16px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
 }
 
 .strength-bar {
   flex: 1;
-  height: 8px;
-  background: #e2e8f0;
-  border-radius: 4px;
+  height: 10px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-full);
   overflow: hidden;
+  box-shadow: var(--shadow-inset);
 }
 
 .strength-fill {
   height: 100%;
-  transition: width 0.3s, background-color 0.3s;
+  transition: width 0.3s ease, background-color 0.3s ease;
+  border-radius: var(--radius-full);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
 .strength-fill.weak {
-  background: #f56565;
+  background: linear-gradient(90deg, var(--error-500), var(--error-700));
 }
 
 .strength-fill.medium {
-  background: #ed8936;
+  background: linear-gradient(90deg, var(--warning-500), var(--warning-700));
 }
 
 .strength-fill.strong {
-  background: #48bb78;
+  background: linear-gradient(90deg, var(--success-500), var(--success-700));
 }
 
 .strength-fill.very-strong {
-  background: #38a169;
+  background: linear-gradient(90deg, var(--primary-500), var(--primary-700));
 }
 
 .strength-text {
-  font-size: 14px;
-  font-weight: 600;
-  color: #4a5568;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
   white-space: nowrap;
 }
 
@@ -511,53 +637,65 @@ export default defineComponent({
   display: flex;
   gap: 12px;
   padding: 24px;
-  background: #f7fafc;
-  border-top: 1px solid #e2e8f0;
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border-color);
   flex-wrap: wrap;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .action-btn {
   flex: 1;
   min-width: 120px;
-  padding: 12px 16px;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  background: white;
-  color: #4a5568;
+  padding: 14px 20px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-primary);
+  color: var(--text-primary);
   cursor: pointer;
   font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s;
+  font-weight: 600;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  box-shadow: var(--shadow-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .action-btn:hover {
-  border-color: #cbd5e0;
-  background: #edf2f7;
+  border-color: var(--primary-300);
+  background: var(--bg-secondary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .action-btn.primary {
-  background: #3182ce;
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
   color: white;
-  border-color: #3182ce;
+  border-color: var(--primary-500);
 }
 
 .action-btn.primary:hover {
-  background: #2c5282;
-  border-color: #2c5282;
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+  border-color: var(--primary-600);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 .action-btn.danger {
-  color: #e53e3e;
-  border-color: #fed7d7;
+  color: var(--error-700);
+  border-color: var(--error-200);
+  background: var(--error-50);
 }
 
 .action-btn.danger:hover {
-  background: #fed7d7;
-  border-color: #feb2b2;
+  background: linear-gradient(135deg, var(--error-500), var(--error-600));
+  border-color: var(--error-400);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 @media (max-width: 768px) {
@@ -572,12 +710,14 @@ export default defineComponent({
   }
 
   .entry-icon {
-    font-size: 40px;
+    font-size: 44px;
+    width: 56px;
+    height: 56px;
     align-self: center;
   }
 
   .entry-title {
-    font-size: 20px;
+    font-size: 24px;
     text-align: center;
   }
 
@@ -596,11 +736,19 @@ export default defineComponent({
   .strength-indicator {
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
+    gap: 12px;
   }
 
   .strength-text {
     text-align: center;
+  }
+  
+  .info-section {
+    padding: 16px;
+  }
+  
+  .info-section h3 {
+    font-size: 18px;
   }
 }
 </style>
