@@ -89,6 +89,7 @@ export interface PagedResponse<T> {
   page: number
   pageSize: number
   totalPages: number
+  totalFavorites?: number // 新增：总收藏数量
 }
 
 // 密码条目分页响应

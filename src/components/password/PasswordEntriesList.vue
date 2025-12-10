@@ -133,7 +133,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { defineComponent, ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { usePasswordEntries } from '../../composables/usePasswordEntries'
 import { useAuth } from '../../composables/useAuth'
 import { categoriesAPI } from '../../services/api'
@@ -151,8 +151,8 @@ export default defineComponent({
     const {
       loading,
       error,
-      entries,
-      total,
+      entries: allEntries,
+      total: allTotal,
       hasData,
       isEmpty,
       hasMore,
@@ -172,10 +172,26 @@ export default defineComponent({
     // 本地状态
     const searchKeyword = ref('')
     const selectedCategory = ref<number | ''>('')
-    const showFavoritesOnly = ref(false)
+    const showFavoritesOnly = ref(false)   // 控制是否只显示收藏条目
     const sortOption = ref('updatedAt-desc')
     const categories = ref<Category[]>([])
     const scrollContainer = ref<HTMLElement>()
+    
+    // 本地筛选后的条目
+    const entries = computed(() => {
+      let filtered = allEntries.value       // 从原始数据中获取
+      
+      // 本地收藏筛选
+      if (showFavoritesOnly.value) {
+        // 使用 Array.filter() 方法筛选出 favorite 为 true 的条目
+        filtered = filtered.filter(entry => entry.favorite)
+      }
+      
+      return filtered    // 返回筛选后的结果
+    })
+    
+    // 本地筛选后的总数
+    const total = computed(() => entries.value.length)
 
     // 搜索防抖
     let searchTimeout: number | null = null
@@ -195,10 +211,10 @@ export default defineComponent({
     }
 
     // 收藏筛选
-    const handleFavoriteFilter = () => {
-      showFavoritesOnly.value = !showFavoritesOnly.value
-      filterFavorites(showFavoritesOnly.value ? true : undefined)
-    }
+  const handleFavoriteFilter = () => {
+    showFavoritesOnly.value = !showFavoritesOnly.value            // 切换收藏筛选状态
+    console.log('收藏筛选切换，showFavoritesOnly:', showFavoritesOnly.value)
+  }
 
     // 排序
     const handleSort = () => {
@@ -283,7 +299,7 @@ export default defineComponent({
 
       try {
         const response = await categoriesAPI.getAll()
-        if (response.code === 200 && response.data) {
+        if (response.code === 1 && response.data) {
           categories.value = response.data
         }
       } catch (err) {

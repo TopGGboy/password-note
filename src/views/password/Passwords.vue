@@ -170,6 +170,7 @@ export default defineComponent({
       error,
       entries,
       total,
+      totalFavorites,
       fetchEntries,
       refresh
     } = usePasswordEntries()
@@ -182,9 +183,14 @@ export default defineComponent({
     const categories = ref<Category[]>([])
 
     // 计算属性
-    const favoriteCount = computed(() =>
-      entries.value.filter(entry => entry.favorite).length
-    )
+    const favoriteCount = computed(() => {
+      // 如果API返回了totalFavorites，直接使用
+      if (totalFavorites.value > 0) {
+        return totalFavorites.value
+      }
+      // 否则使用前端过滤计算
+      return entries.value.filter(entry => entry.favorite).length
+    })
 
     const categoriesCount = computed(() => categories.value.length)
 

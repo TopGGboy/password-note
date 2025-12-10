@@ -36,6 +36,7 @@ export function usePasswordEntries() {
   const entries = ref<DecryptedPasswordEntry[]>([]);
   const total = ref(0);
   const totalPages = ref(0);
+  const totalFavorites = ref(0);
 
   // 查询参数
   const query = reactive<PasswordEntriesQuery>(
@@ -130,7 +131,8 @@ export function usePasswordEntries() {
       console.log('请求参数:', validatedQuery);
       console.log('当前用户ID:', localStorage.getItem('userId'));
       console.log('当前token:', localStorage.getItem('accessToken')?.substring(0, 20) + '...');
-
+      
+      // 调用后端API获取数据
       const response = await passwordEntriesAPI.page(validatedQuery);
       
       console.log('API响应:', response);
@@ -148,19 +150,28 @@ export function usePasswordEntries() {
         // 解密所有条目
         const decryptedEntries = entriesList.map(decryptPasswordEntry);
 
+        // 去重处理 - 确保所有条目ID唯一
+        const uniqueEntries = Array.from(
+          new Map(decryptedEntries.map(entry => [entry.id, entry])).values()
+        );
+
         if (resetPage || query.page === 1) {
-          entries.value = decryptedEntries;
+          entries.value = uniqueEntries;
         } else {
-          // 追加数据（用于无限滚动）
-          entries.value.push(...decryptedEntries);
+          // 追加数据（用于无限滚动），避免重复条目
+          const existingIds = new Set(entries.value.map(entry => entry.id));
+          const newEntries = uniqueEntries.filter(entry => !existingIds.has(entry.id));
+          entries.value.push(...newEntries);
         }
 
         // 修复：使用API响应根级别的分页信息（使用类型断言）
         const responseWithPagination = response as any;
         total.value = responseWithPagination.total || 0;
         totalPages.value = responseWithPagination.totalPages || Math.ceil((responseWithPagination.total || 0) / validatedQuery.pageSize);
+        // 提取总收藏数量
+        totalFavorites.value = responseWithPagination.totalFavorites || 0;
         
-        console.log(`分页信息 - 当前页: ${query.page}, 每页大小: ${validatedQuery.pageSize}, 总记录数: ${total.value}, 总页数: ${totalPages.value}, 当前页记录数: ${entriesList.length}`);
+        console.log(`分页信息 - 当前页: ${query.page}, 每页大小: ${validatedQuery.pageSize}, 总记录数: ${total.value}, 总页数: ${totalPages.value}, 总收藏数: ${totalFavorites.value}, 当前页记录数: ${entriesList.length}`);
       } else {
         console.error('API响应错误:', response);
         throw new Error(response.msg || "获取密码条目失败");
@@ -226,12 +237,19 @@ export function usePasswordEntries() {
 
         // 解密所有条目
         const decryptedEntries = entriesList.map(decryptPasswordEntry);
-        entries.value = decryptedEntries;
+        
+        // 去重处理 - 确保所有条目ID唯一
+        const uniqueEntries = Array.from(
+          new Map(decryptedEntries.map(entry => [entry.id, entry])).values()
+        );
+        entries.value = uniqueEntries;
 
         // 更新分页信息
         const responseWithPagination = response as any;
         total.value = responseWithPagination.total || 0;
         totalPages.value = responseWithPagination.totalPages || Math.ceil((responseWithPagination.total || 0) / query.pageSize);
+        // 提取总收藏数量
+        totalFavorites.value = responseWithPagination.totalFavorites || 0;
 
         console.log(`搜索结果 - 关键词: "${keyword}", 找到: ${total.value} 条记录, 当前页: ${entriesList.length} 条`);
       } else {
@@ -311,22 +329,30 @@ export function usePasswordEntries() {
       );
 
       if (response.code === 1 && response.data) {
-        const entriesList = Array.isArray(response.data) ? response.data : [];
-        console.log('搜索加载更多返回的条目列表:', entriesList);
+          const entriesList = Array.isArray(response.data) ? response.data : [];
+          console.log('搜索加载更多返回的条目列表:', entriesList);
 
-        // 解密新条目并追加到现有列表
-        const decryptedEntries = entriesList.map(decryptPasswordEntry);
-        entries.value = [...entries.value, ...decryptedEntries];
+          // 解密新条目
+          const decryptedEntries = entriesList.map(decryptPasswordEntry);
+          
+          // 去重处理 - 确保所有条目ID唯一
+          const existingIds = new Set(entries.value.map(entry => entry.id));
+          const newEntries = decryptedEntries.filter(entry => !existingIds.has(entry.id));
+          
+          // 追加到现有列表
+          entries.value = [...entries.value, ...newEntries];
 
-        // 更新分页信息
-        const responseWithPagination = response as any;
-        total.value = responseWithPagination.total || 0;
-        totalPages.value = responseWithPagination.totalPages || Math.ceil((responseWithPagination.total || 0) / query.pageSize);
+          // 更新分页信息
+          const responseWithPagination = response as any;
+          total.value = responseWithPagination.total || 0;
+          totalPages.value = responseWithPagination.totalPages || Math.ceil((responseWithPagination.total || 0) / query.pageSize);
+          // 提取总收藏数量
+          totalFavorites.value = responseWithPagination.totalFavorites || 0;
 
-        console.log(`搜索加载更多完成 - 新增: ${entriesList.length} 条, 总计: ${entries.value.length} 条`);
-      } else {
-        throw new Error(response.msg || "加载更多搜索结果失败");
-      }
+          console.log(`搜索加载更多完成 - 新增: ${newEntries.length} 条, 总计: ${entries.value.length} 条`);
+        } else {
+          throw new Error(response.msg || "加载更多搜索结果失败");
+        }
     } catch (err: any) {
       error.value = err.message || "加载更多搜索结果失败";
       console.error("加载更多搜索结果失败:", err);
@@ -458,7 +484,7 @@ export function usePasswordEntries() {
 
       // 修复：检查code为1而不是200
       if (response.code === 1) {
-        // 从本地列表中移除
+        // 从本地列表中移除所有匹配的条目（避免重复条目问题）
         entries.value = entries.value.filter((entry) => entry.id !== id);
         total.value -= 1;
         console.log("密码条目删除成功，ID:", id);
@@ -515,11 +541,12 @@ export function usePasswordEntries() {
 
       // 修复：检查code为1而不是200
       if (response.code === 1) {
-        // 更新本地数据
-        const index = entries.value.findIndex((entry) => entry.id === id);
-        if (index !== -1) {
-          entries.value[index].favorite = favorite;
-        }
+        // 更新本地数据 - 确保更新所有匹配的条目（避免重复条目问题）
+        entries.value.forEach((entry, index) => {
+          if (entry.id === id) {
+            entries.value[index].favorite = favorite;
+          }
+        });
         console.log("收藏状态切换成功，ID:", id);
       } else {
         throw new Error(response.msg || "切换收藏状态失败");
@@ -576,6 +603,7 @@ export function usePasswordEntries() {
     entries,
     total,
     totalPages,
+    totalFavorites,
     query,
 
     // 计算属性
