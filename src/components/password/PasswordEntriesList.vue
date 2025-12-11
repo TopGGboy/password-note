@@ -20,8 +20,8 @@
           </option>
         </select>
 
-        <button @click="handleFavoriteFilter" class="btn favorite-filter" :class="{ 'btn-primary': showFavoritesOnly, 'btn-secondary': !showFavoritesOnly }">
-          ⭐ {{ showFavoritesOnly ? '显示全部' : '仅收藏' }}
+        <button @click="handleFavoriteFilter" class="btn favorite-filter" :class="{ 'btn-primary': query?.favorite === true, 'btn-secondary': query?.favorite !== true }">
+          ⭐ {{ query?.favorite === true ? '显示全部' : '仅收藏' }}
         </button>
 
         <select v-model="sortOption" @change="handleSort" class="form-select sort-select">
@@ -77,8 +77,8 @@
             <p class="entry-username">{{ entry.username }}</p>
           </div>
           <div class="entry-actions">
-            <button @click.stop="handleToggleFavorite(entry.id, entry.favorite)" class="btn btn-icon favorite-btn"
-              :class="{ 'btn-primary': entry.favorite, 'btn-secondary': !entry.favorite }">
+            <button @click.stop="handleToggleFavorite(entry.id, entry.favorite || false)" class="btn btn-icon favorite-btn"
+              :class="{ 'btn-primary': entry.favorite || false, 'btn-secondary': !(entry.favorite || false) }">
               {{ entry.favorite ? '⭐' : '☆' }}
             </button>
             <button @click.stop="handleCopyPassword(entry)" class="btn btn-icon copy-btn" title="复制密码">
@@ -151,8 +151,8 @@ export default defineComponent({
     const {
       loading,
       error,
-      entries: allEntries,
-      total: allTotal,
+      entries,
+      total,
       hasData,
       isEmpty,
       hasMore,
@@ -166,32 +166,16 @@ export default defineComponent({
       refresh,
       deleteEntry,
       toggleFavorite,
-      recordUsage
+      recordUsage,
+      query
     } = usePasswordEntries()
 
     // 本地状态
     const searchKeyword = ref('')
     const selectedCategory = ref<number | ''>('')
-    const showFavoritesOnly = ref(false)   // 控制是否只显示收藏条目
     const sortOption = ref('updatedAt-desc')
     const categories = ref<Category[]>([])
     const scrollContainer = ref<HTMLElement>()
-    
-    // 本地筛选后的条目
-    const entries = computed(() => {
-      let filtered = allEntries.value       // 从原始数据中获取
-      
-      // 本地收藏筛选
-      if (showFavoritesOnly.value) {
-        // 使用 Array.filter() 方法筛选出 favorite 为 true 的条目
-        filtered = filtered.filter(entry => entry.favorite)
-      }
-      
-      return filtered    // 返回筛选后的结果
-    })
-    
-    // 本地筛选后的总数
-    const total = computed(() => entries.value.length)
 
     // 搜索防抖
     let searchTimeout: number | null = null
@@ -207,13 +191,18 @@ export default defineComponent({
     // 分类筛选
     const handleCategoryFilter = () => {
       const categoryId = selectedCategory.value === '' ? undefined : Number(selectedCategory.value)
+      // 获取选中的分类名称
+      const selectedCategoryName = categoryId ? categories.value.find(c => c.id === categoryId)?.name : '所有分类'
+      console.log('选中的分类:', { id: categoryId, name: selectedCategoryName })
+      // 打印当前分类列表
+      console.log('当前分类列表:', categories.value.map(c => ({ id: c.id, name: c.name })))
       filterByCategory(categoryId)
     }
 
     // 收藏筛选
   const handleFavoriteFilter = () => {
-    showFavoritesOnly.value = !showFavoritesOnly.value            // 切换收藏筛选状态
-    console.log('收藏筛选切换，showFavoritesOnly:', showFavoritesOnly.value)
+    // 切换收藏筛选状态
+    filterFavorites(query.favorite === true ? undefined : true);
   }
 
     // 排序
@@ -301,6 +290,15 @@ export default defineComponent({
         const response = await categoriesAPI.getAll()
         if (response.code === 1 && response.data) {
           categories.value = response.data
+          console.log('API返回的分类数据:', response.data)
+          // 保存分类映射，便于调试
+          const categoryMap = response.data.reduce((map: any, category: any) => {
+            map[category.id] = category.name
+            return map
+          }, {})
+          console.log('分类ID映射表:', categoryMap)
+          // 将分类映射保存到localStorage，便于在其他组件中查看
+          localStorage.setItem('categoryMap', JSON.stringify(categoryMap))
         }
       } catch (err) {
         console.error('加载分类失败:', err)
@@ -466,7 +464,6 @@ export default defineComponent({
       hasMore,
       searchKeyword,
       selectedCategory,
-      showFavoritesOnly,
       sortOption,
       categories,
       scrollContainer,

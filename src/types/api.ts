@@ -175,7 +175,7 @@ export interface PasswordEntry {
   notesEncrypted?: string
   customFields?: any
   strengthScore?: number
-  favorite: boolean
+  favorite?: boolean
   timesUsed: number
   lastUsed?: string
   createdAt: string

@@ -70,13 +70,9 @@
           <label>分类</label>
           <select v-model="form.categoryId" class="form-select">
             <option :value="undefined">选择分类</option>
-            <option :value="1">社交媒体</option>
-            <option :value="2">邮箱</option>
-            <option :value="3">购物</option>
-            <option :value="4">银行</option>
-            <option :value="5">工作</option>
-            <option :value="6">娱乐</option>
-            <option :value="7">其他</option>
+            <option v-for="category in categories" :key="category.id" :value="category.id">
+              {{ category.name }}
+            </option>
           </select>
         </div>
 
@@ -108,11 +104,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from 'vue'
+import { defineComponent, PropType, onMounted } from 'vue'
 import type { DecryptedPasswordEntry } from '../../composables/usePasswordEntries'
 import { DataEncryptionService, KeyManager } from '../../utils/encryption/crypto'
-import { passwordEntriesAPI } from '../../services/api'
+import { passwordEntriesAPI, categoriesAPI } from '../../services/api'
 import type { CreatePasswordEntryRequest } from '../../types/api'
+import type { Category } from '../../types/api'
 
 export default defineComponent({
   name: 'EditPasswordModal',
@@ -127,6 +124,7 @@ export default defineComponent({
     return {
       loading: false,
       showPassword: false,
+      categories: [] as Category[],
       form: {
         title: '',
         url: '',
@@ -142,7 +140,10 @@ export default defineComponent({
       return !!this.entry
     }
   },
-  mounted() {
+  async mounted() {
+    // 加载分类数据
+    await this.loadCategories()
+    
     if (this.entry) {
       this.form = {
         title: this.entry.title || '',
@@ -155,6 +156,18 @@ export default defineComponent({
     }
   },
   methods: {
+    // 加载分类列表
+    async loadCategories() {
+      try {
+        const response = await categoriesAPI.getAll()
+        if (response.code === 1 && response.data) {
+          this.categories = response.data
+        }
+      } catch (err) {
+        console.error('加载分类失败:', err)
+      }
+    },
+    
     handleOverlayClick() {
       this.$emit('close')
     },

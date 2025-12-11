@@ -33,8 +33,7 @@ export function usePasswordEntries() {
   // 响应式数据
   const loading = ref(false);
   const error = ref<string | null>(null);
-  const entries = ref<DecryptedPasswordEntry[]>([]);
-  const total = ref(0);
+  const allEntries = ref<DecryptedPasswordEntry[]>([]);
   const totalPages = ref(0);
   const totalFavorites = ref(0);
 
@@ -44,6 +43,66 @@ export function usePasswordEntries() {
   );
 
   // 计算属性
+  const entries = computed(() => {
+    let filtered = [...allEntries.value];
+
+    // 分类筛选调试日志
+    console.log('=== 分类筛选调试信息 ===');
+    console.log('当前query.categoryId:', query.categoryId);
+    console.log('所有条目及其categoryId:', allEntries.value.map(entry => ({ id: entry.id, title: entry.title, categoryId: entry.categoryId })));
+
+    // 分类筛选
+    if (query.categoryId !== undefined) {
+      filtered = filtered.filter(entry => entry.categoryId === query.categoryId);
+      console.log('分类筛选结果:', filtered.length, '条记录');
+      console.log('筛选后的条目:', filtered.map(entry => ({ id: entry.id, title: entry.title, categoryId: entry.categoryId })));
+    }
+
+    // 收藏筛选
+    if (query.favorite !== undefined) {
+      filtered = filtered.filter(entry => (entry.favorite || false) === query.favorite);
+    }
+
+    // 搜索筛选
+    if (query.keyword) {
+      const keyword = query.keyword.toLowerCase();
+      filtered = filtered.filter(entry => 
+        entry.title.toLowerCase().includes(keyword) ||
+        entry.username.toLowerCase().includes(keyword) ||
+        (entry.url && entry.url.toLowerCase().includes(keyword)) ||
+        entry.notes.toLowerCase().includes(keyword)
+      );
+    }
+
+    // 排序
+    if (query.sortBy) {
+      filtered.sort((a, b) => {
+        const sortOrder = query.sortOrder === 'asc' ? 1 : -1;
+        let aVal = a[query.sortBy as keyof DecryptedPasswordEntry];
+        let bVal = b[query.sortBy as keyof DecryptedPasswordEntry];
+
+        // 处理不同类型的排序
+        if (typeof aVal === 'string' && typeof bVal === 'string') {
+          // 日期字符串排序
+          if (query.sortBy === 'updatedAt' || query.sortBy === 'createdAt' || query.sortBy === 'lastUsed') {
+            return new Date(aVal).getTime() - new Date(bVal).getTime() * sortOrder;
+          }
+          // 字符串排序
+          return aVal.localeCompare(bVal) * sortOrder;
+        }
+        // 数字排序
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return (aVal - bVal) * sortOrder;
+        }
+
+        return 0;
+      });
+    }
+
+    return filtered;
+  });
+
+  const total = computed(() => entries.value.length);
   const hasData = computed(() => entries.value.length > 0);
   const isEmpty = computed(() => !loading.value && entries.value.length === 0);
   const hasMore = computed(() => query.page < totalPages.value);
@@ -156,17 +215,27 @@ export function usePasswordEntries() {
         );
 
         if (resetPage || query.page === 1) {
-          entries.value = uniqueEntries;
+          allEntries.value = uniqueEntries;
         } else {
           // 追加数据（用于无限滚动），避免重复条目
-          const existingIds = new Set(entries.value.map(entry => entry.id));
+          const existingIds = new Set(allEntries.value.map(entry => entry.id));
           const newEntries = uniqueEntries.filter(entry => !existingIds.has(entry.id));
-          entries.value.push(...newEntries);
+          allEntries.value.push(...newEntries);
         }
+        
+        // 调试：查看所有条目的分类ID
+        console.log('所有条目的分类ID:', allEntries.value.map(entry => ({ id: entry.id, title: entry.title, categoryId: entry.categoryId })));
+        // 将分类ID映射保存到localStorage，便于在浏览器中查看
+        const categoryMap = JSON.parse(localStorage.getItem('categoryMap') || '{}')
+        console.log('分类名称映射:', allEntries.value.map(entry => ({ 
+          id: entry.id, 
+          title: entry.title, 
+          categoryId: entry.categoryId, 
+          categoryName: entry.categoryId ? categoryMap[entry.categoryId] || '未知分类' : '未分类' 
+        })));
 
         // 修复：使用API响应根级别的分页信息（使用类型断言）
         const responseWithPagination = response as any;
-        total.value = responseWithPagination.total || 0;
         totalPages.value = responseWithPagination.totalPages || Math.ceil((responseWithPagination.total || 0) / validatedQuery.pageSize);
         // 提取总收藏数量
         totalFavorites.value = responseWithPagination.totalFavorites || 0;
@@ -184,105 +253,35 @@ export function usePasswordEntries() {
     }
   };
 
-  // 搜索密码条目 - 使用专门的搜索接口
-  const searchEntries = async (keyword: string) => {
-    // 检查认证状态
-    if (!tokenManager.hasValidToken() || tokenManager.isTokenExpired()) {
-      console.warn("用户未认证或token已过期，无法搜索密码条目");
-      error.value = "用户未认证，请重新登录";
-      return;
-    }
-
-    // 检查是否有加密密钥
-    if (!KeyManager.hasKey()) {
-      console.warn("未找到加密密钥，请先输入主密码");
-      error.value = "未找到加密密钥，请先输入主密码";
-      window.dispatchEvent(new CustomEvent("requireMasterPassword"));
-      return;
-    }
-
-    // 如果关键词为空，则恢复正常列表
+  // 搜索密码条目 - 前端搜索
+  const searchEntries = (keyword: string) => {
+    // 如果关键词为空，则清除搜索条件
     if (!keyword.trim()) {
       query.keyword = undefined;
-      await fetchEntries(true);
-      return;
-    }
-
-    // 重置分页状态
-    query.page = 1;
-    query.keyword = keyword.trim();
-    
-    loading.value = true;
-    error.value = null;
-
-    try {
-      console.log('=== 搜索API请求调试信息 ===');
-      console.log('搜索关键词:', keyword);
-      console.log('页码:', query.page);
-      console.log('每页大小:', query.pageSize);
-
-      // 调用专门的搜索接口
-      const response = await passwordEntriesAPI.search(
-        keyword.trim(),
-        query.page,
-        query.pageSize
-      );
-
-      console.log('搜索API响应:', response);
-
-      if (response.code === 1 && response.data) {
-        // 处理搜索结果
-        const entriesList = Array.isArray(response.data) ? response.data : [];
-        console.log('搜索返回的条目列表:', entriesList);
-
-        // 解密所有条目
-        const decryptedEntries = entriesList.map(decryptPasswordEntry);
-        
-        // 去重处理 - 确保所有条目ID唯一
-        const uniqueEntries = Array.from(
-          new Map(decryptedEntries.map(entry => [entry.id, entry])).values()
-        );
-        entries.value = uniqueEntries;
-
-        // 更新分页信息
-        const responseWithPagination = response as any;
-        total.value = responseWithPagination.total || 0;
-        totalPages.value = responseWithPagination.totalPages || Math.ceil((responseWithPagination.total || 0) / query.pageSize);
-        // 提取总收藏数量
-        totalFavorites.value = responseWithPagination.totalFavorites || 0;
-
-        console.log(`搜索结果 - 关键词: "${keyword}", 找到: ${total.value} 条记录, 当前页: ${entriesList.length} 条`);
-      } else {
-        throw new Error(response.msg || "搜索密码条目失败");
-      }
-    } catch (err: any) {
-      error.value = err.message || "搜索密码条目失败";
-      console.error("搜索密码条目失败:", err);
-    } finally {
-      loading.value = false;
+    } else {
+      query.keyword = keyword.trim();
     }
   };
 
   // 按分类筛选
-  const filterByCategory = async (categoryId?: number) => {
+  const filterByCategory = (categoryId?: number) => {
+    console.log('分类筛选函数被调用，分类ID:', categoryId);
     query.categoryId = categoryId;
-    await fetchEntries(true);
+    console.log('更新后的query.categoryId:', query.categoryId);
   };
 
   // 筛选收藏
-  const filterFavorites = async (favorite?: boolean) => {
+  const filterFavorites = (favorite?: boolean) => {
     query.favorite = favorite;
-    await fetchEntries(true);
   };
 
   // 排序
-  const sortEntries = async (
+  const sortEntries = (
     sortBy: PasswordEntriesQuery["sortBy"],
     sortOrder: PasswordEntriesQuery["sortOrder"] = "desc"
   ) => {
     query.sortBy = sortBy;
     query.sortOrder = sortOrder;
-    await fetchEntries(true);
   };
 
   // 加载更多（分页）
@@ -336,20 +335,19 @@ export function usePasswordEntries() {
           const decryptedEntries = entriesList.map(decryptPasswordEntry);
           
           // 去重处理 - 确保所有条目ID唯一
-          const existingIds = new Set(entries.value.map(entry => entry.id));
+          const existingIds = new Set(allEntries.value.map(entry => entry.id));
           const newEntries = decryptedEntries.filter(entry => !existingIds.has(entry.id));
           
           // 追加到现有列表
-          entries.value = [...entries.value, ...newEntries];
+          allEntries.value = [...allEntries.value, ...newEntries];
 
           // 更新分页信息
           const responseWithPagination = response as any;
-          total.value = responseWithPagination.total || 0;
           totalPages.value = responseWithPagination.totalPages || Math.ceil((responseWithPagination.total || 0) / query.pageSize);
           // 提取总收藏数量
           totalFavorites.value = responseWithPagination.totalFavorites || 0;
 
-          console.log(`搜索加载更多完成 - 新增: ${newEntries.length} 条, 总计: ${entries.value.length} 条`);
+          console.log(`搜索加载更多完成 - 新增: ${newEntries.length} 条, 总计: ${allEntries.value.length} 条`);
         } else {
           throw new Error(response.msg || "加载更多搜索结果失败");
         }
@@ -485,8 +483,7 @@ export function usePasswordEntries() {
       // 修复：检查code为1而不是200
       if (response.code === 1) {
         // 从本地列表中移除所有匹配的条目（避免重复条目问题）
-        entries.value = entries.value.filter((entry) => entry.id !== id);
-        total.value -= 1;
+        allEntries.value = allEntries.value.filter((entry) => entry.id !== id);
         console.log("密码条目删除成功，ID:", id);
       } else {
         throw new Error(response.msg || "删除密码条目失败");
