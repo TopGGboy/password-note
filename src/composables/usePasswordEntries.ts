@@ -34,6 +34,7 @@ export function usePasswordEntries() {
   const loading = ref(false);
   const error = ref<string | null>(null);
   const allEntries = ref<DecryptedPasswordEntry[]>([]);
+  const totalRecords = ref(0); // 总记录数
   const totalPages = ref(0);
   const totalFavorites = ref(0);
 
@@ -102,7 +103,7 @@ export function usePasswordEntries() {
     return filtered;
   });
 
-  const total = computed(() => entries.value.length);
+  const total = computed(() => totalRecords.value || entries.value.length);
   const hasData = computed(() => entries.value.length > 0);
   const isEmpty = computed(() => !loading.value && entries.value.length === 0);
   const hasMore = computed(() => query.page < totalPages.value);
@@ -199,12 +200,27 @@ export function usePasswordEntries() {
       console.log('响应data:', response.data);
 
       if (response.code === 1 && response.data) {
-        // 修复：根据实际API响应结构处理数据
-        // API直接返回数组在data字段中，分页信息在response的根级别
-        const entriesList = Array.isArray(response.data) ? response.data : [];
+        let entriesList: any[] = [];
+        let paginationInfo: any = {};
+        
+        // 处理两种可能的API响应格式
+        if (Array.isArray(response.data)) {
+          // 格式1：API直接返回数组在data字段中，分页信息在response的根级别
+          entriesList = response.data;
+          paginationInfo = response;
+        } else if (response.data.list && Array.isArray(response.data.list)) {
+          // 格式2：API返回包含list和分页信息的对象（符合TypeScript类型定义）
+          entriesList = response.data.list;
+          paginationInfo = response.data;
+        } else {
+          // 格式3：未知格式，默认为空数组
+          entriesList = [];
+          paginationInfo = {};
+        }
 
         console.log('API返回的条目列表:', entriesList);
         console.log('条目数量:', entriesList.length);
+        console.log('分页信息:', paginationInfo);
 
         // 解密所有条目
         const decryptedEntries = entriesList.map(decryptPasswordEntry);
@@ -234,11 +250,12 @@ export function usePasswordEntries() {
           categoryName: entry.categoryId ? categoryMap[entry.categoryId] || '未知分类' : '未分类' 
         })));
 
-        // 修复：使用API响应根级别的分页信息（使用类型断言）
-        const responseWithPagination = response as any;
-        totalPages.value = responseWithPagination.totalPages || Math.ceil((responseWithPagination.total || 0) / validatedQuery.pageSize);
+        // 提取分页信息
+        totalPages.value = paginationInfo.totalPages || Math.ceil((paginationInfo.total || 0) / validatedQuery.pageSize);
+        // 提取总记录数
+        totalRecords.value = paginationInfo.total || entriesList.length;
         // 提取总收藏数量
-        totalFavorites.value = responseWithPagination.totalFavorites || 0;
+        totalFavorites.value = paginationInfo.totalFavorites || 0;
         
         console.log(`分页信息 - 当前页: ${query.page}, 每页大小: ${validatedQuery.pageSize}, 总记录数: ${total.value}, 总页数: ${totalPages.value}, 总收藏数: ${totalFavorites.value}, 当前页记录数: ${entriesList.length}`);
       } else {
@@ -328,8 +345,26 @@ export function usePasswordEntries() {
       );
 
       if (response.code === 1 && response.data) {
-          const entriesList = Array.isArray(response.data) ? response.data : [];
+          let entriesList: any[] = [];
+          let paginationInfo: any = {};
+          
+          // 处理两种可能的API响应格式
+          if (Array.isArray(response.data)) {
+            // 格式1：API直接返回数组在data字段中，分页信息在response的根级别
+            entriesList = response.data;
+            paginationInfo = response;
+          } else if (response.data.list && Array.isArray(response.data.list)) {
+            // 格式2：API返回包含list和分页信息的对象（符合TypeScript类型定义）
+            entriesList = response.data.list;
+            paginationInfo = response.data;
+          } else {
+            // 格式3：未知格式，默认为空数组
+            entriesList = [];
+            paginationInfo = {};
+          }
+          
           console.log('搜索加载更多返回的条目列表:', entriesList);
+          console.log('搜索分页信息:', paginationInfo);
 
           // 解密新条目
           const decryptedEntries = entriesList.map(decryptPasswordEntry);
@@ -342,12 +377,13 @@ export function usePasswordEntries() {
           allEntries.value = [...allEntries.value, ...newEntries];
 
           // 更新分页信息
-          const responseWithPagination = response as any;
-          totalPages.value = responseWithPagination.totalPages || Math.ceil((responseWithPagination.total || 0) / query.pageSize);
+          totalPages.value = paginationInfo.totalPages || Math.ceil((paginationInfo.total || 0) / query.pageSize);
+          // 提取总记录数
+          totalRecords.value = paginationInfo.total || allEntries.value.length;
           // 提取总收藏数量
-          totalFavorites.value = responseWithPagination.totalFavorites || 0;
+          totalFavorites.value = paginationInfo.totalFavorites || 0;
 
-          console.log(`搜索加载更多完成 - 新增: ${newEntries.length} 条, 总计: ${allEntries.value.length} 条`);
+          console.log(`搜索加载更多完成 - 新增: ${newEntries.length} 条, 总计: ${allEntries.value.length} 条, 总记录数: ${totalRecords.value}`);
         } else {
           throw new Error(response.msg || "加载更多搜索结果失败");
         }
