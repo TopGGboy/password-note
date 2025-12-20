@@ -581,12 +581,13 @@ export function usePasswordEntries() {
     try {
       await passwordEntriesAPI.recordUsage(id);
 
-      // 更新本地数据
-      const index = entries.value.findIndex((entry) => entry.id === id);
-      if (index !== -1) {
-        entries.value[index].timesUsed += 1;
-        entries.value[index].lastUsed = new Date().toISOString();
-      }
+      // 更新本地数据 - 更新 allEntries 而不是 entries 计算属性
+      allEntries.value.forEach((entry, index) => {
+        if (entry.id === id) {
+          allEntries.value[index].timesUsed += 1;
+          allEntries.value[index].lastUsed = new Date().toISOString();
+        }
+      });
     } catch (err: any) {
       console.error("记录使用次数失败:", err);
       // 不抛出错误，因为这不是关键功能

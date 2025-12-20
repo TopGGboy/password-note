@@ -331,8 +331,8 @@ const toastMessage = ref('')
 const toastType = ref<'success' | 'error'>('success')
 const copiedField = ref<string | null>(null)
 
-let toastTimer: NodeJS.Timeout | null = null
-let copiedTimer: NodeJS.Timeout | null = null
+let toastTimer: ReturnType<typeof setTimeout> | null = null
+let copiedTimer: ReturnType<typeof setTimeout> | null = null
 
 // 计算属性
 const passwordStrength = computed((): PasswordStrength => {
@@ -494,6 +494,17 @@ const copyToClipboard = async (text: string, fieldName: string) => {
     await navigator.clipboard.writeText(text)
     copiedField.value = fieldName.toLowerCase()
     showToastMessage(`${fieldName}已复制到剪贴板`)
+
+
+    // 记录密码使用次数(只在复制密码时记录)
+    if (fieldName === 'password' && password.value) {
+      await passwordEntriesAPI.recordUsage(password.value.id)
+      // 更新本地数据
+      if (password.value) {
+        password.value.timesUsed += 1
+        password.value.lastUsed = new Date().toISOString()
+      }
+    }
     
     if (copiedTimer) clearTimeout(copiedTimer)
     copiedTimer = setTimeout(() => {

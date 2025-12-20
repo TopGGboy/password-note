@@ -467,6 +467,7 @@ export default defineComponent({
       sortOption,
       categories,
       scrollContainer,
+      query,
 
       // 方法
       handleSearch,

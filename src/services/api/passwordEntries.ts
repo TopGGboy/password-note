@@ -49,7 +49,7 @@ export const passwordEntriesAPI = {
   },
 
   // 切换收藏状态
-  toggleFavorite: (id: number, favorite: boolean): Promise<ApiResponse<PasswordEntry>> => {
+  toggleFavorite: (id: number, favorite: boolean): Promise<ApiResponse<null>> => {
     return http.put(`${API_ENDPOINTS.PASSWORDENTRIES.BASE}/${id}/favorite`, null, {
       params: {favorite}
     });
