@@ -1,135 +1,137 @@
 <template>
-  <div class="password-entry-detail">
-    <div class="detail-header">
-      <div class="entry-icon">{{ entry.icon || '🔐' }}</div>
-      <div class="entry-info">
-        <h2 class="entry-title">{{ entry.title }}</h2>
-        <p v-if="entry.url" class="entry-url">
-          <a :href="entry.url" target="_blank">{{ entry.url }}</a>
-        </p>
+  <div class="modal-overlay" @click="$emit('close')">
+    <div class="password-entry-detail" @click.stop>
+      <div class="detail-header">
+        <div class="entry-icon">{{ entry.icon || '🔐' }}</div>
+        <div class="entry-info">
+          <h2 class="entry-title">{{ entry.title }}</h2>
+          <p v-if="entry.url" class="entry-url">
+            <a :href="entry.url" target="_blank">{{ entry.url }}</a>
+          </p>
+        </div>
+        <div class="header-actions">
+          <button 
+            @click="handleToggleFavorite"
+            class="favorite-btn"
+            :class="{ active: entry.favorite }"
+          >
+            {{ entry.favorite ? '⭐' : '☆' }}
+          </button>
+          <button @click="$emit('edit')" class="edit-btn">
+            ✏️ 编辑
+          </button>
+          <button @click="$emit('close')" class="close-btn">
+            ✕
+          </button>
+        </div>
       </div>
-      <div class="header-actions">
-        <button 
-          @click="handleToggleFavorite"
-          class="favorite-btn"
-          :class="{ active: entry.favorite }"
-        >
-          {{ entry.favorite ? '⭐' : '☆' }}
-        </button>
-        <button @click="$emit('edit')" class="edit-btn">
-          ✏️ 编辑
-        </button>
-        <button @click="$emit('close')" class="close-btn">
-          ✕
-        </button>
-      </div>
-    </div>
 
-    <div class="detail-content">
-      <!-- 登录信息 -->
-      <div class="info-section">
-        <h3>登录信息</h3>
-        <div class="info-grid">
-          <div class="info-item">
-            <label>用户名/邮箱</label>
-            <div class="value-with-copy">
-              <span class="value">{{ entry.username }}</span>
-              <button @click="copyToClipboard(entry.username)" class="copy-btn">
-                📋
-              </button>
+      <div class="detail-content">
+        <!-- 登录信息 -->
+        <div class="info-section">
+          <h3>登录信息</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>用户名/邮箱</label>
+              <div class="value-with-copy">
+                <span class="value">{{ entry.username }}</span>
+                <button @click="copyToClipboard(entry.username)" class="copy-btn">
+                  📋
+                </button>
+              </div>
+            </div>
+            
+            <div class="info-item">
+              <label>密码</label>
+              <div class="value-with-copy">
+                <span class="value password-value" :class="{ hidden: !showPassword }">
+                  {{ showPassword ? entry.password : '••••••••' }}
+                </span>
+                <button @click="showPassword = !showPassword" class="toggle-btn">
+                  {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+                </button>
+                <button @click="copyPassword" class="copy-btn">
+                  📋
+                </button>
+              </div>
             </div>
           </div>
-          
-          <div class="info-item">
-            <label>密码</label>
-            <div class="value-with-copy">
-              <span class="value password-value" :class="{ hidden: !showPassword }">
-                {{ showPassword ? entry.password : '••••••••' }}
-              </span>
-              <button @click="showPassword = !showPassword" class="toggle-btn">
-                {{ showPassword ? '👁️' : '👁️‍🗨️' }}
-              </button>
-              <button @click="copyPassword" class="copy-btn">
-                📋
-              </button>
-            </div>
+        </div>
+
+        <!-- 附加信息 -->
+        <div v-if="entry.notes" class="info-section">
+          <h3>备注</h3>
+          <div class="notes-content">
+            {{ entry.notes }}
           </div>
         </div>
-      </div>
 
-      <!-- 附加信息 -->
-      <div v-if="entry.notes" class="info-section">
-        <h3>备注</h3>
-        <div class="notes-content">
-          {{ entry.notes }}
-        </div>
-      </div>
-
-      <!-- 标签 -->
-      <div v-if="entry.tags && entry.tags.length > 0" class="info-section">
-        <h3>标签</h3>
-        <div class="tags-list">
-          <span v-for="tag in entry.tags" :key="tag" class="tag">
-            {{ tag }}
-          </span>
-        </div>
-      </div>
-
-      <!-- 使用统计 -->
-      <div class="info-section">
-        <h3>使用统计</h3>
-        <div class="stats-grid">
-          <div class="stat-item">
-            <span class="stat-label">使用次数</span>
-            <span class="stat-value">{{ entry.timesUsed }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">最后使用</span>
-            <span class="stat-value">
-              {{ entry.lastUsed ? formatDate(entry.lastUsed) : '从未使用' }}
+        <!-- 标签 -->
+        <div v-if="entry.tags && entry.tags.length > 0" class="info-section">
+          <h3>标签</h3>
+          <div class="tags-list">
+            <span v-for="tag in entry.tags" :key="tag" class="tag">
+              {{ tag }}
             </span>
           </div>
-          <div class="stat-item">
-            <span class="stat-label">创建时间</span>
-            <span class="stat-value">{{ formatDate(entry.createdAt) }}</span>
+        </div>
+
+        <!-- 使用统计 -->
+        <div class="info-section">
+          <h3>使用统计</h3>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <span class="stat-label">使用次数</span>
+              <span class="stat-value">{{ entry.timesUsed }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">最后使用</span>
+              <span class="stat-value">
+                {{ entry.lastUsed ? formatDate(entry.lastUsed) : '从未使用' }}
+              </span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">创建时间</span>
+              <span class="stat-value">{{ formatDate(entry.createdAt) }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">更新时间</span>
+              <span class="stat-value">{{ formatDate(entry.updatedAt) }}</span>
+            </div>
           </div>
-          <div class="stat-item">
-            <span class="stat-label">更新时间</span>
-            <span class="stat-value">{{ formatDate(entry.updatedAt) }}</span>
+        </div>
+
+        <!-- 密码强度 -->
+        <div v-if="entry.strengthScore" class="info-section">
+          <h3>密码强度</h3>
+          <div class="strength-indicator">
+            <div class="strength-bar">
+              <div 
+                class="strength-fill" 
+                :class="strengthLevel"
+                :style="{ width: entry.strengthScore + '%' }"
+              ></div>
+            </div>
+            <span class="strength-text">{{ strengthText }}</span>
           </div>
         </div>
       </div>
 
-      <!-- 密码强度 -->
-      <div v-if="entry.strengthScore" class="info-section">
-        <h3>密码强度</h3>
-        <div class="strength-indicator">
-          <div class="strength-bar">
-            <div 
-              class="strength-fill" 
-              :class="strengthLevel"
-              :style="{ width: entry.strengthScore + '%' }"
-            ></div>
-          </div>
-          <span class="strength-text">{{ strengthText }}</span>
-        </div>
+      <!-- 操作按钮 -->
+      <div class="detail-actions">
+        <button @click="copyPassword" class="action-btn primary">
+          📋 复制密码
+        </button>
+        <button v-if="entry.url" @click="openUrl" class="action-btn">
+          🌐 打开网站
+        </button>
+        <button @click="$emit('edit')" class="action-btn">
+          ✏️ 编辑
+        </button>
+        <button @click="handleDelete" class="action-btn danger">
+          🗑️ 删除
+        </button>
       </div>
-    </div>
-
-    <!-- 操作按钮 -->
-    <div class="detail-actions">
-      <button @click="copyPassword" class="action-btn primary">
-        📋 复制密码
-      </button>
-      <button v-if="entry.url" @click="openUrl" class="action-btn">
-        🌐 打开网站
-      </button>
-      <button @click="$emit('edit')" class="action-btn">
-        ✏️ 编辑
-      </button>
-      <button @click="handleDelete" class="action-btn danger">
-        🗑️ 删除
-      </button>
     </div>
   </div>
 </template>
@@ -240,15 +242,45 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
+  overflow: auto;
+}
+
 .password-entry-detail {
-  background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+  background: #ffffff;
   border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-2xl);
   overflow: hidden;
-  max-width: 600px;
-  margin: 0 auto;
+  max-width: 650px;
+  width: 100%;
+  max-height: 90vh;
   border: 1px solid var(--border-color);
-  animation: fadeIn 0.3s ease;
+  animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @keyframes fadeIn {

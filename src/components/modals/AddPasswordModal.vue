@@ -1,105 +1,108 @@
 <template>
   <div class="modal-overlay" @click="handleOverlayClick">
-    <div class="modal-content" @click.stop>
+    <div class="modal-container" @click.stop>
       <div class="modal-header">
         <h3>添加新密码</h3>
         <button @click="$emit('close')" class="close-btn">✕</button>
       </div>
 
       <form @submit.prevent="handleSubmit" class="password-form">
-        <!-- 基本信息 -->
-        <div class="form-section">
-          <h4>基本信息</h4>
+        <!-- 表单内容区域 -->
+        <div class="form-content">
+          <!-- 基本信息 -->
+          <div class="form-section">
+            <h4>📋 基本信息</h4>
 
-          <div class="form-group">
-            <label for="title">网站/应用名称 *</label>
-            <input id="title" v-model="form.title" type="text" placeholder="例如：GitHub、微信、支付宝" required />
-          </div>
+            <div class="form-group">
+              <label for="title" data-required="*">网站/应用名称</label>
+              <input id="title" v-model="form.title" type="text" placeholder="例如：GitHub、微信、支付宝" required />
+            </div>
 
-          <div class="form-group">
-            <label for="url">网站地址</label>
-            <input id="url" v-model="form.url" type="url" placeholder="https://example.com" />
-          </div>
+            <div class="form-group">
+              <label for="url">网站地址</label>
+              <input id="url" v-model="form.url" type="url" placeholder="https://example.com" />
+            </div>
 
-          <div class="form-group">
-            <CategorySelector
-              v-model="form.categoryId"
-              :categories="categories"
-              :is-loading="isLoadingCategories"
-              label="分类 *"
-              placeholder="请选择分类"
-              help-text="选择密码条目的分类，便于管理和查找"
-              required
-              @change="handleCategoryChange"
-            />
-          </div>
+            <div class="form-group">
+              <CategorySelector
+                v-model="form.categoryId"
+                :categories="categories"
+                :is-loading="isLoadingCategories"
+                label="分类"
+                placeholder="请选择分类"
+                help-text="选择密码条目的分类，便于管理和查找"
+                required
+                @change="handleCategoryChange"
+              />
+            </div>
 
-          <div class="form-group">
-            <label for="icon">图标</label>
-            <div class="icon-selector">
-              <input id="icon" v-model="form.icon" type="text" placeholder="选择一个表情符号" maxlength="2" />
-              <div class="icon-options">
-                <button v-for="icon in commonIcons" :key="icon" type="button" @click="form.icon = icon"
-                  class="icon-option" :class="{ active: form.icon === icon }">
-                  {{ icon }}
-                </button>
+            <div class="form-group">
+              <label for="icon">图标</label>
+              <div class="icon-selector">
+                <input id="icon" v-model="form.icon" type="text" placeholder="选择一个表情符号" maxlength="2" />
+                <div class="icon-options">
+                  <button v-for="icon in commonIcons" :key="icon" type="button" @click="form.icon = icon"
+                    class="icon-option" :class="{ active: form.icon === icon }">
+                    {{ icon }}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- 登录信息 -->
-        <div class="form-section">
-          <h4>登录信息</h4>
+          <!-- 登录信息 -->
+          <div class="form-section">
+            <h4>🔑 登录信息</h4>
 
-          <div class="form-group">
-            <label for="username">用户名/邮箱 *</label>
-            <input id="username" v-model="form.username" type="text" placeholder="用户名或邮箱地址" required />
-          </div>
-
-          <div class="form-group">
-            <label for="password">密码 *</label>
-            <div class="password-input-group">
-              <input id="password" v-model="form.password" :type="showPassword ? 'text' : 'password'" placeholder="输入密码"
-                required />
-              <button type="button" @click="showPassword = !showPassword" class="password-toggle">
-                {{ showPassword ? '👁️' : '👁️‍🗨️' }}
-              </button>
-              <button type="button" @click="generateRandomPassword" class="generate-btn" title="生成随机密码">
-                🎲
-              </button>
+            <div class="form-group">
+              <label for="username" data-required="*">用户名/邮箱</label>
+              <input id="username" v-model="form.username" type="text" placeholder="用户名或邮箱地址" required />
             </div>
 
-            <!-- 密码强度指示器 -->
-            <div class="password-strength">
-              <div class="strength-bar">
-                <div class="strength-fill" :class="passwordStrength.level"
-                  :style="{ width: passwordStrength.percentage + '%' }"></div>
-              </div>
-              <span class="strength-text">{{ passwordStrength.text }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 附加信息 -->
-        <div class="form-section">
-          <h4>附加信息</h4>
-
-          <div class="form-group">
-            <label for="notes">备注</label>
-            <textarea id="notes" v-model="form.notes" placeholder="添加备注信息（可选）" rows="3"></textarea>
-          </div>
-
-          <div class="form-group">
-            <label for="tags">标签</label>
-            <input id="tags" v-model="tagsInput" type="text" placeholder="输入标签，用逗号分隔" @input="updateTags" />
-            <div class="tags-display" v-if="form.tags.length > 0">
-              <span v-for="(tag, index) in form.tags" :key="index" class="tag">
-                {{ tag }}
-                <button type="button" @click="removeTag(index)" class="tag-remove">
-                  ✕
+            <div class="form-group">
+              <label for="password" data-required="*">密码</label>
+              <div class="password-input-group">
+                <input id="password" v-model="form.password" :type="showPassword ? 'text' : 'password'" placeholder="输入密码"
+                  required />
+                <button type="button" @click="showPassword = !showPassword" class="password-toggle" title="显示/隐藏密码">
+                  {{ showPassword ? '👁️' : '👁️‍🗨️' }}
                 </button>
-              </span>
+                <button type="button" @click="generateRandomPassword" class="generate-btn" title="生成随机密码">
+                  🎲
+                </button>
+              </div>
+
+              <!-- 密码强度指示器 -->
+              <div class="password-strength">
+                <div class="strength-bar">
+                  <div class="strength-fill" :class="passwordStrength.level"
+                    :style="{ width: passwordStrength.percentage + '%' }"></div>
+                </div>
+                <span class="strength-text">{{ passwordStrength.text }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 附加信息 -->
+          <div class="form-section">
+            <h4>📝 附加信息</h4>
+
+            <div class="form-group">
+              <label for="notes">备注</label>
+              <textarea id="notes" v-model="form.notes" placeholder="添加备注信息（可选）" rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="tags">标签</label>
+              <input id="tags" v-model="tagsInput" type="text" placeholder="输入标签，用逗号分隔" @input="updateTags" />
+              <div class="tags-display" v-if="form.tags.length > 0">
+                <span v-for="(tag, index) in form.tags" :key="index" class="tag">
+                  {{ tag }}
+                  <button type="button" @click="removeTag(index)" class="tag-remove" title="移除标签">
+                    ✕
+                  </button>
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -107,10 +110,11 @@
         <!-- 表单操作 -->
         <div class="form-actions">
           <button type="button" @click="$emit('close')" class="cancel-btn">
-            取消
+            <span>取消</span>
           </button>
           <button type="submit" :disabled="!isFormValid" class="submit-btn">
-            {{ isLoading ? '保存中...' : '保存密码' }}
+            <span v-if="isLoading">保存中...</span>
+            <span v-else>保存密码</span>
           </button>
         </div>
       </form>
@@ -223,7 +227,7 @@ export default defineComponent({
       if (/[A-Z]/.test(password)) score += 1
       else feedback.push('大写字母')
 
-      if (/\d/.test(password)) score += 1
+      if (/d/.test(password)) score += 1
       else feedback.push('数字')
 
       if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score += 1
@@ -487,20 +491,50 @@ export default defineComponent({
 </script>
 
 <style scoped>
+/* 现代设计变量定义 */
+:root {
+  --primary-color: #4f46e5;
+  --primary-hover: #4338ca;
+  --secondary-color: #7c3aed;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --error-color: #ef4444;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --bg-tertiary: #f3f4f6;
+  --text-primary: #1f2937;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --border-color: #e5e7eb;
+  --border-hover: #d1d5db;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --transition-fast: 0.2s ease-in-out;
+  --transition-normal: 0.3s ease-in-out;
+  --transition-slow: 0.5s ease-in-out;
+}
+
+/* 模态框遮罩层 */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.85);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-  backdrop-filter: blur(4px);
-  animation: fadeIn 0.3s ease;
+  z-index: 9999;
+  padding: 80px 20px 20px;
+  animation: fadeIn 0.3s ease-out;
+  overflow: auto;
 }
 
 @keyframes fadeIn {
@@ -512,413 +546,541 @@ export default defineComponent({
   }
 }
 
-.modal-content {
-  background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
-  border-radius: var(--radius-2xl);
+/* 模态框容器 */
+.modal-container {
+  background: #ffffff;
+  border-radius: var(--radius-xl);
   width: 100%;
-  max-width: 600px;
+  max-width: 650px;
   max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: var(--shadow-2xl);
-  border: 1px solid var(--border-color);
-  animation: slideUp 0.3s ease;
+  overflow: hidden;
+  box-shadow: var(--shadow-xl);
+  animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-sizing: border-box;
 }
 
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(20px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
+/* 模态框头部 */
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px 24px 0;
-  margin-bottom: 24px;
+  padding: 24px 32px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--border-color);
   position: relative;
+  z-index: 10;
 }
 
-.modal-header::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 24px;
-  right: 24px;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--primary-500), transparent);
-}
-
+/* 标题样式 */
 .modal-header h3 {
-  font-size: 28px;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
-  background: linear-gradient(135deg, var(--primary-500), var(--secondary-700));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
+.modal-header h3::before {
+  content: "🔐";
+  font-size: 1.25rem;
+}
+
+/* 关闭按钮 */
 .close-btn {
-  background: var(--bg-primary);
+  background: var(--bg-tertiary);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  width: 40px;
-  height: 40px;
+  border-radius: var(--radius-md);
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   color: var(--text-secondary);
-  font-size: 18px;
-  transition: all 0.3s ease;
+  font-size: 1.25rem;
+  transition: all var(--transition-normal);
   box-shadow: var(--shadow-sm);
 }
 
 .close-btn:hover {
-  background: var(--error-50);
-  border-color: var(--error-200);
-  color: var(--error-600);
-  transform: scale(1.1);
+  background: var(--error-color);
+  border-color: var(--error-color);
+  color: white;
+  transform: scale(1.05);
+  box-shadow: var(--shadow-md);
 }
 
+/* 表单容器 */
 .password-form {
-  padding: 0 24px 24px;
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
 }
 
+/* 表单内容区域 - 包含滚动 */
+.form-content {
+  padding: 32px;
+  max-height: calc(90vh - 180px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) var(--bg-tertiary);
+}
+
+.form-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.form-content::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+
+.form-content::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: var(--radius-sm);
+}
+
+.form-content::-webkit-scrollbar-thumb:hover {
+  background: var(--border-hover);
+}
+
+/* 表单区域 */
 .form-section {
-  margin-bottom: 32px;
+  margin-bottom: 40px;
 }
 
+/* 区域标题 */
 .form-section h4 {
-  font-size: 20px;
+  font-size: 1.125rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin: 0 0 16px 0;
+  margin: 0 0 24px 0;
   padding-bottom: 12px;
   border-bottom: 2px solid var(--border-color);
-  background: linear-gradient(90deg, var(--primary-500), var(--secondary-700));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
+/* 表单组 */
 .form-group {
   margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
+/* 表单标签 */
 .form-group label {
   display: block;
-  margin-bottom: 10px;
-  color: var(--text-primary);
-  font-weight: 600;
-  font-size: 14px;
-  transition: all 0.3s ease;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all var(--transition-fast);
 }
 
+.form-group label::after {
+  content: attr(data-required);
+  color: var(--error-color);
+  margin-left: 4px;
+}
+
+/* 表单输入框 */
 .form-group input,
 .form-group select,
 .form-group textarea {
   width: 100%;
-  padding: 14px 18px;
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  font-size: 16px;
-  transition: all 0.3s ease;
+  padding: 14px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 400;
+  transition: all var(--transition-normal);
   box-sizing: border-box;
   background: var(--bg-primary);
   color: var(--text-primary);
   box-shadow: var(--shadow-sm);
 }
 
+/* 输入框聚焦状态 */
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: var(--primary-500);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  background: var(--bg-primary);
   transform: translateY(-1px);
 }
 
+/* 文本域样式 */
 .form-group textarea {
   resize: vertical;
-  min-height: 100px;
+  min-height: 120px;
   font-family: inherit;
   line-height: 1.6;
 }
 
+/* 图标选择器 */
 .icon-selector {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
+/* 图标选项容器 */
 .icon-options {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  padding: 12px;
-  background: var(--bg-primary);
+  padding: 20px;
+  background: var(--bg-secondary);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
 }
 
+/* 图标选项 */
 .icon-option {
   background: var(--bg-primary);
   border: 2px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  width: 48px;
-  height: 48px;
+  border-radius: var(--radius-md);
+  width: 56px;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 24px;
-  transition: all 0.3s ease;
+  font-size: 1.5rem;
+  transition: all var(--transition-normal);
   box-shadow: var(--shadow-sm);
 }
 
+/* 图标选项悬停状态 */
 .icon-option:hover {
-  border-color: var(--primary-300);
-  background: var(--primary-50);
-  transform: scale(1.1);
+  border-color: var(--primary-color);
+  background: var(--bg-secondary);
+  transform: scale(1.05);
   box-shadow: var(--shadow-md);
 }
 
+/* 选中的图标选项 */
 .icon-option.active {
-  border-color: var(--primary-500);
-  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  border-color: var(--primary-color);
+  background: var(--primary-color);
   color: white;
-  transform: scale(1.2);
-  box-shadow: var(--shadow-lg);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
+/* 密码输入组 */
 .password-input-group {
   position: relative;
   display: flex;
   align-items: center;
 }
 
+/* 密码输入框 */
 .password-input-group input {
-  padding-right: 100px;
+  padding-right: 110px;
 }
 
+/* 密码切换按钮 */
 .password-toggle,
 .generate-btn {
   position: absolute;
   right: 12px;
-  background: var(--bg-primary);
+  background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 18px;
+  font-size: 1.125rem;
   padding: 8px;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
   box-shadow: var(--shadow-sm);
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+/* 密码切换按钮位置 */
 .password-toggle {
-  right: 60px;
+  right: 68px;
 }
 
+/* 生成密码按钮位置 */
 .generate-btn {
   right: 12px;
 }
 
+/* 按钮悬停状态 */
 .password-toggle:hover,
 .generate-btn:hover {
-  background: var(--primary-50);
-  border-color: var(--primary-300);
-  transform: scale(1.1);
-  box-shadow: var(--shadow-md);
-}
-
-.password-strength {
-  margin-top: 12px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px;
-  background: var(--bg-primary);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-sm);
-}
-
-.strength-bar {
-  flex: 1;
-  height: 8px;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-  box-shadow: var(--shadow-inset);
-}
-
-.strength-fill {
-  height: 100%;
-  transition: width 0.3s ease, background-color 0.3s ease;
-  border-radius: var(--radius-full);
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-}
-
-.strength-fill.weak {
-  background: linear-gradient(90deg, var(--error-500), var(--error-700));
-}
-
-.strength-fill.medium {
-  background: linear-gradient(90deg, var(--warning-500), var(--warning-700));
-}
-
-.strength-fill.strong {
-  background: linear-gradient(90deg, var(--success-500), var(--success-700));
-}
-
-.strength-fill.very-strong {
-  background: linear-gradient(90deg, var(--primary-500), var(--primary-700));
-}
-
-.strength-text {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
-  white-space: nowrap;
-}
-
-.tags-display {
-  margin-top: 12px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 12px;
-  background: var(--bg-primary);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-sm);
-}
-
-.tag {
-  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  background: var(--primary-color);
+  border-color: var(--primary-color);
   color: white;
-  padding: 6px 12px;
-  border-radius: var(--radius-full);
-  font-size: 13px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.3s ease;
-  box-shadow: var(--shadow-sm);
-}
-
-.tag:hover {
   transform: scale(1.05);
   box-shadow: var(--shadow-md);
 }
 
+/* 密码强度指示器 */
+.password-strength {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 强度条 */
+.strength-bar {
+  flex: 1;
+  height: 10px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* 强度填充 */
+.strength-fill {
+  height: 100%;
+  transition: width 0.4s ease, background-color 0.4s ease;
+  border-radius: var(--radius-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.strength-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* 不同强度的颜色 */
+.strength-fill.weak {
+  background: var(--error-color);
+}
+
+.strength-fill.medium {
+  background: var(--warning-color);
+}
+
+.strength-fill.strong {
+  background: var(--success-color);
+}
+
+.strength-fill.very-strong {
+  background: var(--primary-color);
+}
+
+/* 强度文本 */
+.strength-text {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 标签显示 */
+.tags-display {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 标签样式 */
+.tag {
+  background: var(--primary-color);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 标签悬停 */
+.tag:hover {
+  background: var(--primary-hover);
+  transform: scale(1.05);
+  box-shadow: var(--shadow-md);
+}
+
+/* 标签移除按钮 */
 .tag-remove {
   background: rgba(255, 255, 255, 0.2);
   border: none;
   color: white;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 0.75rem;
   padding: 2px;
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
 }
 
+/* 标签移除按钮悬停 */
 .tag-remove:hover {
   background: rgba(255, 255, 255, 0.4);
   transform: scale(1.2);
 }
 
+/* 表单操作按钮 */
 .form-actions {
   display: flex;
   gap: 16px;
   justify-content: flex-end;
-  padding-top: 24px;
-  border-top: 2px solid var(--border-color);
-  margin-top: 32px;
+  padding: 24px 32px;
+  border-top: 1px solid var(--border-color);
+  margin-top: 0;
+  background: #ffffff;
+  position: relative;
+  z-index: 10;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
 }
 
-.cancel-btn,
-.submit-btn {
-  padding: 14px 32px;
-  border-radius: var(--radius-lg);
-  font-size: 16px;
+/* 取消按钮 */
+.cancel-btn {
+  padding: 14px 28px;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: var(--shadow-md);
-  border: none;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.cancel-btn {
+  transition: all var(--transition-normal);
+  border: 1px solid var(--border-color);
   background: var(--bg-primary);
-  color: var(--text-primary);
-  border: 2px solid var(--border-color);
+  color: var(--text-secondary);
+  box-shadow: var(--shadow-sm);
 }
 
+/* 取消按钮悬停 */
 .cancel-btn:hover {
   background: var(--bg-secondary);
-  border-color: var(--primary-300);
-  color: var(--text-primary);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
 }
 
+/* 提交按钮 */
 .submit-btn {
-  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  padding: 14px 28px;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  background: var(--primary-color);
   color: white;
-  border: 2px solid var(--primary-500);
+  border: 1px solid var(--primary-color);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
+/* 提交按钮悬停 */
 .submit-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
-  border-color: var(--primary-600);
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
 }
 
+/* 提交按钮禁用状态 */
 .submit-btn:disabled {
-  opacity: 0.6;
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+  color: var(--text-muted);
   cursor: not-allowed;
   transform: none;
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+/* 加载状态动画 */
+.submit-btn:disabled::after {
+  content: '';
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
+  /* 调整移动端样式 */
   .modal-overlay {
-    padding: 10px;
+    padding: 60px 16px 16px;
   }
 
-  .modal-content {
-    max-height: 95vh;
+  .modal-container {
+    max-height: 90vh;
   }
 
   .modal-header,
-  .password-form {
-    padding-left: 16px;
-    padding-right: 16px;
+  .form-content,
+  .form-actions {
+    padding: 20px;
   }
 
   .form-actions {
@@ -928,14 +1090,56 @@ export default defineComponent({
   .cancel-btn,
   .submit-btn {
     width: 100%;
+    justify-content: center;
   }
   
   .form-section h4 {
-    font-size: 18px;
+    font-size: 1rem;
   }
   
   .modal-header h3 {
-    font-size: 24px;
+    font-size: 1.25rem;
+  }
+  
+  .icon-options {
+    gap: 10px;
+    padding: 16px;
+  }
+  
+  .icon-option {
+    width: 50px;
+    height: 50px;
+    font-size: 1.25rem;
+  }
+  
+  .password-strength {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .strength-text {
+    justify-content: center;
+  }
+}
+
+/* 无障碍设计 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+  :root {
+    --border-color: #000000;
+    --text-primary: #000000;
+    --text-secondary: #000000;
   }
 }
 </style>
