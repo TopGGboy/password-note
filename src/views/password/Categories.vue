@@ -1,78 +1,23 @@
 <template>
-  <div class="categories-container">
+  <div class="categories-page">
     <!-- 页面头部 -->
-    <div class="page-header">
+    <header class="page-header">
       <div class="header-content">
-        <div class="header-left">
-          <div class="header-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2l5 0 2 3h9a2 2 0 0 1 2 2z"/>
-            </svg>
-          </div>
-          <div class="header-text">
-            <h1>分类管理</h1>
-            <p>组织和管理您的密码分类</p>
-          </div>
+        <div class="header-breadcrumb">
+          <span class="breadcrumb-item">密码管理</span>
+          <span class="breadcrumb-separator">/</span>
+          <span class="breadcrumb-item active">分类管理</span>
         </div>
-        <div class="header-actions">
-          <button @click="showAddModal = true" class="add-btn">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <line x1="12" y1="5" x2="12" y2="19"/>
-              <line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            添加分类
-          </button>
-        </div>
+        <h1 class="page-title">分类管理</h1>
+        <p class="page-description">组织和管理您的密码分类，让密码管理更加有序</p>
       </div>
-    </div>
+    </header>
 
-    <!-- 分类统计 -->
-    <div class="categories-stats">
-      <div class="stat-card">
-        <div class="stat-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2l5 0 2 3h9a2 2 0 0 1 2 2z"/>
-          </svg>
-        </div>
-        <div class="stat-content">
-          <div class="stat-number">{{ categoriesList.length }}</div>
-          <div class="stat-label">总分类数</div>
-        </div>
-      </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <circle cx="12" cy="16" r="1"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-        </div>
-        <div class="stat-content">
-          <div class="stat-number">{{ totalPasswordsCount }}</div>
-          <div class="stat-label">总密码数</div>
-        </div>
-      </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12,6 12,12 16,14"/>
-          </svg>
-        </div>
-        <div class="stat-content">
-          <div class="stat-number">{{ recentlyUpdated }}</div>
-          <div class="stat-label">最近更新</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 分类列表 -->
-    <div class="categories-section">
-      <div class="section-header">
-        <h2>所有分类</h2>
-        <div class="view-options">
+    <!-- 主要内容区域 -->
+    <main class="main-content">
+      <!-- 操作栏 -->
+      <div class="action-bar">
+        <div class="view-controls">
           <button 
             @click="viewMode = 'grid'" 
             class="view-btn" 
@@ -84,6 +29,7 @@
               <rect x="14" y="14" width="7" height="7"/>
               <rect x="3" y="14" width="7" height="7"/>
             </svg>
+            网格视图
           </button>
           <button 
             @click="viewMode = 'list'" 
@@ -98,94 +44,160 @@
               <line x1="3" y1="12" x2="3.01" y2="12"/>
               <line x1="3" y1="18" x2="3.01" y2="18"/>
             </svg>
+            列表视图
           </button>
         </div>
-      </div>
-
-      <div v-if="loadingCategories" class="loading-state">
-        <div class="loading-spinner">
-          <svg class="icon spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path d="M21 12a9 9 0 11-6.219-8.56"/>
+        <button @click="showAddModal = true" class="primary-btn add-btn">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
-        </div>
-        <p>正在加载分类...</p>
-      </div>
-
-      <div v-else-if="categories.length === 0" class="empty-state">
-        <div class="empty-icon">📂</div>
-        <p>暂无分类</p>
-        <button @click="showAddModal = true" class="add-category-btn">
-          添加第一个分类
+          添加分类
         </button>
       </div>
 
-      <div v-else class="categories-grid" :class="{ 'list-view': viewMode === 'list' }">
-        <div 
-          v-for="category in categories" 
-          :key="category.id" 
-          class="category-card" 
-          @click="viewCategory(category)"
-        >
-          <div class="category-header">
-            <div class="category-icon">{{ category.icon }}</div>
-            <div class="category-actions">
-              <button @click.stop="editCategory(category)" class="action-btn edit-btn">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-              </button>
-              <button @click.stop="handleDeleteCategory(category)" class="action-btn delete-btn">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <polyline points="3,6 5,6 21,6"/>
-                  <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
-                </svg>
-              </button>
+      <!-- 统计卡片 -->
+      <section class="stats-section">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2l5 0 2 3h9a2 2 0 0 1 2 2z"/>
+              </svg>
+            </div>
+            <div class="stat-content">
+              <h3 class="stat-title">总分类数</h3>
+              <p class="stat-value">{{ categoriesList.length }}</p>
             </div>
           </div>
-
-          <div class="category-info">
-            <h3>{{ category.name }}</h3>
-            <p>{{ category.description || '暂无描述' }}</p>
+          
+          <div class="stat-card">
+            <div class="stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <circle cx="12" cy="16" r="1"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </div>
+            <div class="stat-content">
+              <h3 class="stat-title">总密码数</h3>
+              <p class="stat-value">{{ totalPasswordsCount }}</p>
+            </div>
           </div>
-
-          <div class="category-stats">
-            <div class="stat-item">
-              <span class="stat-number">{{ category.passwordCount }}</span>
-              <span class="stat-label">个密码</span>
+          
+          <div class="stat-card">
+            <div class="stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12,6 12,12 16,14"/>
+              </svg>
             </div>
-            <div class="stat-item">
-              <span class="stat-time">{{ category.lastUpdated }}</span>
+            <div class="stat-content">
+              <h3 class="stat-title">最近更新</h3>
+              <p class="stat-value">{{ recentlyUpdated }}</p>
             </div>
-          </div>
-
-          <div class="category-progress">
-            <div class="progress-bar">
-              <div 
-                class="progress-fill" 
-                :style="{ width: Math.min((category.passwordCount / 20) * 100, 100) + '%' }"
-              ></div>
-            </div>
-            <span class="progress-text">{{ Math.min(category.passwordCount, 20) }}/20</span>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+
+      <!-- 分类列表 -->
+      <section class="categories-section">
+        <div class="section-header">
+          <h2 class="section-title">所有分类</h2>
+          <div class="section-subtitle">{{ categoriesList.length }} 个分类</div>
+        </div>
+
+        <!-- 加载状态 -->
+        <div v-if="loadingCategories" class="loading-state">
+          <div class="loading-spinner">
+            <svg class="icon spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M21 12a9 9 0 11-6.219-8.56"/>
+            </svg>
+          </div>
+          <p class="loading-text">正在加载分类...</p>
+        </div>
+
+        <!-- 空状态 -->
+        <div v-else-if="categories.length === 0" class="empty-state">
+          <div class="empty-icon">📂</div>
+          <h3 class="empty-title">暂无分类</h3>
+          <p class="empty-description">创建您的第一个分类，开始有序管理密码</p>
+          <button @click="showAddModal = true" class="primary-btn empty-btn">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            创建第一个分类
+          </button>
+        </div>
+
+        <!-- 分类网格 -->
+        <div v-else :class="['categories-container', { 'list-view': viewMode === 'list' }]">
+          <div 
+            v-for="category in categories" 
+            :key="category.id" 
+            class="category-card"
+            @click="viewCategory(category)"
+          >
+            <div class="category-header">
+              <div class="category-icon">{{ category.icon }}</div>
+              <div class="category-actions">
+                <button @click.stop="editCategory(category)" class="action-btn edit-btn">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </button>
+                <button @click.stop="handleDeleteCategory(category)" class="action-btn delete-btn">
+                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <polyline points="3,6 5,6 21,6"/>
+                    <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <div class="category-content">
+              <h3 class="category-name">{{ category.name }}</h3>
+              <p class="category-description">{{ category.description || '暂无描述' }}</p>
+            </div>
+            
+            <div class="category-meta">
+              <div class="meta-item">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <circle cx="12" cy="16" r="1"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <span>{{ category.passwordCount }} 个密码</span>
+              </div>
+              <div class="meta-item">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12,6 12,12 16,14"/>
+                </svg>
+                <span>{{ category.lastUpdated }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
 
     <!-- 添加/编辑分类模态框 -->
     <Transition name="modal">
       <div v-if="showAddModal || showEditModal" class="modal-overlay" @click="closeModals">
         <div class="modal-content" @click.stop>
           <div class="modal-header">
-            <h3>{{ showEditModal ? '编辑分类' : '添加分类' }}</h3>
-            <button @click="closeModals" class="close-btn">
+            <h3 class="modal-title">{{ showEditModal ? '编辑分类' : '添加分类' }}</h3>
+            <button @click="closeModals" class="modal-close">
               <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <line x1="18" y1="6" x2="6" y2="18"/>
                 <line x1="6" y1="6" x2="18" y2="18"/>
               </svg>
             </button>
           </div>
-
+          
           <form @submit.prevent="handleSubmit" class="modal-body">
             <!-- 分类名称 -->
             <div class="form-group">
@@ -202,83 +214,19 @@
               />
             </div>
 
-            <!-- 图标和颜色（并排显示） -->
-            <div class="form-row">
-              <div class="form-group flex-1">
-                <label class="form-label">图标</label>
-                <div class="icon-selector">
-                  <div 
-                    v-for="icon in availableIcons" 
-                    :key="icon" 
-                    class="icon-option"
-                    :class="{ selected: form.icon === icon }" 
-                    @click="form.icon = icon"
-                    :title="icon"
-                  >
-                    {{ icon }}
-                  </div>
-                </div>
-              </div>
-
-              <div class="form-group flex-1">
-                <label class="form-label">主题颜色</label>
-                <div class="color-selector">
-                  <div 
-                    v-for="color in presetColors" 
-                    :key="color.value"
-                    class="color-option"
-                    :class="{ selected: form.color === color.value }"
-                    :style="{ backgroundColor: color.value }"
-                    @click="form.color = color.value; customColor = color.value"
-                    :title="color.name"
-                  >
-                    <svg v-if="form.color === color.value" class="check-icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
-                      <polyline points="20,6 9,17 4,12"/>
-                    </svg>
-                  </div>
-                  <div class="color-custom">
-                    <input 
-                      type="color" 
-                      v-model="customColor" 
-                      @input="form.color = customColor"
-                      class="color-picker"
-                      title="自定义颜色"
-                    />
-                    <span class="color-custom-label">自定义</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 排序和默认设置（并排显示） -->
-            <div class="form-row">
-              <div class="form-group flex-1">
-                <label class="form-label">
-                  排序顺序
-                  <span class="label-hint">（数字越小越靠前）</span>
-                </label>
-                <input 
-                  v-model.number="form.sortOrder" 
-                  type="number" 
-                  class="form-input" 
-                  placeholder="0"
-                  min="0"
-                  max="999"
-                />
-              </div>
-
-              <div class="form-group flex-1">
-                <label class="form-label">设置</label>
-                <div class="toggle-group">
-                  <label class="toggle-label">
-                    <input 
-                      type="checkbox" 
-                      v-model="form.isDefault"
-                      class="toggle-input"
-                    />
-                    <span class="toggle-slider"></span>
-                    <span class="toggle-text">设为默认分类</span>
-                  </label>
+            <!-- 图标选择 -->
+            <div class="form-group">
+              <label class="form-label">图标</label>
+              <div class="icon-selector">
+                <div 
+                  v-for="icon in availableIcons" 
+                  :key="icon" 
+                  class="icon-option"
+                  :class="{ selected: form.icon === icon }" 
+                  @click="form.icon = icon"
+                  :title="icon"
+                >
+                  {{ icon }}
                 </div>
               </div>
             </div>
@@ -296,17 +244,44 @@
               <div class="char-count">{{ (form.description || '').length }}/100</div>
             </div>
 
+            <!-- 排序和默认设置 -->
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">
+                  排序顺序
+                  <span class="label-hint">（数字越小越靠前）</span>
+                </label>
+                <input 
+                  v-model.number="form.sortOrder" 
+                  type="number" 
+                  class="form-input" 
+                  placeholder="0"
+                  min="0"
+                  max="999"
+                />
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">设置</label>
+                <div class="toggle-group">
+                  <label class="toggle-label">
+                    <input 
+                      type="checkbox" 
+                      v-model="form.isDefault"
+                      class="toggle-input"
+                    />
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">设为默认分类</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
             <!-- 预览 -->
             <div class="form-group">
               <label class="form-label">预览</label>
               <div class="category-preview">
-                <div 
-                  class="preview-card"
-                  :style="{ 
-                    borderLeftColor: form.color || '#6366f1',
-                    backgroundColor: form.color ? `${form.color}15` : 'transparent'
-                  }"
-                >
+                <div class="preview-card">
                   <div class="preview-icon">{{ form.icon }}</div>
                   <div class="preview-content">
                     <div class="preview-name">{{ form.name || '分类名称' }}</div>
@@ -316,11 +291,11 @@
               </div>
             </div>
 
-            <div class="modal-actions">
-              <button type="button" @click="closeModals" class="cancel-btn">
+            <div class="modal-footer">
+              <button type="button" @click="closeModals" class="secondary-btn">
                 取消
               </button>
-              <button type="submit" class="submit-btn" :disabled="loading || !form.name.trim()">
+              <button type="submit" class="primary-btn" :disabled="loading || !form.name.trim()">
                 <svg v-if="loading" class="icon spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path d="M21 12a9 9 0 11-6.219-8.56"/>
                 </svg>
@@ -332,7 +307,7 @@
       </div>
     </Transition>
 
-    <!-- 成功提示 -->
+    <!-- 提示消息 -->
     <Transition name="toast">
       <div v-if="showToast" class="toast" :class="toastType">
         <svg v-if="toastType === 'success'" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -351,7 +326,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import { useCategories, type Category, type CategoryForm } from '../../composables/useCategories'
+import { useCategories, type Category } from '../../composables/useCategories'
 import { CATEGORY_ICONS, getDefaultCategoryIcon } from '../../utils/categoryUtils'
 
 export default defineComponent({
@@ -380,39 +355,10 @@ export default defineComponent({
         name: '',
         icon: getDefaultCategoryIcon(),
         description: '',
-        color: '#6366f1',
         sortOrder: undefined,
         isDefault: false
-      } as CategoryForm,
-
-      // 预设颜色
-      presetColors: [
-        { name: '蓝色', value: '#6366f1' },
-        { name: '绿色', value: '#10b981' },
-        { name: '红色', value: '#ef4444' },
-        { name: '黄色', value: '#f59e0b' },
-        { name: '紫色', value: '#8b5cf6' },
-        { name: '粉色', value: '#ec4899' },
-        { name: '青色', value: '#06b6d4' },
-        { name: '橙色', value: '#f97316' },
-        { name: '灰色', value: '#6b7280' },
-        { name: '靛蓝', value: '#4f46e5' }
-      ],
-
-      customColor: '#6366f1'
+      },
     }
-  },
-  watch: {
-    'form.color'(newColor) {
-      // 如果颜色不在预设列表中，同步到自定义颜色选择器
-      const isPresetColor = this.presetColors.some(c => c.value === newColor)
-      if (!isPresetColor && newColor) {
-        this.customColor = newColor
-      }
-    }
-  },
-  mounted() {
-    this.handleLoadCategories()
   },
   computed: {
     // 从 composable 获取分类列表
@@ -433,6 +379,9 @@ export default defineComponent({
       ).length
     }
   },
+  mounted() {
+    this.handleLoadCategories()
+  },
   methods: {
     viewCategory(category: Category) {
       // 跳转到该分类的密码列表
@@ -448,11 +397,9 @@ export default defineComponent({
         name: category.name,
         icon: category.icon,
         description: category.description,
-        color: '#6366f1', // TODO: 从API获取颜色信息
-        sortOrder: undefined, // TODO: 从API获取排序信息
-        isDefault: false // TODO: 从API获取默认状态
+        sortOrder: undefined,
+        isDefault: false
       }
-      this.customColor = this.form.color || '#6366f1'
       this.showEditModal = true
     },
 
@@ -489,13 +436,12 @@ export default defineComponent({
           this.showToastMessage('编辑分类功能暂未实现', 'error')
           return
         } else {
-          // 使用 composable 创建分类（会自动刷新列表）
+          // 使用 composable 创建分类
           const result = await this.createCategory(this.form)
           
           if (result.success) {
             this.showToastMessage(result.message || '分类创建成功')
             this.closeModals()
-            // createCategory 内部已经调用了 loadCategories，无需再次调用
           } else {
             this.showToastMessage(result.message || '创建分类失败', 'error')
           }
@@ -515,14 +461,12 @@ export default defineComponent({
         name: '',
         icon: getDefaultCategoryIcon(),
         description: '',
-        color: '#6366f1',
         sortOrder: undefined,
         isDefault: false
       }
-      this.customColor = '#6366f1'
     },
 
-    // 加载分类列表（使用 composable 的方法）
+    // 加载分类列表
     async handleLoadCategories() {
       const success = await this.loadCategories()
       if (!success && this.error) {
@@ -544,265 +488,344 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.categories-container {
-  padding: var(--spacing-2xl);
-  background: transparent;
+/* 全局样式重置 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.icon {
-  width: 20px;
-  height: 20px;
-  stroke-width: 2;
+/* 页面布局 */
+.categories-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 0;
 }
 
 /* 页面头部 */
 .page-header {
-  background: var(--bg-primary);
-  border-radius: var(--radius-xl);
-  padding: var(--spacing-8);
-  margin-bottom: var(--spacing-6);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
-}
-
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--spacing-6);
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-4);
-}
-
-.header-icon {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   color: white;
-}
-
-.header-icon svg {
-  width: 24px;
-  height: 24px;
-}
-
-.header-text h1 {
-  font-size: var(--text-3xl);
-  font-weight: var(--font-bold);
-  color: var(--text-primary);
-  margin: 0 0 var(--spacing-1) 0;
-}
-
-.header-text p {
-  color: var(--text-secondary);
-  margin: 0;
-  font-size: var(--text-base);
-}
-
-.add-btn {
-  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
-  color: white;
-  border: none;
-  padding: var(--spacing-3) var(--spacing-6);
-  border-radius: var(--radius-lg);
-  cursor: pointer;
-  font-weight: var(--font-semibold);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  transition: all 0.3s ease;
-  box-shadow: var(--shadow-sm), 0 2px 10px rgba(99, 102, 241, 0.3);
+  padding: 3rem 2rem;
+  text-align: center;
   position: relative;
   overflow: hidden;
 }
 
-.add-btn::before {
+.page-header::before {
   content: '';
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
-  transform: translate(-50%, -50%);
-  transition: width 0.6s, height 0.6s;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzPjxwYXR0ZXJuIGlkPSJwYXR0ZXJuIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiPjxwYXRoIGQ9Ik0gNDAgMCBMIDAgMCAwIDQwIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNwYXR0ZXJuKSIvPjwvc3ZnPg==');
+  opacity: 0.1;
 }
 
-.add-btn:hover::before {
-  width: 300px;
-  height: 300px;
+.header-content {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.add-btn:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: var(--shadow-lg), 0 4px 20px rgba(99, 102, 241, 0.4);
-}
-
-.add-btn svg {
-  transition: transform 0.3s ease;
-}
-
-.add-btn:hover svg {
-  transform: rotate(90deg) scale(1.2);
-}
-
-/* 分类统计 */
-.categories-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--spacing-4);
-  margin-bottom: var(--spacing-6);
-}
-
-.stat-card {
-  background: var(--bg-primary);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-5);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-4);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
-  transition: all 0.2s;
-}
-
-.stat-card:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.stat-icon {
-  width: 40px;
-  height: 40px;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-lg);
+.header-breadcrumb {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary-500);
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  opacity: 0.9;
+}
+
+.breadcrumb-item {
+  margin: 0 0.5rem;
+}
+
+.breadcrumb-item.active {
+  font-weight: 600;
+}
+
+.breadcrumb-separator {
+  opacity: 0.6;
+}
+
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.page-description {
+  font-size: 1.125rem;
+  opacity: 0.9;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* 主要内容 */
+.main-content {
+  max-width: 1200px;
+  margin: -3rem auto 2rem;
+  padding: 0 2rem;
+  position: relative;
+  z-index: 2;
+}
+
+/* 操作栏 */
+.action-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.view-controls {
+  display: flex;
+  gap: 0.5rem;
+  background: #f3f4f6;
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+}
+
+.view-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  transition: all 0.2s ease;
+}
+
+.view-btn:hover {
+  color: #374151;
+}
+
+.view-btn.active {
+  background: white;
+  color: #6366f1;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+/* 按钮样式 */
+.primary-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: white;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3);
+}
+
+.primary-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
+}
+
+.primary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.secondary-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #374151;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.secondary-btn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+/* 统计卡片 */
+.stats-section {
+  margin-bottom: 2rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.stat-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.stat-icon {
+  width: 4rem;
+  height: 4rem;
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6366f1;
+  flex-shrink: 0;
 }
 
 .stat-icon svg {
-  width: 20px;
-  height: 20px;
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
-.stat-number {
-  font-size: var(--text-2xl);
-  font-weight: var(--font-bold);
-  color: var(--text-primary);
-  display: block;
+.stat-content {
+  flex: 1;
 }
 
-.stat-label {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
+.stat-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111827;
 }
 
 /* 分类部分 */
 .categories-section {
-  background: var(--bg-primary);
-  border-radius: var(--radius-xl);
-  padding: var(--spacing-8);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
+  background: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-6);
+  margin-bottom: 2rem;
 }
 
-.section-header h2 {
-  font-size: var(--text-2xl);
-  font-weight: var(--font-semibold);
-  color: var(--text-primary);
-  margin: 0;
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
 }
 
-.view-options {
+.section-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+/* 加载状态 */
+.loading-state {
   display: flex;
-  gap: var(--spacing-1);
-  background: var(--bg-secondary);
-  padding: var(--spacing-1);
-  border-radius: var(--radius-md);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  text-align: center;
 }
 
-.view-btn {
-  background: none;
-  border: none;
-  padding: var(--spacing-2);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  color: var(--text-secondary);
-  transition: all 0.2s;
+.loading-spinner {
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 1rem;
 }
 
-.view-btn:hover {
-  color: var(--text-primary);
+.loading-spinner .icon {
+  width: 100%;
+  height: 100%;
+  color: #6366f1;
 }
 
-.view-btn.active {
-  background: var(--bg-primary);
-  color: var(--primary-500);
-  box-shadow: var(--shadow-sm);
+.loading-text {
+  color: #6b7280;
+  font-size: 1rem;
 }
 
-.categories-grid {
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.empty-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+
+.empty-description {
+  color: #6b7280;
+  margin-bottom: 2rem;
+  max-width: 300px;
+}
+
+/* 分类容器 */
+.categories-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: var(--spacing-5);
+  gap: 1.5rem;
 }
 
-.categories-grid.list-view {
+.categories-container.list-view {
   grid-template-columns: 1fr;
+  gap: 1rem;
 }
 
-.categories-grid.list-view .category-card {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-4);
-  padding: var(--spacing-4);
-}
-
-.categories-grid.list-view .category-header {
-  margin-bottom: 0;
-}
-
-.categories-grid.list-view .category-info {
-  flex: 1;
-  margin-bottom: 0;
-}
-
-.categories-grid.list-view .category-stats {
-  margin-top: 0;
-  border-top: none;
-  padding-top: 0;
-}
-
-.categories-grid.list-view .category-progress {
-  margin-top: 0;
-}
-
+/* 分类卡片 */
 .category-card {
-  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-6);
-  cursor: pointer;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  padding: 1.5rem;
   transition: all 0.3s ease;
-  box-shadow: var(--shadow-sm), 0 2px 10px rgba(0, 0, 0, 0.05);
-  border: 1px solid var(--border-color);
+  cursor: pointer;
   position: relative;
   overflow: hidden;
 }
@@ -814,56 +837,40 @@ export default defineComponent({
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, var(--primary-500), var(--primary-600), var(--primary-500));
-  transform: scaleX(0);
-  transition: transform 0.3s ease;
+  background: linear-gradient(90deg, #6366f1, #4f46e5);
 }
 
 .category-card:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: var(--shadow-lg), 0 4px 20px rgba(0, 0, 0, 0.1);
-  border-color: var(--primary-300);
-}
-
-.category-card:hover::before {
-  transform: scaleX(1);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border-color: #d1d5db;
 }
 
 .category-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--spacing-4);
+  align-items: flex-start;
+  margin-bottom: 1rem;
 }
 
 .category-icon {
-  font-size: var(--text-2xl);
-  background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
-  padding: var(--spacing-3);
-  border-radius: var(--radius-lg);
+  font-size: 2rem;
+  background: white;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.category-card:hover .category-icon {
-  transform: scale(1.1) rotate(5deg);
-  box-shadow: var(--shadow-md);
-  border-color: var(--primary-400);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
 }
 
 .category-actions {
   display: flex;
-  gap: var(--spacing-2);
+  gap: 0.5rem;
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s ease;
 }
 
 .category-card:hover .category-actions {
@@ -871,96 +878,69 @@ export default defineComponent({
 }
 
 .action-btn {
-  background: none;
+  width: 2rem;
+  height: 2rem;
   border: none;
+  background: white;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  padding: var(--spacing-2);
-  border-radius: var(--radius-md);
-  transition: all 0.2s;
-  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.action-btn:hover {
+  transform: scale(1.1);
 }
 
 .edit-btn:hover {
-  background: var(--primary-50);
-  color: var(--primary-500);
+  background: #eff6ff;
+  color: #3b82f6;
 }
 
 .delete-btn:hover {
-  background: var(--danger-50);
-  color: var(--danger-500);
+  background: #fef2f2;
+  color: #ef4444;
 }
 
-.category-info h3 {
-  margin: 0 0 var(--spacing-2) 0;
-  font-size: var(--text-xl);
-  font-weight: var(--font-semibold);
-  color: var(--text-primary);
+.category-content {
+  margin-bottom: 1rem;
 }
 
-.category-info p {
-  margin: 0;
-  color: var(--text-secondary);
+.category-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+
+.category-description {
+  color: #6b7280;
+  font-size: 0.875rem;
   line-height: 1.5;
-  font-size: var(--text-sm);
 }
 
-.category-stats {
+.category-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: var(--spacing-5);
-  padding-top: var(--spacing-5);
-  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
 }
 
-.stat-item {
+.meta-item {
   display: flex;
   align-items: center;
-  gap: var(--spacing-2);
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: #6b7280;
 }
 
-.category-stats .stat-number {
-  font-size: var(--text-lg);
-  font-weight: var(--font-semibold);
-  color: var(--text-primary);
-}
-
-.category-stats .stat-label {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-}
-
-.stat-time {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-}
-
-.category-progress {
-  margin-top: var(--spacing-4);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-3);
-}
-
-.progress-bar {
-  flex: 1;
-  height: 6px;
-  background: var(--bg-tertiary);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--primary-500), var(--primary-600));
-  border-radius: var(--radius-full);
-  transition: width 0.3s ease;
-}
-
-.progress-text {
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
-  font-weight: var(--font-medium);
+.meta-item .icon {
+  width: 1rem;
+  height: 1rem;
 }
 
 /* 模态框 */
@@ -979,232 +959,158 @@ export default defineComponent({
 }
 
 .modal-content {
-  background: var(--bg-primary);
-  border-radius: var(--radius-xl);
+  background: white;
+  border-radius: 1rem;
   width: 90%;
   max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: var(--shadow-xl);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-6);
-  border-bottom: 1px solid var(--border-color);
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-.modal-header h3 {
-  margin: 0;
-  font-size: var(--text-xl);
-  font-weight: var(--font-semibold);
-  color: var(--text-primary);
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
 }
 
-.close-btn {
-  background: none;
+.modal-close {
+  width: 2rem;
+  height: 2rem;
   border: none;
+  background: none;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  color: var(--text-secondary);
-  padding: var(--spacing-1);
-  border-radius: var(--radius-md);
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  color: #6b7280;
 }
 
-.close-btn:hover {
-  color: var(--text-primary);
-  background: var(--bg-secondary);
+.modal-close:hover {
+  background: #f3f4f6;
+  color: #374151;
 }
 
 .modal-body {
-  padding: var(--spacing-6);
+  padding: 1.5rem;
 }
 
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* 表单样式 */
 .form-group {
-  margin-bottom: var(--spacing-5);
+  margin-bottom: 1.5rem;
 }
 
 .form-label {
   display: block;
-  margin-bottom: var(--spacing-2);
-  font-weight: var(--font-medium);
-  color: var(--text-primary);
-  font-size: var(--text-sm);
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #374151;
+  font-size: 0.875rem;
 }
 
-.form-label .required {
-  color: var(--danger-500);
-  margin-left: 2px;
-}
-
-.form-label .label-hint {
-  font-weight: var(--font-normal);
-  color: var(--text-secondary);
-  font-size: var(--text-xs);
-  margin-left: var(--spacing-1);
+.label-hint {
+  font-weight: 400;
+  color: #6b7280;
+  font-size: 0.75rem;
+  margin-left: 0.5rem;
 }
 
 .form-input,
 .form-textarea {
   width: 100%;
-  padding: var(--spacing-3);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: var(--text-sm);
-  transition: border-color 0.2s;
-  background: var(--bg-primary);
-  color: var(--text-primary);
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease;
+  background: white;
+  color: #111827;
 }
 
 .form-input:focus,
 .form-textarea:focus {
   outline: none;
-  border-color: var(--primary-500);
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
 .form-textarea {
   resize: vertical;
   min-height: 80px;
-  font-family: inherit;
 }
 
 .char-count {
+  font-size: 0.75rem;
+  color: #6b7280;
   text-align: right;
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
-  margin-top: var(--spacing-1);
+  margin-top: 0.25rem;
 }
 
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* 图标选择器 */
 .icon-selector {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
-  gap: var(--spacing-2);
-  margin-top: var(--spacing-2);
+  gap: 0.5rem;
 }
 
 .icon-option {
+  width: 3rem;
+  height: 3rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius-md);
   cursor: pointer;
-  font-size: var(--text-lg);
-  transition: all 0.2s;
-  background: var(--bg-primary);
+  font-size: 1.25rem;
+  transition: all 0.2s ease;
+  background: white;
 }
 
 .icon-option:hover {
-  border-color: var(--border-hover);
-  background: var(--bg-secondary);
+  border-color: #d1d5db;
+  background: #f9fafb;
 }
 
 .icon-option.selected {
-  border-color: var(--primary-500);
-  background: var(--primary-50);
-  transform: scale(1.05);
-}
-
-/* 表单行布局 */
-.form-row {
-  display: flex;
-  gap: var(--spacing-4);
-  margin-bottom: var(--spacing-5);
-}
-
-.form-row .form-group {
-  margin-bottom: 0;
-}
-
-.flex-1 {
-  flex: 1;
-}
-
-/* 颜色选择器 */
-.color-selector {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-2);
-  margin-top: var(--spacing-2);
-}
-
-.color-option {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.2s;
-  border: 2px solid transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.color-option:hover {
-  transform: scale(1.1);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-}
-
-.color-option.selected {
-  border-color: var(--text-primary);
-  box-shadow: 0 0 0 2px var(--bg-primary), 0 2px 8px rgba(0, 0, 0, 0.2);
-  transform: scale(1.1);
-}
-
-.color-option .check-icon {
-  width: 16px;
-  height: 16px;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
-}
-
-.color-custom {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-1);
-}
-
-.color-picker {
-  width: 36px;
-  height: 36px;
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  padding: 0;
-  background: none;
-  overflow: hidden;
-}
-
-.color-picker::-webkit-color-swatch-wrapper {
-  padding: 0;
-}
-
-.color-picker::-webkit-color-swatch {
-  border: none;
-  border-radius: var(--radius-sm);
-}
-
-.color-custom-label {
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
-  white-space: nowrap;
+  border-color: #6366f1;
+  background: #eff6ff;
 }
 
 /* 开关样式 */
 .toggle-group {
-  padding: var(--spacing-2) 0;
+  padding: 0.5rem 0;
 }
 
 .toggle-label {
   display: flex;
   align-items: center;
-  gap: var(--spacing-2);
+  gap: 0.75rem;
   cursor: pointer;
   user-select: none;
 }
@@ -1218,66 +1124,65 @@ export default defineComponent({
 
 .toggle-slider {
   position: relative;
-  width: 44px;
-  height: 24px;
-  background-color: var(--bg-tertiary);
-  border-radius: 24px;
-  transition: all 0.3s;
-  border: 2px solid var(--border-color);
+  width: 3.5rem;
+  height: 1.75rem;
+  background-color: #e5e7eb;
+  border-radius: 1rem;
+  transition: all 0.3s ease;
 }
 
 .toggle-slider::before {
   content: '';
   position: absolute;
-  width: 18px;
-  height: 18px;
+  width: 1.25rem;
+  height: 1.25rem;
   border-radius: 50%;
   background-color: white;
-  top: 1px;
-  left: 1px;
-  transition: all 0.3s;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  top: 0.25rem;
+  left: 0.25rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .toggle-input:checked + .toggle-slider {
-  background-color: var(--primary-500);
-  border-color: var(--primary-500);
+  background-color: #6366f1;
 }
 
 .toggle-input:checked + .toggle-slider::before {
-  transform: translateX(20px);
+  transform: translateX(1.75rem);
 }
 
 .toggle-text {
-  font-size: var(--text-sm);
-  color: var(--text-primary);
+  font-size: 0.875rem;
+  color: #374151;
+  font-weight: 500;
 }
 
-/* 分类预览 */
+/* 预览卡片 */
 .category-preview {
-  margin-top: var(--spacing-2);
+  margin-top: 0.5rem;
 }
 
 .preview-card {
   display: flex;
   align-items: center;
-  gap: var(--spacing-3);
-  padding: var(--spacing-4);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-color);
-  border-left: 4px solid;
-  transition: all 0.2s;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
 }
 
 .preview-icon {
-  font-size: 32px;
-  width: 48px;
-  height: 48px;
+  font-size: 1.5rem;
+  background: white;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   flex-shrink: 0;
 }
 
@@ -1287,111 +1192,62 @@ export default defineComponent({
 }
 
 .preview-name {
-  font-size: var(--text-base);
-  font-weight: var(--font-semibold);
-  color: var(--text-primary);
-  margin-bottom: var(--spacing-1);
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0.25rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .preview-desc {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
+  font-size: 0.875rem;
+  color: #6b7280;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.modal-actions {
-  display: flex;
-  gap: var(--spacing-3);
-  justify-content: flex-end;
-  margin-top: var(--spacing-6);
-}
-
-.cancel-btn,
-.submit-btn {
-  padding: var(--spacing-3) var(--spacing-5);
-  border-radius: var(--radius-md);
-  font-weight: var(--font-medium);
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  font-size: var(--text-sm);
-}
-
-.cancel-btn {
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  border: 1px solid var(--border-color);
-}
-
-.cancel-btn:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-}
-
-.submit-btn {
-  background: var(--primary-500);
-  color: white;
-  border: 1px solid var(--primary-500);
-}
-
-.submit-btn:hover:not(:disabled) {
-  background: var(--primary-600);
-}
-
-.submit-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
 /* 提示消息 */
 .toast {
   position: fixed;
-  top: var(--spacing-6);
-  right: var(--spacing-6);
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-4) var(--spacing-5);
-  box-shadow: var(--shadow-lg);
+  top: 2rem;
+  right: 2rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
-  gap: var(--spacing-3);
+  gap: 0.75rem;
   z-index: 1000;
   min-width: 300px;
 }
 
 .toast.success {
-  border-color: var(--success-500);
-  color: var(--success-700);
+  border-left: 4px solid #10b981;
 }
 
 .toast.success .icon {
-  color: var(--success-500);
+  color: #10b981;
 }
 
 .toast.error {
-  border-color: var(--danger-500);
-  color: var(--danger-700);
+  border-left: 4px solid #ef4444;
 }
 
 .toast.error .icon {
-  color: var(--danger-500);
+  color: #ef4444;
+}
+
+/* 图标样式 */
+.icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 /* 动画 */
@@ -1407,7 +1263,8 @@ export default defineComponent({
 
 .modal-enter-from .modal-content,
 .modal-leave-to .modal-content {
-  transform: scale(0.9) translateY(-20px);
+  transform: scale(0.95) translateY(-20px);
+  opacity: 0;
 }
 
 .toast-enter-active,
@@ -1417,133 +1274,99 @@ export default defineComponent({
 
 .toast-enter-from {
   opacity: 0;
-  transform: translateX(100%);
+  transform: translateX(100%) translateY(-20px);
 }
 
 .toast-leave-to {
   opacity: 0;
-  transform: translateX(100%);
+  transform: translateX(100%) translateY(-20px);
 }
 
-/* 加载状态 */
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-12);
-  min-height: 300px;
+.spin {
+  animation: spin 1s linear infinite;
 }
 
-.loading-spinner {
-  width: 48px;
-  height: 48px;
-  margin-bottom: var(--spacing-4);
-}
-
-.loading-spinner .icon {
-  width: 100%;
-  height: 100%;
-  color: var(--primary-500);
-}
-
-.loading-state p {
-  color: var(--text-secondary);
-  font-size: var(--text-base);
-}
-
-/* 空状态 */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-12);
-  min-height: 300px;
-  text-align: center;
-}
-
-.empty-icon {
-  font-size: 64px;
-  margin-bottom: var(--spacing-4);
-}
-
-.empty-state p {
-  color: var(--text-secondary);
-  font-size: var(--text-lg);
-  margin-bottom: var(--spacing-6);
-}
-
-.add-category-btn {
-  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
-  color: white;
-  border: none;
-  padding: var(--spacing-3) var(--spacing-6);
-  border-radius: var(--radius-lg);
-  cursor: pointer;
-  font-weight: var(--font-semibold);
-  transition: all 0.2s;
-  box-shadow: var(--shadow-sm);
-}
-
-.add-category-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .categories-container {
-    padding: var(--spacing-4);
+  .page-header {
+    padding: 2rem 1rem;
   }
 
-  .header-content {
+  .page-title {
+    font-size: 2rem;
+  }
+
+  .main-content {
+    padding: 0 1rem;
+    margin-top: -2rem;
+  }
+
+  .action-bar {
     flex-direction: column;
-    gap: var(--spacing-4);
     align-items: stretch;
+    gap: 1rem;
   }
 
-  .categories-stats {
+  .view-controls {
+    justify-content: center;
+  }
+
+  .stats-grid {
     grid-template-columns: 1fr;
   }
 
-  .categories-grid {
+  .categories-container {
     grid-template-columns: 1fr;
   }
 
-  .category-stats {
-    flex-direction: column;
-    gap: var(--spacing-3);
-    align-items: flex-start;
+  .form-row {
+    grid-template-columns: 1fr;
   }
 
   .icon-selector {
     grid-template-columns: repeat(6, 1fr);
   }
 
-  .form-row {
-    flex-direction: column;
-    gap: var(--spacing-4);
-  }
-
-  .color-selector {
-    justify-content: flex-start;
-  }
-
-  .preview-card {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
   .modal-content {
-    margin: var(--spacing-4);
-    width: auto;
+    width: 95%;
+    margin: 1rem;
   }
 
   .toast {
-    right: var(--spacing-4);
-    left: var(--spacing-4);
+    right: 1rem;
+    left: 1rem;
     min-width: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 1.75rem;
+  }
+
+  .page-description {
+    font-size: 1rem;
+  }
+
+  .action-bar {
+    padding: 1rem;
+  }
+
+  .categories-section {
+    padding: 1rem;
+  }
+
+  .category-card {
+    padding: 1rem;
+  }
+
+  .icon-selector {
+    grid-template-columns: repeat(5, 1fr);
   }
 }
 </style>
