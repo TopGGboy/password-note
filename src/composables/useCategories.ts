@@ -91,25 +91,31 @@ export function useCategories() {
    * @returns 格式化后的请求数据
    */
   const buildCategoryRequestData = (formData: CategoryForm): CreateCategoryRequest => {
-    return {
+    const requestData: CreateCategoryRequest = {
       name: formData.name.trim(),
       // 图标转换：emoji字符串 → 数字索引
-      icon: emojiToNumber(formData.icon),
-      // 可选字段：只有当有值时才添加到请求中
-      ...(formData.description?.trim() && { 
-        description: formData.description.trim() 
-      }),
-      ...(formData.color?.trim() && { 
-        color: formData.color.trim() 
-      }),
-      ...(formData.sortOrder !== undefined && formData.sortOrder !== null && { 
-        sortOrder: formData.sortOrder 
-      }),
-      ...(formData.isDefault !== undefined && { 
-        isDefault: formData.isDefault 
-      })
-      // userId 不需要传递，后端会从 Security Context 中获取
+      icon: emojiToNumber(formData.icon)
     }
+
+    // 可选字段：只有当有值时才添加到请求中
+    if (formData.description && formData.description.trim()) {
+      requestData.description = formData.description.trim()
+    }
+
+    if (formData.color && formData.color.trim()) {
+      requestData.color = formData.color.trim()
+    }
+
+    if (formData.sortOrder !== undefined && formData.sortOrder !== null) {
+      requestData.sortOrder = formData.sortOrder
+    }
+
+    if (formData.isDefault !== undefined) {
+      // 后端期望 Integer 类型：true → 1, false → 0
+      requestData.isDefault = formData.isDefault ? 1 : 0
+    }
+
+    return requestData
   }
 
   /**

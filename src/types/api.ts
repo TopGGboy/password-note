@@ -145,7 +145,7 @@ export interface CreateCategoryRequest {
   color?: string
   sortOrder?: number
   icon?: number
-  isDefault?: boolean
+  isDefault?: number
   description?: string
   userId?: number
 }

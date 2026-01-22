@@ -11,25 +11,25 @@ export const CATEGORY_ICONS = [
 ] as const
 
 /**
- * 将emoji图标转换为数字索引（从1开始）
+ * 将emoji图标转换为数字索引（与数据库保持一致，从0开始）
  * @param emoji emoji字符串
- * @returns 数字索引，如果未找到则返回1（默认图标）
+ * @returns 数字索引，如果未找到则返回0（默认图标）
  */
 export function emojiToNumber(emoji: string): number {
   const index = CATEGORY_ICONS.indexOf(emoji as any)
-  return index >= 0 ? index + 1 : 1 // 索引从1开始
+  return index >= 0 ? index : 0 // 索引从0开始，与数据库保持一致
 }
 
 /**
- * 将数字索引转换为emoji图标
- * @param num 数字索引（从1开始）
+ * 将数字索引转换为emoji图标（与数据库保持一致，从0开始）
+ * @param num 数字索引（从0开始）
  * @returns emoji字符串，如果无效则返回默认图标📁
  */
 export function numberToEmoji(num?: number): string {
-  if (!num || num < 1 || num > CATEGORY_ICONS.length) {
+  if (num === undefined || num === null || num < 0 || num >= CATEGORY_ICONS.length) {
     return CATEGORY_ICONS[0] // 默认返回第一个图标
   }
-  return CATEGORY_ICONS[num - 1]
+  return CATEGORY_ICONS[num]
 }
 
 /**
