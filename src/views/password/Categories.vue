@@ -387,7 +387,7 @@ export default defineComponent({
       // 跳转到该分类的密码列表
       this.$router.push({
         path: '/passwords',
-        query: { category: category.name }
+        query: { categoryId: category.id.toString() }
       })
     },
 

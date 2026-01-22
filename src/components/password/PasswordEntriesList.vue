@@ -390,6 +390,31 @@ export default defineComponent({
     // 节流后的滚动处理函数
     const throttledHandleScroll = throttle(handleScroll, 200)
 
+    // 从URL获取分类ID参数
+    const getCategoryIdFromUrl = () => {
+      const urlParams = new URLSearchParams(window.location.search)
+      const categoryIdStr = urlParams.get('categoryId')
+      if (categoryIdStr && !isNaN(Number(categoryIdStr))) {
+        return Number(categoryIdStr)
+      }
+      return undefined
+    }
+
+    // 处理URL参数中的分类过滤
+    const handleUrlCategoryFilter = async () => {
+      const categoryId = getCategoryIdFromUrl()
+      if (categoryId !== undefined) {
+        console.log('从URL参数检测到分类ID:', categoryId)
+        // 设置选中的分类
+        selectedCategory.value = categoryId
+        // 应用分类过滤
+        await filterByCategory(categoryId)
+        // 刷新数据
+        await refresh()
+        console.log('自动应用分类过滤:', categoryId)
+      }
+    }
+
     // 组件挂载时初始化
     onMounted(async () => {
       console.log('=== PasswordEntriesList 组件挂载调试信息 ===')
@@ -428,6 +453,9 @@ export default defineComponent({
         ])
         console.log('数据加载完成，entries数量:', entries.value.length)
         console.log('total数量:', total.value)
+        
+        // 处理URL中的分类参数
+        await handleUrlCategoryFilter()
       } catch (error) {
         console.error('初始化数据加载失败:', error)
         showToast('数据加载失败，请刷新页面重试', 'error')
