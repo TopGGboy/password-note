@@ -16,4 +16,8 @@ export const categoriesAPI = {
   create: (data: CreateCategoryRequest): Promise<ApiResponse<CategoriesResponse>> => {
     return http.post(API_ENDPOINTS.CATEGORIES.BASE, data);
   },
+  // 删除分类
+  delete: (id: number): Promise<ApiResponse<CategoriesResponse>> => {
+    return http.delete(`${API_ENDPOINTS.CATEGORIES.BASE}/${id}`);
+  },
 };

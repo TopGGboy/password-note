@@ -153,12 +153,34 @@ export function useCategories() {
   }
 
   /**
-   * 删除分类（将来实现）
+   * 删除分类
+   * @param id 分类ID
+   * @returns 删除结果
    */
   const deleteCategory = async (id: number): Promise<{ success: boolean; message?: string }> => {
-    // TODO: 实现删除功能（等待后端接口）
-    console.warn('删除分类功能暂未实现')
-    return { success: false, message: '删除分类功能暂未实现' }
+    loading.value = true
+    error.value = null
+
+    try {
+      const response = await categoriesAPI.delete(id)
+      
+      if (response.code === 1) {
+        // 删除成功后重新加载列表
+        await loadCategories()
+        return { success: true, message: response.msg || '分类删除成功' }
+      } else {
+        const message = response.msg || '删除分类失败'
+        error.value = message
+        return { success: false, message }
+      }
+    } catch (err: any) {
+      const message = err?.response?.data?.msg || err?.message || '删除分类失败，请重试'
+      error.value = message
+      console.error('删除分类失败:', err)
+      return { success: false, message }
+    } finally {
+      loading.value = false
+    }
   }
 
   /**
