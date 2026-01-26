@@ -432,9 +432,15 @@ export default defineComponent({
 
       try {
         if (this.showEditModal && this.editingCategory) {
-          // 更新分类功能暂未实现（后端接口暂无）
-          this.showToastMessage('编辑分类功能暂未实现', 'error')
-          return
+          // 更新分类
+          const result = await this.updateCategory(this.editingCategory.id, this.form)
+          
+          if (result.success) {
+            this.showToastMessage(result.message || '分类更新成功')
+            this.closeModals()
+          } else {
+            this.showToastMessage(result.message || '更新分类失败', 'error')
+          }
         } else {
           // 使用 composable 创建分类
           const result = await this.createCategory(this.form)

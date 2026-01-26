@@ -20,4 +20,8 @@ export const categoriesAPI = {
   delete: (id: number): Promise<ApiResponse<CategoriesResponse>> => {
     return http.delete(`${API_ENDPOINTS.CATEGORIES.BASE}/${id}`);
   },
+  // 更新分类
+  update: (id: number, data: CreateCategoryRequest): Promise<ApiResponse<CategoriesResponse>> => {
+    return http.put(`${API_ENDPOINTS.CATEGORIES.BASE}/${id}`, data);
+  },
 };

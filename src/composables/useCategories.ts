@@ -184,18 +184,44 @@ export function useCategories() {
   }
 
   /**
-   * 更新分类（将来实现）
+   * 更新分类
    * @param id 分类ID
    * @param formData 分类表单数据
    * @returns 更新结果
    */
   const updateCategory = async (id: number, formData: CategoryForm): Promise<{ success: boolean; message?: string }> => {
-    // TODO: 实现更新功能（等待后端接口）
-    // 当后端接口可用时，使用类似 createCategory 的逻辑
-    // const updateData = buildCategoryRequestData(formData)
-    // const response = await categoriesAPI.update(id, updateData)
-    console.warn('更新分类功能暂未实现')
-    return { success: false, message: '更新分类功能暂未实现' }
+    loading.value = true
+    error.value = null
+
+    try {
+      // 构建更新请求数据
+      const requestData = buildCategoryRequestData(formData)
+      // 添加ID到请求数据中，确保路径参数与请求体中的ID匹配
+      const updateData: CreateCategoryRequest & { id: number } = {
+        ...requestData,
+        id
+      }
+      
+      // 调用后端API更新分类
+      const response = await categoriesAPI.update(id, updateData)
+      
+      if (response.code === 1) {
+        // 更新成功后重新加载列表
+        await loadCategories()
+        return { success: true, message: response.msg || '分类更新成功' }
+      } else {
+        const message = response.msg || '更新分类失败'
+        error.value = message
+        return { success: false, message }
+      }
+    } catch (err: any) {
+      const message = err?.response?.data?.msg || err?.message || '更新分类失败，请重试'
+      error.value = message
+      console.error('更新分类失败:', err)
+      return { success: false, message }
+    } finally {
+      loading.value = false
+    }
   }
 
   /**
