@@ -1,1294 +1,2018 @@
 <template>
   <div class="settings-container">
-    <!-- 页面头部 -->
-    <div class="page-header">
+    <!-- 背景装饰 -->
+    <div class="settings-bg">
+      <div class="bg-gradient"></div>
+      <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+        <div class="blob blob-4"></div>
+        <div class="blob blob-5"></div>
+      </div>
+      <div class="bg-particles">
+        <div v-for="i in 20" :key="'particle-' + i" class="particle" :style="{ '--delay': i * 0.1 + 's' }"></div>
+      </div>
+      <div class="bg-grid"></div>
+    </div>
+
+    <!-- 页面标题 -->
+    <div class="settings-header">
       <div class="header-content">
-        <div class="header-left">
-          <div class="header-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"/>
-            </svg>
-          </div>
-          <div class="header-text">
-            <h1>设置</h1>
-            <p>个性化您的密码管理体验</p>
-          </div>
+        <div class="header-decoration-top">
+          <div class="deco-dot deco-dot-1"></div>
+          <div class="deco-dot deco-dot-2"></div>
+          <div class="deco-dot deco-dot-3"></div>
+        </div>
+        <h1 class="settings-title">设置</h1>
+        <p class="settings-subtitle">管理你的账户信息和安全设置</p>
+        <div class="header-decoration">
+          <div class="deco-circle deco-1"></div>
+          <div class="deco-line"></div>
+          <div class="deco-circle deco-2"></div>
+        </div>
+        <div class="header-decoration-bottom">
+          <div class="deco-star deco-star-1"></div>
+          <div class="deco-star deco-star-2"></div>
+          <div class="deco-star deco-star-3"></div>
         </div>
       </div>
     </div>
 
+    <!-- 设置选项卡 -->
+    <div class="settings-tabs">
+      <button 
+        v-for="tab in tabs" 
+        :key="tab.id"
+        class="settings-tab"
+        :class="{ active: activeTab === tab.id }"
+        @click="activeTab = tab.id"
+      >
+        <div class="tab-icon">{{ tab.icon }}</div>
+        <span class="tab-label">{{ tab.label }}</span>
+        <div class="tab-indicator"></div>
+      </button>
+    </div>
+
     <!-- 设置内容 -->
     <div class="settings-content">
-      <!-- 账户设置 -->
-      <div class="settings-section">
+      <!-- 个人信息 -->
+      <div v-if="activeTab === 'profile'" class="settings-section">
         <div class="section-header">
-          <div class="section-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
+          <div class="section-decoration">
+            <div class="section-icon">👤</div>
           </div>
-          <div class="section-text">
-            <h2>账户设置</h2>
-            <p>管理您的个人信息和账户安全</p>
-          </div>
+          <h2 class="section-title">个人信息</h2>
+          <p class="section-desc">查看和更新你的账户信息</p>
         </div>
-        
-        <div class="settings-group">
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-              </div>
-              <div class="setting-text">
-                <h4>用户名</h4>
-                <p>您的登录用户名</p>
-              </div>
-            </div>
-            <div class="setting-control">
-              <input
-                v-model="userSettings.username"
-                type="text"
-                class="setting-input readonly"
-                readonly
-              />
-            </div>
+
+        <div class="profile-card card">
+          <div class="profile-avatar">
+            <div class="avatar" :data-initials="userInitials">{{ userInitials }}</div>
+            <button class="btn btn-primary" @click="isEditingProfile = !isEditingProfile">
+              <div class="btn-icon">{{ isEditingProfile ? '✕' : '✏️' }}</div>
+              <span>{{ isEditingProfile ? '取消' : '编辑' }}</span>
+            </button>
           </div>
 
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                  <polyline points="22,6 12,13 2,6"/>
-                </svg>
-              </div>
-              <div class="setting-text">
-                <h4>邮箱地址</h4>
-                <p>用于接收通知和找回密码</p>
+          <form class="profile-form" @submit.prevent="saveProfile">
+            <div class="form-group">
+              <label class="form-label">
+                <span class="label-icon">👤</span>
+                用户名
+              </label>
+              <div class="form-input-wrapper">
+                <input 
+                  type="text" 
+                  class="form-input" 
+                  v-model="profileForm.username"
+                  :disabled="!isEditingProfile"
+                  required
+                />
+                <div class="input-icon">👤</div>
               </div>
             </div>
-            <div class="setting-control">
-              <input
-                v-model="userSettings.email"
-                type="email"
-                class="setting-input"
-                :class="{ readonly: !editingEmail }"
-                :readonly="!editingEmail"
-              />
-              <button
-                @click="toggleEmailEdit"
-                class="edit-btn"
-                :class="{ saving: editingEmail && loading }"
-              >
-                <svg v-if="!editingEmail" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-                <svg v-else-if="loading" class="icon spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M21 12a9 9 0 11-6.219-8.56"/>
-                </svg>
-                <svg v-else class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <polyline points="20,6 9,17 4,12"/>
-                </svg>
-                {{ editingEmail ? (loading ? '保存中...' : '保存') : '编辑' }}
+
+            <div class="form-group">
+              <label class="form-label">
+                <span class="label-icon">📧</span>
+                邮箱
+              </label>
+              <div class="form-input-wrapper">
+                <input 
+                  type="email" 
+                  class="form-input" 
+                  v-model="profileForm.email"
+                  :disabled="!isEditingProfile"
+                  required
+                />
+                <div class="input-icon">📧</div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                <span class="label-icon">📝</span>
+                姓名
+              </label>
+              <div class="form-input-wrapper">
+                <input 
+                  type="text" 
+                  class="form-input" 
+                  v-model="profileForm.name"
+                  :disabled="!isEditingProfile"
+                />
+                <div class="input-icon">📝</div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                <span class="label-icon">📱</span>
+                手机号码
+              </label>
+              <div class="form-input-wrapper">
+                <input 
+                  type="tel" 
+                  class="form-input" 
+                  v-model="profileForm.phone"
+                  :disabled="!isEditingProfile"
+                />
+                <div class="input-icon">📱</div>
+              </div>
+            </div>
+
+            <div v-if="isEditingProfile" class="form-actions">
+              <button type="button" class="btn btn-secondary" @click="isEditingProfile = false">
+                <span>取消</span>
+              </button>
+              <button type="submit" class="btn btn-primary" :disabled="isLoading">
+                <div v-if="isLoading" class="loading-spinner"></div>
+                <span>{{ isLoading ? '保存中...' : '保存' }}</span>
               </button>
             </div>
-          </div>
-
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <circle cx="12" cy="16" r="1"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-              </div>
-              <div class="setting-text">
-                <h4>修改密码</h4>
-                <p>定期更改密码以保护账户安全</p>
-              </div>
-            </div>
-            <div class="setting-control">
-              <button @click="showChangePassword = true" class="action-btn">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-                修改密码
-              </button>
-            </div>
-          </div>
+          </form>
         </div>
-      </div>
 
-      <!-- 应用设置 -->
-      <div class="settings-section">
-        <div class="section-header">
-          <div class="section-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-              <line x1="8" y1="21" x2="16" y2="21"/>
-              <line x1="12" y1="17" x2="12" y2="21"/>
-            </svg>
-          </div>
-          <div class="section-text">
-            <h2>应用设置</h2>
-            <p>自定义应用的外观和行为</p>
-          </div>
-        </div>
-        
-        <div class="settings-group">
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <circle cx="12" cy="12" r="5"/>
-                  <line x1="12" y1="1" x2="12" y2="3"/>
-                  <line x1="12" y1="21" x2="12" y2="23"/>
-                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-                  <line x1="1" y1="12" x2="3" y2="12"/>
-                  <line x1="21" y1="12" x2="23" y2="12"/>
-                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-                </svg>
-              </div>
-              <div class="setting-text">
-                <h4>主题</h4>
-                <p>选择您喜欢的界面主题</p>
-              </div>
+        <!-- 账户信息 -->
+        <div class="account-info card">
+          <h3 class="info-title">
+            <span class="title-icon">ℹ️</span>
+            账户信息
+          </h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-icon">📅</div>
+              <span class="info-label">账户创建时间</span>
+              <span class="info-value">{{ formatDate(accountInfo.createdAt) }}</span>
+              <div class="info-glow"></div>
             </div>
-            <div class="setting-control">
-              <select v-model="appSettings.theme" @change="updateAppSettings" class="select-input">
-                <option value="light">浅色主题</option>
-                <option value="dark">深色主题</option>
-                <option value="auto">跟随系统</option>
-              </select>
+            <div class="info-item">
+              <div class="info-icon">⏰</div>
+              <span class="info-label">最后登录时间</span>
+              <span class="info-value">{{ formatDate(accountInfo.lastLoginAt) }}</span>
+              <div class="info-glow"></div>
             </div>
-          </div>
-
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-                  <line x1="9" y1="9" x2="9.01" y2="9"/>
-                  <line x1="15" y1="9" x2="15.01" y2="9"/>
-                </svg>
-              </div>
-              <div class="setting-text">
-                <h4>语言</h4>
-                <p>选择界面显示语言</p>
-              </div>
-            </div>
-            <div class="setting-control">
-              <select v-model="appSettings.language" @change="updateAppSettings" class="select-input">
-                <option value="zh-CN">简体中文</option>
-                <option value="zh-TW">繁体中文</option>
-                <option value="en-US">English</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-                </svg>
-              </div>
-              <div class="setting-text">
-                <h4>自动保存</h4>
-                <p>编辑密码时自动保存更改</p>
-              </div>
-            </div>
-            <div class="setting-control">
-              <label class="toggle-switch">
-                <input
-                  v-model="appSettings.autoSave"
-                  type="checkbox"
-                  @change="updateAppSettings"
-                />
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
-
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M9 12l2 2 4-4"/>
-                  <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
-                  <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
-                  <path d="M13 12h1"/>
-                </svg>
-              </div>
-              <div class="setting-text">
-                <h4>显示密码强度</h4>
-                <p>在密码列表中显示强度指示器</p>
-              </div>
-            </div>
-            <div class="setting-control">
-              <label class="toggle-switch">
-                <input
-                  v-model="appSettings.showPasswordStrength"
-                  type="checkbox"
-                  @change="updateAppSettings"
-                />
-                <span class="toggle-slider"></span>
-              </label>
+            <div class="info-item">
+              <div class="info-icon">📊</div>
+              <span class="info-label">账户状态</span>
+              <span class="info-value">
+                <span class="status-badge active">
+                  <span class="badge-icon">✅</span>
+                  活跃
+                </span>
+              </span>
+              <div class="info-glow"></div>
             </div>
           </div>
         </div>
       </div>
 
       <!-- 安全设置 -->
-      <div class="settings-section">
+      <div v-if="activeTab === 'security'" class="settings-section">
         <div class="section-header">
-          <div class="section-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
+          <div class="section-decoration">
+            <div class="section-icon">🔒</div>
           </div>
-          <div class="section-text">
-            <h2>安全设置</h2>
-            <p>保护您的账户和数据安全</p>
-          </div>
+          <h2 class="section-title">安全设置</h2>
+          <p class="section-desc">保护你的账户安全</p>
         </div>
-        
-        <div class="settings-group">
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <circle cx="12" cy="16" r="1"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-              </div>
-              <div class="setting-text">
-                <h4>修改主密码</h4>
-                <p>更改用于加密所有密码数据的主密码</p>
-              </div>
-            </div>
-            <div class="setting-control">
-              <button @click="showChangeMasterPassword = true" class="action-btn">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-                修改主密码
-              </button>
-            </div>
-          </div>
 
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <circle cx="12" cy="12" r="10"/>
-                  <polyline points="12,6 12,12 16,14"/>
-                </svg>
-              </div>
-              <div class="setting-text">
-                <h4>自动锁定</h4>
-                <p>在指定时间后自动锁定应用</p>
-              </div>
-            </div>
-            <div class="setting-control">
-              <select v-model="securitySettings.autoLockTime" @change="updateSecuritySettings" class="select-input">
-                <option value="0">从不</option>
-                <option value="5">5分钟</option>
-                <option value="15">15分钟</option>
-                <option value="30">30分钟</option>
-                <option value="60">1小时</option>
-              </select>
-            </div>
+        <!-- 修改密码 -->
+        <div class="security-card card">
+          <div class="card-decoration">
+            <div class="card-glow"></div>
           </div>
+          <h3 class="card-title">
+            <span class="card-icon">🔑</span>
+            修改密码
+          </h3>
+          <p class="card-desc">定期更新你的账户密码以增强安全性</p>
+          <button 
+            class="btn btn-primary" 
+            @click="showChangePasswordModal = true"
+          >
+            <div class="btn-icon">🔄</div>
+            <span>修改密码</span>
+          </button>
+        </div>
 
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M9 12l2 2 4-4"/>
-                  <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
-                  <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
-                  <path d="M13 12h1"/>
-                </svg>
-              </div>
-              <div class="setting-text">
-                <h4>双因素认证</h4>
-                <p>为您的账户添加额外的安全保护</p>
-              </div>
-            </div>
-            <div class="setting-control">
-              <label class="toggle-switch">
-                <input
-                  v-model="securitySettings.twoFactorAuth"
-                  type="checkbox"
-                  @change="handle2FAToggle"
-                />
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
+        <!-- 修改主密码 -->
+        <div class="security-card card">
+          <div class="card-decoration">
+            <div class="card-glow"></div>
           </div>
+          <h3 class="card-title">
+            <span class="card-icon">🗝️</span>
+            修改主密码
+          </h3>
+          <p class="card-desc">主密码用于加密和保护你的所有密码数据</p>
+          <button 
+            class="btn btn-primary" 
+            @click="showChangeMasterPasswordModal = true"
+          >
+            <div class="btn-icon">🔄</div>
+            <span>修改主密码</span>
+          </button>
+        </div>
 
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                  <polyline points="22,6 12,13 2,6"/>
-                </svg>
-              </div>
-              <div class="setting-text">
-                <h4>登录通知</h4>
-                <p>新设备登录时发送邮件通知</p>
-              </div>
-            </div>
-            <div class="setting-control">
-              <label class="toggle-switch">
-                <input
-                  v-model="securitySettings.loginNotification"
-                  type="checkbox"
-                  @change="updateSecuritySettings"
-                />
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
+        <!-- 安全状态 -->
+        <div class="security-status card">
+          <div class="card-decoration">
+            <div class="card-glow"></div>
           </div>
-
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-                  <line x1="8" y1="21" x2="16" y2="21"/>
-                  <line x1="12" y1="17" x2="12" y2="21"/>
-                </svg>
+          <h3 class="card-title">
+            <span class="card-icon">📊</span>
+            安全状态
+          </h3>
+          <div class="security-stats">
+            <div class="security-stat">
+              <div class="stat-icon">🔒</div>
+              <div class="stat-info">
+                <div class="stat-value">安全</div>
+                <div class="stat-label">账户状态</div>
               </div>
-              <div class="setting-text">
-                <h4>会话管理</h4>
-                <p>查看和管理活跃的登录会话</p>
-              </div>
+              <div class="stat-indicator safe"></div>
             </div>
-            <div class="setting-control">
-              <button @click="showSessions = true" class="action-btn">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
-                管理会话
-              </button>
+            <div class="security-stat">
+              <div class="stat-icon">🗝️</div>
+              <div class="stat-info">
+                <div class="stat-value">{{ hasMasterPassword ? '已设置' : '未设置' }}</div>
+                <div class="stat-label">主密码</div>
+              </div>
+              <div class="stat-indicator" :class="hasMasterPassword ? 'safe' : 'warning'"></div>
+            </div>
+            <div class="security-stat">
+              <div class="stat-icon">📅</div>
+              <div class="stat-info">
+                <div class="stat-value">30天前</div>
+                <div class="stat-label">密码更新</div>
+              </div>
+              <div class="stat-indicator warning"></div>
             </div>
           </div>
         </div>
       </div>
 
       <!-- 数据管理 -->
-      <div class="settings-section">
+      <div v-if="activeTab === 'data'" class="settings-section">
         <div class="section-header">
-          <div class="section-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <ellipse cx="12" cy="5" rx="9" ry="3"/>
-              <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
-              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
-            </svg>
+          <div class="section-decoration">
+            <div class="section-icon">💾</div>
           </div>
-          <div class="section-text">
-            <h2>数据管理</h2>
-            <p>导入、导出和备份您的数据</p>
+          <h2 class="section-title">数据管理</h2>
+          <p class="section-desc">管理你的密码数据</p>
+        </div>
+
+        <!-- 导出数据 -->
+        <div class="data-card card">
+          <div class="card-decoration">
+            <div class="card-glow"></div>
+          </div>
+          <h3 class="card-title">
+            <span class="card-icon">📤</span>
+            导出数据
+          </h3>
+          <p class="card-desc">将你的密码数据导出为安全格式</p>
+          <div class="data-actions">
+            <button class="btn btn-secondary">
+              <div class="btn-icon">📄</div>
+              <span>导出为JSON</span>
+            </button>
+            <button class="btn btn-secondary">
+              <div class="btn-icon">📊</div>
+              <span>导出为CSV</span>
+            </button>
           </div>
         </div>
-        
-        <div class="settings-group">
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7,10 12,15 17,10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-              </div>
-              <div class="setting-text">
-                <h4>数据导出</h4>
-                <p>导出您的密码数据</p>
-              </div>
-            </div>
-            <div class="setting-control">
-              <button @click="exportData" class="action-btn">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7,10 12,15 17,10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-                导出数据
-              </button>
-            </div>
-          </div>
 
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="17,8 12,3 7,8"/>
-                  <line x1="12" y1="3" x2="12" y2="15"/>
-                </svg>
-              </div>
-              <div class="setting-text">
-                <h4>数据导入</h4>
-                <p>从其他密码管理器导入数据</p>
-              </div>
-            </div>
-            <div class="setting-control">
-              <button @click="showImport = true" class="action-btn">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="17,8 12,3 7,8"/>
-                  <line x1="12" y1="3" x2="12" y2="15"/>
-                </svg>
-                导入数据
-              </button>
-            </div>
+        <!-- 导入数据 -->
+        <div class="data-card card">
+          <div class="card-decoration">
+            <div class="card-glow"></div>
           </div>
+          <h3 class="card-title">
+            <span class="card-icon">📥</span>
+            导入数据
+          </h3>
+          <p class="card-desc">从其他密码管理器导入数据</p>
+          <button class="btn btn-primary">
+            <div class="btn-icon">📁</div>
+            <span>导入数据</span>
+          </button>
+        </div>
 
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14,2 14,8 20,8"/>
-                  <line x1="16" y1="13" x2="8" y2="13"/>
-                  <line x1="16" y1="17" x2="8" y2="17"/>
-                  <polyline points="10,9 9,9 8,9"/>
-                </svg>
-              </div>
-              <div class="setting-text">
-                <h4>数据备份</h4>
-                <p>创建数据备份以防丢失</p>
-              </div>
-            </div>
-            <div class="setting-control">
-              <button @click="createBackup" class="action-btn">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                </svg>
-                创建备份
-              </button>
-            </div>
+        <!-- 清除数据 -->
+        <div class="data-card card danger">
+          <div class="card-decoration danger">
+            <div class="card-glow danger"></div>
           </div>
-
-          <div class="setting-item danger">
-            <div class="setting-info">
-              <div class="setting-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <polyline points="3,6 5,6 21,6"/>
-                  <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
-                  <line x1="10" y1="11" x2="10" y2="17"/>
-                  <line x1="14" y1="11" x2="14" y2="17"/>
-                </svg>
-              </div>
-              <div class="setting-text">
-                <h4>删除账户</h4>
-                <p>永久删除您的账户和所有数据</p>
-              </div>
-            </div>
-            <div class="setting-control">
-              <button @click="showDeleteAccount = true" class="danger-btn">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <polyline points="3,6 5,6 21,6"/>
-                  <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
-                </svg>
-                删除账户
-              </button>
-            </div>
-          </div>
+          <h3 class="card-title">
+            <span class="card-icon">🗑️</span>
+            清除数据
+          </h3>
+          <p class="card-desc danger">永久删除所有本地存储的密码数据</p>
+          <button class="btn btn-danger">
+            <div class="btn-icon">⚠️</div>
+            <span>清除所有数据</span>
+          </button>
         </div>
       </div>
 
       <!-- 关于 -->
-      <div class="settings-section">
+      <div v-if="activeTab === 'about'" class="settings-section">
         <div class="section-header">
-          <div class="section-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M9,9h5a3,3,0,0,1,0,6H9"/>
-              <line x1="12" y1="9" x2="12" y2="15"/>
-            </svg>
+          <div class="section-decoration">
+            <div class="section-icon">ℹ️</div>
           </div>
-          <div class="section-text">
-            <h2>关于</h2>
-            <p>应用信息和帮助支持</p>
-          </div>
+          <h2 class="section-title">关于</h2>
+          <p class="section-desc">了解密码笔记应用</p>
         </div>
-        
-        <div class="settings-group">
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-                  <line x1="9" y1="9" x2="9.01" y2="9"/>
-                  <line x1="15" y1="9" x2="15.01" y2="9"/>
-                </svg>
-              </div>
-              <div class="setting-text">
-                <h4>版本信息</h4>
-                <p>密码笔记 v{{ appVersion }}</p>
-              </div>
+
+        <div class="about-card card">
+          <div class="card-decoration">
+            <div class="card-glow"></div>
+          </div>
+          <div class="about-logo">
+            <div class="logo-icon">🔐</div>
+            <div class="logo-text">
+              <h3>密码笔记</h3>
+              <p class="version">版本 1.0.0</p>
+              <div class="logo-badge">安全可靠</div>
             </div>
-            <div class="setting-control">
-              <button @click="checkUpdate" class="action-btn">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M1 4v6h6"/>
-                  <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
-                </svg>
-                检查更新
-              </button>
+          </div>
+          
+          <div class="about-info">
+            <p class="about-desc">
+              密码笔记是一个安全、私密的密码管理工具，帮助你轻松管理所有的账号和密码。
+            </p>
+            <div class="about-features">
+              <div class="feature-item">
+                <div class="feature-icon">🔒</div>
+                <span>端到端加密</span>
+                <div class="feature-glow"></div>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon">💾</div>
+                <span>本地优先</span>
+                <div class="feature-glow"></div>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon">🔍</div>
+                <span>一键检索</span>
+                <div class="feature-glow"></div>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon">📁</div>
+                <span>分类管理</span>
+                <div class="feature-glow"></div>
+              </div>
             </div>
           </div>
 
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-                  <line x1="12" y1="17" x2="12.01" y2="17"/>
-                </svg>
-              </div>
-              <div class="setting-text">
-                <h4>帮助与支持</h4>
-                <p>获取使用帮助和技术支持</p>
-              </div>
-            </div>
-            <div class="setting-control">
-              <button @click="openHelp" class="action-btn">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                  <polyline points="15,3 21,3 21,9"/>
-                  <line x1="10" y1="14" x2="21" y2="3"/>
-                </svg>
-                帮助中心
-              </button>
-            </div>
-          </div>
-
-          <div class="setting-item">
-            <div class="setting-info">
-              <div class="setting-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14,2 14,8 20,8"/>
-                  <line x1="16" y1="13" x2="8" y2="13"/>
-                  <line x1="16" y1="17" x2="8" y2="17"/>
-                  <polyline points="10,9 9,9 8,9"/>
-                </svg>
-              </div>
-              <div class="setting-text">
-                <h4>隐私政策</h4>
-                <p>了解我们如何保护您的隐私</p>
-              </div>
-            </div>
-            <div class="setting-control">
-              <button @click="openPrivacyPolicy" class="action-btn">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                  <polyline points="15,3 21,3 21,9"/>
-                  <line x1="10" y1="14" x2="21" y2="3"/>
-                </svg>
-                查看政策
-              </button>
-            </div>
+          <div class="about-links">
+            <a href="#" class="about-link">
+              <div class="link-icon">❓</div>
+              <span>使用帮助</span>
+              <div class="link-arrow">→</div>
+            </a>
+            <a href="#" class="about-link">
+              <div class="link-icon">🔒</div>
+              <span>隐私政策</span>
+              <div class="link-arrow">→</div>
+            </a>
+            <a href="#" class="about-link">
+              <div class="link-icon">📝</div>
+              <span>服务条款</span>
+              <div class="link-arrow">→</div>
+            </a>
+            <a href="#" class="about-link">
+              <div class="link-icon">📞</div>
+              <span>联系我们</span>
+              <div class="link-arrow">→</div>
+            </a>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 成功提示 -->
-    <Transition name="toast">
-      <div v-if="showToast" class="toast" :class="toastType">
-        <svg v-if="toastType === 'success'" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <polyline points="20,6 9,17 4,12"/>
-        </svg>
-        <svg v-else class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="15" y1="9" x2="9" y2="15"/>
-          <line x1="9" y1="9" x2="15" y2="15"/>
-        </svg>
-        <span>{{ toastMessage }}</span>
-      </div>
-    </Transition>
-
-    <!-- 模态框占位符 - 实际项目中需要实现这些组件 -->
-    <!-- 
-    <ChangePasswordModal
-      v-if="showChangePassword"
-      @close="showChangePassword = false"
-      @success="handlePasswordChanged"
+    <!-- 修改密码模态框 -->
+    <ChangePasswordModal 
+      v-if="showChangePasswordModal" 
+      @close="showChangePasswordModal = false"
+      @success="handleChangePasswordSuccess"
     />
 
-    <ChangeMasterPasswordModal
-      v-if="showChangeMasterPassword"
-      @close="showChangeMasterPassword = false"
-      @success="handleMasterPasswordChanged"
+    <!-- 修改主密码模态框 -->
+    <ChangeMasterPasswordModal 
+      v-if="showChangeMasterPasswordModal" 
+      @close="showChangeMasterPasswordModal = false"
+      @success="handleChangeMasterPasswordSuccess"
     />
-
-    <SessionsModal
-      v-if="showSessions"
-      @close="showSessions = false"
-    />
-
-    <ImportDataModal
-      v-if="showImport"
-      @close="showImport = false"
-      @success="handleDataImported"
-    />
-
-    <DeleteAccountModal
-      v-if="showDeleteAccount"
-      @close="showDeleteAccount = false"
-      @confirm="handleAccountDeleted"
-    />
-    -->
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { useAuthStore } from '../../store/auth'
+import ChangePasswordModal from '../../components/modals/ChangePasswordModal.vue'
+import ChangeMasterPasswordModal from '../../components/modals/ChangeMasterPasswordModal.vue'
+import { KeyManager } from '../../utils/encryption/crypto'
 
-interface UserSettings {
-  username: string
-  email: string
-}
+// 状态管理
+const authStore = useAuthStore()
+const activeTab = ref('profile')
+const isEditingProfile = ref(false)
+const showChangePasswordModal = ref(false)
+const showChangeMasterPasswordModal = ref(false)
+const isLoading = ref(false)
 
-interface AppSettings {
-  theme: 'light' | 'dark' | 'auto'
-  language: string
-  autoSave: boolean
-  showPasswordStrength: boolean
-}
+// 选项卡配置
+const tabs = [
+  { id: 'profile', label: '个人信息', icon: '👤' },
+  { id: 'security', label: '安全设置', icon: '🔒' },
+  { id: 'data', label: '数据管理', icon: '💾' },
+  { id: 'about', label: '关于', icon: 'ℹ️' }
+]
 
-interface SecuritySettings {
-  autoLockTime: number
-  twoFactorAuth: boolean
-  loginNotification: boolean
-}
+// 用户信息
+const user = computed(() => authStore.user)
+const userInitials = computed(() => {
+  if (!user.value?.username) return 'U'
+  return user.value.username.charAt(0).toUpperCase()
+})
 
-export default defineComponent({
-  name: 'Settings',
-  data() {
-    return {
-      loading: false,
-      editingEmail: false,
-      showChangePassword: false,
-      showChangeMasterPassword: false,
-      showSessions: false,
-      showImport: false,
-      showDeleteAccount: false,
-      
-      showToast: false,
-      toastMessage: '',
-      toastType: 'success' as 'success' | 'error',
-      
-      appVersion: '1.0.0',
-      
-      userSettings: {
-        username: 'user123',
-        email: 'user@example.com'
-      } as UserSettings,
-      
-      appSettings: {
-        theme: 'light',
-        language: 'zh-CN',
-        autoSave: true,
-        showPasswordStrength: true
-      } as AppSettings,
-      
-      securitySettings: {
-        autoLockTime: 15,
-        twoFactorAuth: false,
-        loginNotification: true
-      } as SecuritySettings
+// 个人信息表单
+const profileForm = ref({
+  username: user.value?.username || '',
+  email: user.value?.email || '',
+  name: user.value?.name || '',
+  phone: user.value?.phone || ''
+})
+
+// 账户信息
+const accountInfo = ref({
+  createdAt: user.value?.createdAt || new Date().toISOString(),
+  lastLoginAt: user.value?.lastLoginAt || new Date().toISOString()
+})
+
+// 主密码状态
+const hasMasterPassword = ref(false)
+
+// 保存个人信息
+const saveProfile = async () => {
+  isLoading.value = true
+  try {
+    // 这里应该调用API更新用户信息
+    console.log('保存个人信息:', profileForm.value)
+    // 模拟API调用
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    // 更新本地存储的用户信息
+    if (user.value) {
+      Object.assign(user.value, profileForm.value)
     }
-  },
-  async mounted() {
-    await this.loadSettings()
-  },
-  methods: {
-    // 加载设置
-    async loadSettings() {
-      try {
-        // 模拟API调用
-        console.log('加载用户设置')
-      } catch (error) {
-        console.error('加载设置失败:', error)
-      }
-    },
+    isEditingProfile.value = false
+    alert('个人信息保存成功！')
+  } catch (error) {
+    console.error('保存个人信息失败:', error)
+    alert('保存失败，请重试')
+  } finally {
+    isLoading.value = false
+  }
+}
 
-    // 切换邮箱编辑状态
-    async toggleEmailEdit() {
-      if (this.editingEmail) {
-        // 保存邮箱
-        this.loading = true
-        try {
-          // 模拟API调用
-          await new Promise(resolve => setTimeout(resolve, 1000))
-          console.log('保存邮箱:', this.userSettings.email)
-          this.showToastMessage('邮箱地址已更新')
-        } catch (error) {
-          console.error('保存邮箱失败:', error)
-          this.showToastMessage('保存邮箱失败，请重试', 'error')
-        } finally {
-          this.loading = false
-        }
-      }
-      this.editingEmail = !this.editingEmail
-    },
+// 处理密码修改成功
+const handleChangePasswordSuccess = () => {
+  showChangePasswordModal.value = false
+  alert('密码修改成功！')
+}
 
-    // 更新应用设置
-    async updateAppSettings() {
-      try {
-        console.log('更新应用设置:', this.appSettings)
-        this.showToastMessage('应用设置已更新')
-        // 实际项目中调用API保存
-      } catch (error) {
-        console.error('更新应用设置失败:', error)
-        this.showToastMessage('更新设置失败，请重试', 'error')
-      }
-    },
+// 处理主密码修改成功
+const handleChangeMasterPasswordSuccess = () => {
+  showChangeMasterPasswordModal.value = false
+  alert('主密码修改成功！')
+}
 
-    // 更新安全设置
-    async updateSecuritySettings() {
-      try {
-        console.log('更新安全设置:', this.securitySettings)
-        this.showToastMessage('安全设置已更新')
-        // 实际项目中调用API保存
-      } catch (error) {
-        console.error('更新安全设置失败:', error)
-        this.showToastMessage('更新设置失败，请重试', 'error')
-      }
-    },
+// 格式化日期
+const formatDate = (dateString: string) => {
+  if (!dateString) return '未知'
+  const date = new Date(dateString)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
 
-    // 处理双因素认证切换
-    async handle2FAToggle() {
-      if (this.securitySettings.twoFactorAuth) {
-        // 启用2FA
-        console.log('启用双因素认证')
-        this.showToastMessage('双因素认证已启用')
-        // 实际项目中显示2FA设置流程
-      } else {
-        // 禁用2FA
-        if (confirm('确定要禁用双因素认证吗？这会降低账户安全性。')) {
-          console.log('禁用双因素认证')
-          this.showToastMessage('双因素认证已禁用')
-          // 实际项目中调用API禁用
-        } else {
-          this.securitySettings.twoFactorAuth = true
-        }
-      }
-    },
-
-    // 导出数据
-    async exportData() {
-      try {
-        console.log('导出数据')
-        this.showToastMessage('数据导出功能开发中...')
-        // 实际项目中实现数据导出
-      } catch (error) {
-        console.error('导出数据失败:', error)
-        this.showToastMessage('导出数据失败，请重试', 'error')
-      }
-    },
-
-    // 创建备份
-    async createBackup() {
-      try {
-        console.log('创建备份')
-        this.showToastMessage('备份创建成功！')
-        // 实际项目中实现备份功能
-      } catch (error) {
-        console.error('创建备份失败:', error)
-        this.showToastMessage('创建备份失败，请重试', 'error')
-      }
-    },
-
-    // 检查更新
-    async checkUpdate() {
-      try {
-        console.log('检查更新')
-        this.showToastMessage('当前已是最新版本！')
-        // 实际项目中检查应用更新
-      } catch (error) {
-        console.error('检查更新失败:', error)
-        this.showToastMessage('检查更新失败，请重试', 'error')
-      }
-    },
-
-    // 打开帮助中心
-    openHelp() {
-      window.open('/help', '_blank')
-    },
-
-    // 打开隐私政策
-    openPrivacyPolicy() {
-      window.open('/privacy', '_blank')
-    },
-
-    // 处理密码修改成功
-    handlePasswordChanged() {
-      console.log('密码修改成功')
-      this.showToastMessage('密码修改成功')
-    },
-
-    // 处理主密码修改成功
-    handleMasterPasswordChanged() {
-      console.log('主密码修改成功')
-      this.showToastMessage('主密码修改成功！请使用新密码重新登录应用。')
-    },
-
-    // 处理数据导入成功
-    handleDataImported() {
-      console.log('数据导入成功')
-      this.showToastMessage('数据导入成功')
-    },
-
-    // 处理账户删除
-    handleAccountDeleted() {
-      console.log('账户已删除')
-      this.showToastMessage('账户已删除')
-      // 实际项目中跳转到登录页
-      this.$router.push('/login')
-    },
-
-    // 显示提示消息
-    showToastMessage(message: string, type: 'success' | 'error' = 'success') {
-      this.toastMessage = message
-      this.toastType = type
-      this.showToast = true
-      
-      setTimeout(() => {
-        this.showToast = false
-      }, 3000)
+// 生命周期
+onMounted(() => {
+  // 检查主密码状态
+  hasMasterPassword.value = KeyManager.hasMasterPassword()
+  // 初始化表单数据
+  if (user.value) {
+    profileForm.value = {
+      username: user.value.username || '',
+      email: user.value.email || '',
+      name: user.value.name || '',
+      phone: user.value.phone || ''
+    }
+    accountInfo.value = {
+      createdAt: user.value.createdAt || new Date().toISOString(),
+      lastLoginAt: user.value.lastLoginAt || new Date().toISOString()
     }
   }
 })
 </script>
 
 <style scoped>
+/* 背景装饰样式 */
+.settings-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.bg-gradient {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(249, 250, 251, 0.9) 100%);
+  animation: gradientShift 15s ease infinite;
+}
+
+.bg-blobs {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  animation: blobMove 20s ease-in-out infinite;
+  opacity: 0.6;
+}
+
+.blob-1 {
+  width: 300px;
+  height: 300px;
+  background: rgba(99, 102, 241, 0.2);
+  top: 10%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.blob-2 {
+  width: 250px;
+  height: 250px;
+  background: rgba(16, 185, 129, 0.2);
+  top: 50%;
+  right: 10%;
+  animation-delay: -5s;
+}
+
+.blob-3 {
+  width: 200px;
+  height: 200px;
+  background: rgba(245, 158, 11, 0.2);
+  bottom: 10%;
+  left: 20%;
+  animation-delay: -10s;
+}
+
+.blob-4 {
+  width: 180px;
+  height: 180px;
+  background: rgba(239, 68, 68, 0.2);
+  top: 20%;
+  right: 25%;
+  animation-delay: -3s;
+}
+
+.blob-5 {
+  width: 150px;
+  height: 150px;
+  background: rgba(139, 92, 246, 0.2);
+  bottom: 20%;
+  right: 30%;
+  animation-delay: -7s;
+}
+
+.bg-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: var(--primary-500);
+  border-radius: 50%;
+  animation: particleFloat 6s ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+  opacity: 0;
+}
+
+.bg-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: gridMove 20s linear infinite;
+}
+
+/* 容器样式 */
 .settings-container {
+  max-width: 1000px;
+  margin: 0 auto;
   padding: var(--spacing-2xl);
-  background: transparent;
+  min-height: 80vh;
+  position: relative;
+  z-index: 1;
+  backdrop-filter: blur(10px);
 }
 
-.icon {
-  width: 20px;
-  height: 20px;
-  stroke-width: 2;
-}
-
-/* 页面头部 */
-.page-header {
-  background: var(--bg-primary);
-  border-radius: var(--radius-xl);
-  padding: var(--spacing-8);
-  margin-bottom: var(--spacing-6);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
+/* 页面标题 */
+.settings-header {
+  margin-bottom: var(--spacing-3xl);
+  text-align: center;
+  animation: fadeIn var(--transition-normal);
+  position: relative;
 }
 
 .header-content {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-4);
+  position: relative;
+  z-index: 1;
 }
 
-.header-icon {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
-  border-radius: var(--radius-lg);
+/* 顶部装饰点 */
+.header-decoration-top {
   display: flex;
-  align-items: center;
   justify-content: center;
-  color: white;
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+  animation: slideIn var(--transition-normal) 0.2s both;
 }
 
-.header-icon svg {
-  width: 24px;
-  height: 24px;
+.deco-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  animation: pulse 2s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
 }
 
-.header-text h1 {
-  font-size: var(--text-3xl);
+.deco-dot-1 {
+  animation-delay: 0s;
+}
+
+.deco-dot-2 {
+  animation-delay: 0.5s;
+}
+
+.deco-dot-3 {
+  animation-delay: 1s;
+}
+
+.settings-title {
+  font-size: var(--text-2xl);
   font-weight: var(--font-bold);
-  color: var(--text-primary);
-  margin: 0 0 var(--spacing-1) 0;
-}
-
-.header-text p {
-  color: var(--text-secondary);
-  margin: 0;
-  font-size: var(--text-base);
-}
-
-/* 设置内容 */
-.settings-content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-6);
-}
-
-.settings-section {
-  background: var(--bg-primary);
-  border-radius: var(--radius-xl);
-  padding: var(--spacing-8);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-4);
-  margin-bottom: var(--spacing-6);
-  padding-bottom: var(--spacing-4);
-  border-bottom: 1px solid var(--border-color);
-}
-
-.section-icon {
-  width: 40px;
-  height: 40px;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary-500);
-}
-
-.section-icon svg {
-  width: 20px;
-  height: 20px;
-}
-
-.section-text h2 {
-  font-size: var(--text-xl);
-  font-weight: var(--font-semibold);
-  color: var(--text-primary);
-  margin: 0 0 var(--spacing-1) 0;
-}
-
-.section-text p {
-  color: var(--text-secondary);
-  margin: 0;
-  font-size: var(--text-sm);
-}
-
-.settings-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-4);
-}
-
-.setting-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-5);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  transition: all 0.2s;
-}
-
-.setting-item:hover {
-  border-color: var(--border-hover);
-  background: var(--bg-secondary);
-}
-
-.setting-item.danger {
-  border-color: var(--danger-200);
-  background: var(--danger-50);
-}
-
-.setting-item.danger:hover {
-  border-color: var(--danger-300);
-  background: var(--danger-100);
-}
-
-.setting-info {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-4);
-  flex: 1;
-}
-
-.setting-icon {
-  width: 40px;
-  height: 40px;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-secondary);
-}
-
-.setting-icon svg {
-  width: 20px;
-  height: 20px;
-}
-
-.setting-text h4 {
-  font-size: var(--text-base);
-  font-weight: var(--font-semibold);
-  color: var(--text-primary);
-  margin: 0 0 var(--spacing-1) 0;
-}
-
-.setting-text p {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  margin: 0;
-  line-height: 1.4;
-}
-
-.setting-control {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-3);
-}
-
-.setting-input {
-  padding: var(--spacing-2) var(--spacing-3);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: var(--text-sm);
-  min-width: 200px;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  transition: all 0.2s;
-}
-
-.setting-input:focus {
-  outline: none;
-  border-color: var(--primary-500);
-}
-
-.setting-input.readonly {
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  cursor: not-allowed;
-}
-
-.select-input {
-  padding: var(--spacing-2) var(--spacing-3);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  background: var(--bg-primary);
-  cursor: pointer;
-  min-width: 120px;
-  font-size: var(--text-sm);
-  color: var(--text-primary);
-}
-
-.select-input:focus {
-  outline: none;
-  border-color: var(--primary-500);
-}
-
-.edit-btn,
-.action-btn {
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  border: 1px solid var(--border-color);
-  padding: var(--spacing-2) var(--spacing-4);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-}
-
-.edit-btn:hover,
-.action-btn:hover {
-  background: var(--bg-tertiary);
-  border-color: var(--border-hover);
-  color: var(--text-primary);
-}
-
-.edit-btn.saving {
-  background: var(--primary-500);
-  color: white;
-  border-color: var(--primary-500);
-}
-
-.danger-btn {
-  background: var(--danger-100);
-  color: var(--danger-700);
-  border: 1px solid var(--danger-300);
-  padding: var(--spacing-2) var(--spacing-4);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2);
-}
-
-.danger-btn:hover {
-  background: var(--danger-200);
-  border-color: var(--danger-400);
-  color: var(--danger-800);
-}
-
-.toggle-switch {
+  margin-bottom: var(--spacing-sm);
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+  letter-spacing: -0.025em;
+  animation: textGlow 3s ease-in-out infinite alternate;
   position: relative;
   display: inline-block;
-  width: 50px;
-  height: 24px;
 }
 
-.toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.toggle-slider {
+.settings-title::before,
+.settings-title::after {
+  content: '';
   position: absolute;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-radius: 50%;
+  transform: translateY(-50%);
+  opacity: 0.3;
+  animation: float 3s ease-in-out infinite;
+}
+
+.settings-title::before {
+  left: -30px;
+  animation-delay: 0s;
+}
+
+.settings-title::after {
+  right: -30px;
+  animation-delay: 1s;
+}
+
+.settings-subtitle {
+  font-size: var(--text-base);
+  color: var(--secondary-600);
+  font-weight: var(--font-medium);
+  margin-bottom: var(--spacing-xl);
+  position: relative;
+  display: inline-block;
+}
+
+.settings-subtitle::before,
+.settings-subtitle::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  width: 15px;
+  height: 2px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  border-radius: 1px;
+}
+
+.settings-subtitle::before {
+  left: -20px;
+}
+
+.settings-subtitle::after {
+  right: -20px;
+}
+
+/* 中间装饰 */
+.header-decoration {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xl);
+  animation: fadeIn var(--transition-normal) 0.4s both;
+}
+
+.deco-circle {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  animation: pulse 2s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+}
+
+.deco-1 {
+  animation-delay: 0s;
+}
+
+.deco-2 {
+  animation-delay: 1s;
+}
+
+.deco-line {
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3));
+  border-radius: 1px;
+}
+
+/* 底部装饰星星 */
+.header-decoration-bottom {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-xl);
+  animation: slideIn var(--transition-normal) 0.6s both;
+}
+
+.deco-star {
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  animation: twinkle 2s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.5);
+}
+
+.deco-star-1 {
+  animation-delay: 0s;
+}
+
+.deco-star-2 {
+  animation-delay: 0.7s;
+}
+
+.deco-star-3 {
+  animation-delay: 1.4s;
+}
+
+/* 选项卡样式 */
+.settings-tabs {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-3xl);
+  background: rgba(255, 255, 255, 0.8);
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  animation: slideIn var(--transition-normal);
+}
+
+.settings-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-lg);
   cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--secondary-700);
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.settings-tab::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left var(--transition-normal);
+  z-index: -1;
+}
+
+.settings-tab:hover {
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  color: var(--secondary-900);
+}
+
+.settings-tab:hover::before {
+  left: 100%;
+}
+
+.settings-tab.active {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: #fff;
+  box-shadow: 0 6px 24px rgba(99, 102, 241, 0.4);
+  transform: translateY(-3px);
+}
+
+.settings-tab.active::before {
+  display: none;
+}
+
+.settings-tab.active .tab-icon {
+  transform: scale(1.1) rotate(5deg);
+  transition: transform var(--transition-fast);
+}
+
+.tab-icon {
+  font-size: var(--text-lg);
+  transition: transform var(--transition-fast);
+}
+
+.tab-indicator {
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  border-radius: 1px;
+  transition: all var(--transition-fast);
+}
+
+.settings-tab.active .tab-indicator {
+  width: 40px;
+  bottom: 0;
+}
+
+.settings-tab:hover .tab-indicator {
+  width: 30px;
+  bottom: 0;
+  background: var(--primary-400);
+}
+
+/* 内容区域 */
+.settings-content {
+  animation: fadeIn 0.5s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 选项卡内容过渡效果 */
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 区域标题 */
+.section-header {
+  margin-bottom: var(--spacing-lg);
+  animation: fadeIn var(--transition-normal) 0.2s both;
+}
+
+.section-title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  color: var(--secondary-900);
+  margin-bottom: var(--spacing-xs);
+}
+
+.section-desc {
+  font-size: var(--text-sm);
+  color: var(--secondary-600);
+  font-weight: var(--font-medium);
+}
+
+/* 卡片样式 - 使用全局卡片样式 */
+.profile-card, .account-info, .security-card, .security-status, .data-card, .about-card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: var(--spacing-xl);
+}
+
+/* 卡片进入动画，添加延迟以创建层次感 */
+.profile-card {
+  animation: cardSlideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.1s both;
+}
+
+.account-info {
+  animation: cardSlideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both;
+}
+
+.security-card:nth-child(1) {
+  animation: cardSlideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.1s both;
+}
+
+.security-card:nth-child(2) {
+  animation: cardSlideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both;
+}
+
+.security-status {
+  animation: cardSlideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.3s both;
+}
+
+.data-card:nth-child(1) {
+  animation: cardSlideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.1s both;
+}
+
+.data-card:nth-child(2) {
+  animation: cardSlideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both;
+}
+
+.data-card:nth-child(3) {
+  animation: cardSlideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.3s both;
+}
+
+.about-card {
+  animation: cardSlideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.1s both;
+}
+
+@keyframes cardSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0.1);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.profile-card::before, .account-info::before, .security-card::before, .security-status::before, .data-card::before, .about-card::before {
+  content: '';
+  position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: var(--bg-tertiary);
-  transition: 0.4s;
-  border-radius: 24px;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  transition: all var(--transition-fast);
 }
 
-.toggle-slider:before {
+.profile-card:hover, .account-info:hover, .security-card:hover, .security-status:hover, .data-card:hover, .about-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.profile-card:hover::before, .account-info:hover::before, .security-card:hover::before, .security-status:hover::before, .data-card:hover::before, .about-card:hover::before {
+  height: 6px;
+  background: linear-gradient(90deg, #4f46e5, #7c3aed, #db2777);
+}
+
+/* 卡片内部元素动画 */
+.card-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--secondary-800);
+  margin-bottom: var(--spacing-sm);
+  transition: all var(--transition-fast);
+}
+
+.card-desc {
+  font-size: var(--text-sm);
+  color: var(--secondary-600);
+  line-height: 1.5;
+  margin-bottom: var(--spacing-lg);
+  transition: all var(--transition-fast);
+}
+
+.profile-card:hover .card-title,
+.account-info:hover .card-title,
+.security-card:hover .card-title,
+.security-status:hover .card-title,
+.data-card:hover .card-title,
+.about-card:hover .card-title {
+  color: #6366f1;
+  transform: translateY(-2px);
+}
+
+.profile-card:hover .card-desc,
+.account-info:hover .card-desc,
+.security-card:hover .card-desc,
+.security-status:hover .card-desc,
+.data-card:hover .card-desc,
+.about-card:hover .card-desc {
+  color: var(--secondary-700);
+}
+
+.profile-card {
+  text-align: center;
+}
+
+.profile-avatar {
+  margin-bottom: var(--spacing-2xl);
+  animation: scaleInCenter var(--transition-normal) 0.4s both;
+}
+
+.avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: var(--radius-full);
+  background: var(--gradient-primary);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  margin: 0 auto var(--spacing-lg) auto;
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.avatar::before {
+  content: '';
   position: absolute;
-  content: "";
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: 0.4s;
+  inset: 0;
+  background: var(--gradient-primary);
+  opacity: 0.8;
+  animation: pulse 3s infinite;
+}
+
+.avatar::after {
+  content: attr(data-initials);
+  position: relative;
+  z-index: 1;
+}
+
+.profile-card:hover .avatar {
+  transform: scale(1.05) rotate(5deg);
+  box-shadow: 0 12px 30px rgba(99, 102, 241, 0.5);
+}
+
+/* 表单样式 - 使用全局表单样式 */
+.profile-form {
+  max-width: 500px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.form-group {
+  text-align: left;
+  animation: fadeIn var(--transition-normal) 0.5s both;
+}
+
+.form-group:nth-child(2) {
+  animation-delay: 0.6s;
+}
+
+.form-group:nth-child(3) {
+  animation-delay: 0.7s;
+}
+
+.form-group:nth-child(4) {
+  animation-delay: 0.8s;
+}
+
+.form-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.form-input {
+  width: 100%;
+  padding: var(--spacing-md) var(--spacing-lg) var(--spacing-md) var(--spacing-xl);
+  border: 2px solid rgba(209, 213, 219, 0.8);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-base);
+  transition: all var(--transition-fast);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2), 0 4px 16px rgba(99, 102, 241, 0.15);
+  transform: translateY(-2px);
+}
+
+.form-input:disabled {
+  background: rgba(243, 244, 246, 0.9);
+  cursor: not-allowed;
+  opacity: 0.7;
+  border-color: rgba(209, 213, 219, 0.5);
+}
+
+/* 输入框图标样式 */
+.input-icon {
+  position: absolute;
+  left: var(--spacing-md);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--secondary-500);
+  font-size: var(--text-sm);
+  transition: all var(--transition-fast);
+  pointer-events: none;
+}
+
+.form-input:focus + .input-icon {
+  color: #6366f1;
+  transform: translateY(-50%) scale(1.1);
+}
+
+/* 表单标签样式 */
+.form-label {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--secondary-800);
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.form-group:hover .form-label {
+  color: #6366f1;
+}
+
+.label-icon {
+  font-size: var(--text-xs);
+  transition: all var(--transition-fast);
+}
+
+.form-group:hover .label-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+  margin-top: var(--spacing-lg);
+  animation: fadeIn var(--transition-normal) 0.9s both;
+}
+
+/* 账户信息 */
+.account-info {
+  margin-top: var(--spacing-xl);
+}
+
+.info-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--secondary-800);
+  margin-bottom: var(--spacing-lg);
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-lg);
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--gray-200);
+  transition: all var(--transition-fast);
+}
+
+.info-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-400);
+}
+
+.info-label {
+  font-size: var(--text-sm);
+  color: var(--secondary-600);
+  font-weight: var(--font-medium);
+}
+
+.info-value {
+  font-size: var(--text-base);
+  font-weight: var(--font-bold);
+  color: var(--secondary-900);
+}
+
+/* 按钮样式增强 */
+.btn {
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-fast);
+  border: none;
+  border-radius: var(--radius-lg);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md) var(--spacing-lg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--secondary-800);
+  border: 1px solid var(--gray-200);
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border-color: var(--primary-400);
+  background: rgba(255, 255, 255, 1);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #fff;
+}
+
+.btn-danger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left var(--transition-normal);
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
+.btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 加载状态动画 */
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid #fff;
   border-radius: 50%;
-}
-
-input:checked + .toggle-slider {
-  background-color: var(--primary-500);
-}
-
-input:checked + .toggle-slider:before {
-  transform: translateX(26px);
-}
-
-.spin {
   animation: spin 1s linear infinite;
+  margin-right: var(--spacing-xs);
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-/* 提示消息 */
-.toast {
-  position: fixed;
-  top: var(--spacing-6);
-  right: var(--spacing-6);
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-4) var(--spacing-5);
-  box-shadow: var(--shadow-lg);
+/* 按钮图标动画 */
+.btn-icon {
+  transition: transform var(--transition-fast);
+}
+
+.btn:hover .btn-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+/* 安全卡片 */
+.security-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.card-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--secondary-800);
+}
+
+.card-desc {
+  font-size: var(--text-sm);
+  color: var(--secondary-600);
+  line-height: 1.5;
+}
+
+/* 安全状态 */
+.security-status {
+  margin-top: var(--spacing-xl);
+}
+
+.security-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.security-stat {
   display: flex;
   align-items: center;
-  gap: var(--spacing-3);
-  z-index: 1000;
-  min-width: 300px;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--gray-200);
+  transition: all var(--transition-fast);
 }
 
-.toast.success {
-  border-color: var(--success-500);
-  color: var(--success-700);
+.security-stat:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-400);
 }
 
-.toast.success .icon {
-  color: var(--success-500);
+.stat-icon {
+  font-size: var(--text-2xl);
+  transition: transform var(--transition-fast);
 }
 
-.toast.error {
-  border-color: var(--danger-500);
-  color: var(--danger-700);
+.security-stat:hover .stat-icon {
+  transform: scale(1.1) rotate(5deg);
 }
 
-.toast.error .icon {
-  color: var(--danger-500);
+.stat-info {
+  flex: 1;
 }
 
-/* 动画 */
-.toast-enter-active,
-.toast-leave-active {
-  transition: all 0.3s ease;
+.stat-value {
+  font-size: var(--text-base);
+  font-weight: var(--font-bold);
+  color: var(--secondary-900);
 }
 
-.toast-enter-from {
-  opacity: 0;
-  transform: translateX(100%);
+.stat-label {
+  font-size: var(--text-xs);
+  color: var(--secondary-600);
+  font-weight: var(--font-medium);
 }
 
-.toast-leave-to {
-  opacity: 0;
-  transform: translateX(100%);
+/* 数据管理 */
+.data-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.data-card.danger {
+  border-color: var(--error-200);
+  background: var(--error-50);
+}
+
+.data-actions {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+.data-actions .btn {
+  flex: 1;
+}
+
+/* 关于卡片 */
+.about-card {
+  text-align: center;
+}
+
+.about-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-2xl);
+  animation: scaleInCenter var(--transition-normal) 0.4s both;
+}
+
+.logo-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-xl);
+  background: var(--gradient-primary);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: var(--text-3xl);
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.logo-icon::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gradient-primary);
+  opacity: 0.8;
+  animation: pulse 3s infinite;
+}
+
+.logo-icon::after {
+  content: '🔐';
+  position: relative;
+  z-index: 1;
+}
+
+.about-card:hover .logo-icon {
+  transform: scale(1.05) rotate(5deg);
+  box-shadow: 0 12px 30px rgba(99, 102, 241, 0.5);
+}
+
+.logo-text h3 {
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  color: var(--secondary-900);
+  margin: 0;
+}
+
+.version {
+  font-size: var(--text-sm);
+  color: var(--secondary-600);
+  margin: var(--spacing-xs) 0 0 0;
+}
+
+.about-desc {
+  font-size: var(--text-base);
+  color: var(--secondary-700);
+  line-height: 1.6;
+  margin-bottom: var(--spacing-xl);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  animation: fadeIn var(--transition-normal) 0.6s both;
+}
+
+.about-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-lg);
+  justify-content: center;
+  margin-bottom: var(--spacing-2xl);
+  animation: fadeIn var(--transition-normal) 0.8s both;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--gray-200);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--secondary-800);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.feature-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-400);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.feature-icon {
+  font-size: var(--text-base);
+  transition: transform var(--transition-fast);
+}
+
+.feature-item:hover .feature-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.about-links {
+  display: flex;
+  gap: var(--spacing-xl);
+  justify-content: center;
+  flex-wrap: wrap;
+  animation: fadeIn var(--transition-normal) 1s both;
+}
+
+.about-link {
+  color: var(--primary-700);
+  text-decoration: none;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  transition: all var(--transition-fast);
+  position: relative;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-lg);
+}
+
+.about-link:hover {
+  color: var(--primary-900);
+  background: var(--primary-50);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.about-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: var(--gradient-primary);
+  transition: all var(--transition-fast);
+  transform: translateX(-50%);
+}
+
+.about-link:hover::after {
+  width: 100%;
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
   .settings-container {
-    padding: var(--spacing-4);
+    padding: var(--spacing-xl);
   }
-  
-  .setting-item {
+
+  .settings-header {
+    margin-bottom: var(--spacing-2xl);
+  }
+
+  /* 标题装饰元素响应式调整 */
+  .header-decoration-top {
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .header-decoration-bottom {
+    gap: var(--spacing-lg);
+  }
+
+  .settings-title::before,
+  .settings-title::after {
+    width: 16px;
+    height: 16px;
+  }
+
+  .settings-title::before {
+    left: -25px;
+  }
+
+  .settings-title::after {
+    right: -25px;
+  }
+
+  .settings-subtitle::before,
+  .settings-subtitle::after {
+    width: 12px;
+  }
+
+  .settings-subtitle::before {
+    left: -16px;
+  }
+
+  .settings-subtitle::after {
+    right: -16px;
+  }
+
+  /* 选项卡响应式调整 */
+  .settings-tabs {
     flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing-4);
+    gap: var(--spacing-xs);
   }
-  
-  .setting-control {
-    width: 100%;
-    justify-content: flex-end;
+
+  .settings-tab {
+    padding: var(--spacing-sm) var(--spacing-md);
   }
-  
-  .setting-input {
-    min-width: auto;
+
+  /* 卡片响应式调整 */
+  .profile-card, .account-info, .security-card, .security-status, .data-card, .about-card {
+    padding: var(--spacing-lg);
+  }
+
+  /* 网格布局响应式调整 */
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .security-stats {
+    grid-template-columns: 1fr;
+  }
+
+  /* 按钮组响应式调整 */
+  .data-actions {
+    flex-direction: column;
+  }
+
+  /* 关于部分响应式调整 */
+  .about-logo {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .about-links {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* 表单响应式调整 */
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions .btn {
     width: 100%;
   }
 
-  .toast {
-    right: var(--spacing-4);
-    left: var(--spacing-4);
-    min-width: auto;
+  /* 背景装饰响应式调整 */
+  .blob-1 {
+    width: 200px;
+    height: 200px;
+  }
+
+  .blob-2 {
+    width: 180px;
+    height: 180px;
+  }
+
+  .blob-3 {
+    width: 150px;
+    height: 150px;
+  }
+
+  .blob-4 {
+    width: 120px;
+    height: 120px;
+  }
+
+  .blob-5 {
+    width: 100px;
+    height: 100px;
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-container {
+    padding: var(--spacing-lg);
+  }
+
+  .settings-title {
+    font-size: var(--text-xl);
+  }
+
+  .settings-subtitle {
+    font-size: var(--text-sm);
+  }
+
+  .section-title {
+    font-size: var(--text-lg);
+  }
+
+  .section-desc {
+    font-size: var(--text-xs);
+  }
+
+  /* 卡片响应式调整 */
+  .profile-card, .account-info, .security-card, .security-status, .data-card, .about-card {
+    padding: var(--spacing-md);
+  }
+
+  /* 头像和logo响应式调整 */
+  .avatar {
+    width: 80px;
+    height: 80px;
+    font-size: var(--text-lg);
+  }
+
+  .logo-icon {
+    width: 60px;
+    height: 60px;
+    font-size: var(--text-2xl);
+  }
+
+  /* 特性项响应式调整 */
+  .about-features {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .feature-item {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* 输入框响应式调整 */
+  .form-input {
+    padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) var(--spacing-lg);
+  }
+
+  .input-icon {
+    left: var(--spacing-sm);
+  }
+
+  /* 按钮响应式调整 */
+  .btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  /* 标题装饰响应式调整 */
+  .header-decoration-top {
+    gap: var(--spacing-md);
+  }
+
+  .header-decoration-bottom {
+    gap: var(--spacing-md);
+  }
+
+  .deco-dot {
+    width: 4px;
+    height: 4px;
+  }
+
+  .deco-star {
+    width: 10px;
+    height: 10px;
+  }
+}
+
+/* 平板横屏响应式调整 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .settings-container {
+    max-width: 800px;
+  }
+
+  .info-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .security-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* 动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes scaleInCenter {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes gradientShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes blobMove {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(20px, -20px) scale(1.05);
+  }
+  50% {
+    transform: translate(0, 20px) scale(1);
+  }
+  75% {
+    transform: translate(-20px, -10px) scale(0.95);
+  }
+}
+
+@keyframes particleFloat {
+  0% {
+    transform: translateY(100vh) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px) translateX(100px);
+    opacity: 0;
+  }
+}
+
+@keyframes gridMove {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 50px 50px;
+  }
+}
+
+@keyframes textGlow {
+  0% {
+    text-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+  }
+  100% {
+    text-shadow: 0 4px 12px rgba(99, 102, 241, 0.4), 0 0 20px rgba(139, 92, 246, 0.2);
+  }
+}
+
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.8);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(-50%) translateY(0px);
+  }
+  50% {
+    transform: translateY(-50%) translateY(-10px);
   }
 }
 </style>
