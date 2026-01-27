@@ -14,7 +14,6 @@
         <nav class="nav-links">
           <router-link to="/passwords" class="nav-link" :class="{ active: $route.path.startsWith('/passwords') }">密码</router-link>
           <router-link to="/categories" class="nav-link" :class="{ active: $route.path.startsWith('/categories') }">分类</router-link>
-          <router-link to="/security" class="nav-link" :class="{ active: $route.path.startsWith('/security') }">安全中心</router-link>
           <router-link to="/settings" class="nav-link" :class="{ active: $route.path.startsWith('/settings') }">设置</router-link>
         </nav>
       </div>

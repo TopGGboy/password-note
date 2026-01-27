@@ -89,15 +89,7 @@ const routes: Array<RouteRecordRaw> = [
           description: '管理密码分类'
         }
       },
-      {
-        path: '/security',
-        name: 'Security',
-        component: () => import('../views/security/Security.vue'),
-        meta: {
-          title: '安全中心 - 密码笔记',
-          description: '安全检查和设置'
-        }
-      },
+
       {
         path: '/settings',
         name: 'Settings',

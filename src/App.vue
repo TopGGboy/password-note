@@ -4,8 +4,7 @@
     <router-view />
 
 
-    <!-- 开发环境安全状态监控 -->
-    <SecurityStatus />
+    
 
     <!-- 主密码模态框 -->
     <MasterPasswordModal v-if="showMasterPasswordModal" :is-setup="!hasMasterPassword"
@@ -17,7 +16,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import AppLayout from './components/common/AppLayout.vue'
-import SecurityStatus from './components/security/SecurityStatus.vue'
+
 import MasterPasswordModal from './components/modals/MasterPasswordModal.vue'
 import { KeyManager } from './utils/encryption/crypto'
 

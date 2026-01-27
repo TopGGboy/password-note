@@ -69,6 +69,5 @@ export const ROUTES = {
   RESET_PASSWORD: "/reset-password",
   PASSWORDS: "/passwords",
   CATEGORIES: "/categories",
-  SECURITY: "/security",
   SETTINGS: "/settings",
 } as const;
