@@ -52,9 +52,14 @@ export const userAPI = {
     return http.post("/api/auth/reset-password", data);
   },
 
-  // 获取当前用户信息
+  // 获取当前用户信息（旧接口）
   getCurrentUser: (): Promise<ApiResponse<UserInfoResponse>> => {
     return http.get(API_ENDPOINTS.USER.ME);
+  },
+
+  // 获取当前用户详细信息（新接口）
+  getUserInfo: (): Promise<ApiResponse<UserInfoResponse>> => {
+    return http.get(API_ENDPOINTS.USER.INFO);
   },
 
   // 修改密码

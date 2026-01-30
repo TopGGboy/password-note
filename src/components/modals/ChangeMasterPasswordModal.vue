@@ -138,12 +138,28 @@
         </div>
       </div>
     </div>
+    
+    <!-- 成功通知 -->
+    <SuccessNotification 
+      v-if="showSuccessNotification" 
+      title="主密码修改成功"
+      message="您的主密码已成功修改，请使用新密码重新登录。"
+      :items="[
+        '请使用新主密码重新登录',
+        '现有的密码条目需要重新加密',
+        '建议立即备份您的数据',
+        '修改后所有设备都需要重新输入新主密码'
+      ]"
+      :duration="8000"
+      @close="showSuccessNotification = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { KeyManager, DataEncryptionService } from '../../utils/encryption/crypto'
+import SuccessNotification from '../common/SuccessNotification.vue'
 
 interface Emits {
   (e: 'success'): void
@@ -151,7 +167,6 @@ interface Emits {
 }
 
 const emit = defineEmits<Emits>()
-
 const currentMasterPassword = ref('')
 const newMasterPassword = ref('')
 const confirmNewPassword = ref('')
@@ -160,6 +175,7 @@ const showNewPassword = ref(false)
 const showConfirmPassword = ref(false)
 const isLoading = ref(false)
 const errorMessage = ref('')
+const showSuccessNotification = ref(false)
 
 const passwordStrength = computed(() => {
   const password = newMasterPassword.value
@@ -273,10 +289,13 @@ const handleSubmit = async () => {
     
     console.log('主密码修改成功')
     
-    // 4. 提示用户需要重新加密现有数据
-    alert('主密码修改成功！\n\n重要提醒：\n- 请使用新主密码重新登录\n- 现有的密码条目需要重新加密\n- 建议立即备份您的数据')
+    // 4. 显示成功通知
+    showSuccessNotification.value = true
     
-    emit('success')
+    // 延迟发送成功事件，让用户有时间看到通知
+    setTimeout(() => {
+      emit('success')
+    }, 1000)
   } catch (error: any) {
     console.error('主密码修改失败:', error)
     errorMessage.value = error.message || '修改失败，请重试'

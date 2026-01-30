@@ -103,11 +103,11 @@ export class TokenManager {
     try {
       const expiresAt = localStorage.getItem(STORAGE_KEYS.TOKEN_EXPIRES_AT)
       if (!expiresAt) return false
-      
+
       const expirationTime = parseInt(expiresAt)
       return Date.now() >= expirationTime
     } catch (error) {
-      return true // 出错时认为已过期，更安全
+      return false // 出错时认为未过期，避免不必要的token刷新
     }
   }
 

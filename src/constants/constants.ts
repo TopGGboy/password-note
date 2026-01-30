@@ -9,6 +9,7 @@ export const API_ENDPOINTS = {
     LOGOUT: "/api/user/logout", // 登出
 
     ME: "/api/user/me",
+    INFO: "/api/user/info", // 获取用户详细信息
     CHANGE_PASSWORD: "/api/user/change-password",
     FORGOT_PASSWORD: "/api/user/forgot-password",
     RESET_PASSWORD: "/api/user/reset-password",

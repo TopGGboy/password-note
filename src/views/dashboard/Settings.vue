@@ -89,7 +89,6 @@
                   :disabled="!isEditingProfile"
                   required
                 />
-                <div class="input-icon">👤</div>
               </div>
             </div>
 
@@ -106,41 +105,10 @@
                   :disabled="!isEditingProfile"
                   required
                 />
-                <div class="input-icon">📧</div>
               </div>
             </div>
 
-            <div class="form-group">
-              <label class="form-label">
-                <span class="label-icon">📝</span>
-                姓名
-              </label>
-              <div class="form-input-wrapper">
-                <input 
-                  type="text" 
-                  class="form-input" 
-                  v-model="profileForm.name"
-                  :disabled="!isEditingProfile"
-                />
-                <div class="input-icon">📝</div>
-              </div>
-            </div>
 
-            <div class="form-group">
-              <label class="form-label">
-                <span class="label-icon">📱</span>
-                手机号码
-              </label>
-              <div class="form-input-wrapper">
-                <input 
-                  type="tel" 
-                  class="form-input" 
-                  v-model="profileForm.phone"
-                  :disabled="!isEditingProfile"
-                />
-                <div class="input-icon">📱</div>
-              </div>
-            </div>
 
             <div v-if="isEditingProfile" class="form-actions">
               <button type="button" class="btn btn-secondary" @click="isEditingProfile = false">
@@ -438,6 +406,7 @@ import { useAuthStore } from '../../store/auth'
 import ChangePasswordModal from '../../components/modals/ChangePasswordModal.vue'
 import ChangeMasterPasswordModal from '../../components/modals/ChangeMasterPasswordModal.vue'
 import { KeyManager } from '../../utils/encryption/crypto'
+import { userAPI } from '../../services/api/user'
 
 // 状态管理
 const authStore = useAuthStore()
@@ -465,9 +434,7 @@ const userInitials = computed(() => {
 // 个人信息表单
 const profileForm = ref({
   username: user.value?.username || '',
-  email: user.value?.email || '',
-  name: user.value?.name || '',
-  phone: user.value?.phone || ''
+  email: user.value?.email || ''
 })
 
 // 账户信息
@@ -510,7 +477,7 @@ const handleChangePasswordSuccess = () => {
 // 处理主密码修改成功
 const handleChangeMasterPasswordSuccess = () => {
   showChangeMasterPasswordModal.value = false
-  alert('主密码修改成功！')
+  // 成功通知已在 ChangeMasterPasswordModal 中处理
 }
 
 // 格式化日期
@@ -527,20 +494,41 @@ const formatDate = (dateString: string) => {
 }
 
 // 生命周期
-onMounted(() => {
+onMounted(async () => {
   // 检查主密码状态
   hasMasterPassword.value = KeyManager.hasMasterPassword()
-  // 初始化表单数据
-  if (user.value) {
+  
+  try {
+    // 获取用户详细信息
+    const response = await userAPI.getUserInfo()
+    const userInfo = response.data
+    
+    console.log('获取用户详细信息成功:', userInfo)
+    
+    // 初始化表单数据
     profileForm.value = {
-      username: user.value.username || '',
-      email: user.value.email || '',
-      name: user.value.name || '',
-      phone: user.value.phone || ''
+      username: userInfo.username || '',
+      email: userInfo.email || ''
     }
+    
+    // 更新账户信息
     accountInfo.value = {
-      createdAt: user.value.createdAt || new Date().toISOString(),
-      lastLoginAt: user.value.lastLoginAt || new Date().toISOString()
+      createdAt: userInfo.createdAt || new Date().toISOString(),
+      lastLoginAt: userInfo.lastLoginAt || userInfo.createdAt || new Date().toISOString()
+    }
+    
+  } catch (error) {
+    console.error('获取用户详细信息失败:', error)
+    // 如果API调用失败，使用存储中的用户信息
+    if (user.value) {
+      profileForm.value = {
+        username: user.value.username || '',
+        email: user.value.email || ''
+      }
+      accountInfo.value = {
+        createdAt: user.value.createdAt || new Date().toISOString(),
+        lastLoginAt: user.value.lastLoginAt || new Date().toISOString()
+      }
     }
   }
 })
@@ -671,7 +659,11 @@ onMounted(() => {
   min-height: 80vh;
   position: relative;
   z-index: 1;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(15px);
+  border-radius: var(--radius-2xl);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 /* 页面标题 */
@@ -995,15 +987,16 @@ onMounted(() => {
 
 /* 卡片样式 - 使用全局卡片样式 */
 .profile-card, .account-info, .security-card, .security-status, .data-card, .about-card {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(15px);
   position: relative;
   overflow: hidden;
   border-radius: var(--radius-lg);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   padding: var(--spacing-xl);
+  z-index: 2;
 }
 
 /* 卡片进入动画，添加延迟以创建层次感 */
@@ -1117,28 +1110,54 @@ onMounted(() => {
 
 .profile-card {
   text-align: center;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(20px);
+  border-radius: var(--radius-2xl);
+  padding: var(--spacing-3xl);
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left var(--transition-slow);
+}
+
+.profile-card:hover::before {
+  left: 100%;
 }
 
 .profile-avatar {
   margin-bottom: var(--spacing-2xl);
   animation: scaleInCenter var(--transition-normal) 0.4s both;
+  position: relative;
+  z-index: 1;
 }
 
 .avatar {
-  width: 100px;
-  height: 100px;
+  width: 120px;
+  height: 120px;
   border-radius: var(--radius-full);
   background: var(--gradient-primary);
   color: #fff;
   display: grid;
   place-items: center;
-  font-size: var(--text-2xl);
+  font-size: var(--text-3xl);
   font-weight: var(--font-bold);
   margin: 0 auto var(--spacing-lg) auto;
-  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 12px 30px rgba(99, 102, 241, 0.5);
   transition: all var(--transition-normal);
   position: relative;
   overflow: hidden;
+  border: 4px solid rgba(255, 255, 255, 0.3);
 }
 
 .avatar::before {
@@ -1148,12 +1167,14 @@ onMounted(() => {
   background: var(--gradient-primary);
   opacity: 0.8;
   animation: pulse 3s infinite;
+  border-radius: 50%;
 }
 
 .avatar::after {
   content: attr(data-initials);
   position: relative;
   z-index: 1;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .profile-card:hover .avatar {
@@ -1167,111 +1188,144 @@ onMounted(() => {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-xl);
+  position: relative;
+  z-index: 1;
 }
 
 .form-group {
   text-align: left;
   animation: fadeIn var(--transition-normal) 0.5s both;
+  position: relative;
 }
 
 .form-group:nth-child(2) {
   animation-delay: 0.6s;
 }
 
-.form-group:nth-child(3) {
-  animation-delay: 0.7s;
-}
-
-.form-group:nth-child(4) {
-  animation-delay: 0.8s;
-}
-
 .form-input-wrapper {
   position: relative;
   width: 100%;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  transition: all var(--transition-fast);
+}
+
+.form-input-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.form-group:hover .form-input-wrapper {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.15);
+}
+
+.form-group:hover .form-input-wrapper::before {
+  opacity: 1;
 }
 
 .form-input {
   width: 100%;
-  padding: var(--spacing-md) var(--spacing-lg) var(--spacing-md) var(--spacing-xl);
+  padding: var(--spacing-lg) var(--spacing-xl);
   border: 2px solid rgba(209, 213, 219, 0.8);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   font-size: var(--text-base);
   transition: all var(--transition-fast);
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(15px);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+  color: var(--secondary-900);
+  font-weight: var(--font-medium);
 }
 
 .form-input:focus {
   outline: none;
   border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2), 0 4px 16px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2), 0 8px 25px rgba(99, 102, 241, 0.2);
   transform: translateY(-2px);
+  background: rgba(255, 255, 255, 1);
 }
 
 .form-input:disabled {
-  background: rgba(243, 244, 246, 0.9);
+  background: rgba(243, 244, 246, 0.95);
   cursor: not-allowed;
-  opacity: 0.7;
+  opacity: 0.8;
   border-color: rgba(209, 213, 219, 0.5);
+  color: var(--secondary-600);
 }
 
 /* 输入框图标样式 */
 .input-icon {
   position: absolute;
-  left: var(--spacing-md);
+  left: var(--spacing-lg);
   top: 50%;
   transform: translateY(-50%);
   color: var(--secondary-500);
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   transition: all var(--transition-fast);
   pointer-events: none;
+  z-index: 1;
 }
 
 .form-input:focus + .input-icon {
   color: #6366f1;
-  transform: translateY(-50%) scale(1.1);
+  transform: translateY(-50%) scale(1.2) rotate(5deg);
+  filter: drop-shadow(0 2px 4px rgba(99, 102, 241, 0.3));
 }
 
 /* 表单标签样式 */
 .form-label {
   display: block;
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
   font-size: var(--text-sm);
-  font-weight: var(--font-medium);
+  font-weight: var(--font-semibold);
   color: var(--secondary-800);
   transition: all var(--transition-fast);
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
+  gap: var(--spacing-sm);
+  padding-left: var(--spacing-xs);
 }
 
 .form-group:hover .form-label {
   color: #6366f1;
+  transform: translateX(4px);
 }
 
 .label-icon {
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   transition: all var(--transition-fast);
+  background: rgba(99, 102, 241, 0.1);
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-lg);
 }
 
 .form-group:hover .label-icon {
-  transform: scale(1.1) rotate(5deg);
+  transform: scale(1.2) rotate(10deg);
+  background: rgba(99, 102, 241, 0.2);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
 }
 
 .form-actions {
   display: flex;
-  gap: var(--spacing-md);
-  justify-content: flex-end;
-  margin-top: var(--spacing-lg);
+  gap: var(--spacing-lg);
+  justify-content: center;
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-xl);
+  border-top: 1px solid rgba(209, 213, 219, 0.3);
   animation: fadeIn var(--transition-normal) 0.9s both;
 }
 
 /* 账户信息 */
 .account-info {
   margin-top: var(--spacing-xl);
+  position: relative;
+  z-index: 2;
 }
 
 .info-title {
@@ -1279,23 +1333,31 @@ onMounted(() => {
   font-weight: var(--font-bold);
   color: var(--secondary-800);
   margin-bottom: var(--spacing-lg);
+  position: relative;
+  z-index: 1;
 }
 
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: var(--spacing-lg);
+  position: relative;
+  z-index: 1;
 }
 
 .info-item {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-lg);
-  background: rgba(255, 255, 255, 0.8);
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xl);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: var(--radius-lg);
   border: 1px solid var(--gray-200);
   transition: all var(--transition-fast);
+  position: relative;
+  z-index: 1;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .info-item:hover {
@@ -1314,6 +1376,7 @@ onMounted(() => {
   font-size: var(--text-base);
   font-weight: var(--font-bold);
   color: var(--secondary-900);
+  word-break: break-word;
 }
 
 /* 按钮样式增强 */
@@ -1322,49 +1385,68 @@ onMounted(() => {
   overflow: hidden;
   transition: all var(--transition-fast);
   border: none;
-  border-radius: var(--radius-lg);
-  font-weight: var(--font-medium);
+  border-radius: var(--radius-xl);
+  font-weight: var(--font-semibold);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-md) var(--spacing-lg);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  font-size: var(--text-sm);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  min-width: 120px;
+  justify-content: center;
+  border: 2px solid transparent;
+}
+
+.btn:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .btn-primary {
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   color: #fff;
+  border-color: rgba(99, 102, 241, 0.3);
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
   background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  box-shadow: 0 12px 35px rgba(99, 102, 241, 0.4);
+  border-color: rgba(99, 102, 241, 0.5);
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.95);
   color: var(--secondary-800);
-  border: 1px solid var(--gray-200);
+  border: 2px solid var(--gray-200);
+  backdrop-filter: blur(10px);
 }
 
 .btn-secondary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  border-color: var(--primary-400);
   background: rgba(255, 255, 255, 1);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border-color: #6366f1;
+  color: #6366f1;
 }
 
 .btn-danger {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: #fff;
+  border-color: rgba(239, 68, 68, 0.3);
 }
 
 .btn-danger:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
   background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  box-shadow: 0 12px 35px rgba(239, 68, 68, 0.4);
+  border-color: rgba(239, 68, 68, 0.5);
 }
 
 .btn::before {
@@ -1374,28 +1456,31 @@ onMounted(() => {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  transition: left var(--transition-normal);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left var(--transition-slow);
+  z-index: 1;
 }
 
 .btn:hover::before {
   left: 100%;
 }
 
-.btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.btn span {
+  position: relative;
+  z-index: 2;
 }
 
 /* 加载状态动画 */
 .loading-spinner {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-top: 2px solid #fff;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-right: var(--spacing-xs);
+  margin-right: var(--spacing-sm);
+  position: relative;
+  z-index: 2;
 }
 
 @keyframes spin {
@@ -1406,10 +1491,36 @@ onMounted(() => {
 /* 按钮图标动画 */
 .btn-icon {
   transition: transform var(--transition-fast);
+  position: relative;
+  z-index: 2;
+  font-size: var(--text-base);
 }
 
 .btn:hover .btn-icon {
-  transform: scale(1.1) rotate(5deg);
+  transform: scale(1.2) rotate(10deg);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* 按钮禁用状态 */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.btn-primary:disabled {
+  background: linear-gradient(135deg, #9333ea 0%, #a855f7 100%);
+}
+
+.btn-secondary:disabled {
+  background: rgba(243, 244, 246, 0.9);
+  border-color: rgba(209, 213, 219, 0.5);
+  color: var(--secondary-500);
+}
+
+.btn-danger:disabled {
+  background: linear-gradient(135deg, #f87171 0%, #fb7185 100%);
 }
 
 /* 安全卡片 */
@@ -1725,6 +1836,11 @@ onMounted(() => {
   /* 网格布局响应式调整 */
   .info-grid {
     grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+  }
+
+  .info-item {
+    padding: var(--spacing-lg);
   }
 
   .security-stats {
@@ -1835,11 +1951,7 @@ onMounted(() => {
 
   /* 输入框响应式调整 */
   .form-input {
-    padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) var(--spacing-lg);
-  }
-
-  .input-icon {
-    left: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
   }
 
   /* 按钮响应式调整 */

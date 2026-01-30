@@ -207,14 +207,26 @@ export interface CaptchaTokenResponse {
 export interface UserInfo {
   id: number
   username: string
-  email?: string
-  createdAt?: string
-  updatedAt?: string
+  email: string
+  twoFactorEnabled: boolean
+  isLocked: boolean
+  emailVerified: boolean
+  lastLoginAt?: string
+  createdAt: string
+  updatedAt: string
 }
 
-// 用户信息响应（包含user字段）
+// 用户信息响应（直接返回UserInfo）
 export interface UserInfoResponse {
-  user: UserInfo
+  id: number
+  username: string
+  email: string
+  twoFactorEnabled: boolean
+  isLocked: boolean
+  emailVerified: boolean
+  lastLoginAt?: string
+  createdAt: string
+  updatedAt: string
 }
 
 // 修改密码请求参数

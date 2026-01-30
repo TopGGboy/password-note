@@ -341,14 +341,14 @@ export const useAuthStore = defineStore("auth", {
             // 尝试从API获取用户信息
             try {
               const response = await userAPI.getCurrentUser();
-              if (response.code === 1 && response.data && response.data.user) {
-                const userData = response.data.user;
+              if (response.code === 1 && response.data) {
+                const userData = response.data;
                 this.user = {
                   id: userData.id || 0,
                   username: userData.username,
                   email: userData.email,
                   token: this.token,
-                  twoFactorEnabled: false,
+                  twoFactorEnabled: userData.twoFactorEnabled || false,
                 };
                 // 保存到本地存储
                 localStorage.setItem(
@@ -382,15 +382,20 @@ export const useAuthStore = defineStore("auth", {
 
 
     // 清除认证信息
-    clearAuth(): void {
-      // 使用token管理器安全清除所有token
-      tokenManager.clearTokens();
+  clearAuth(): void {
+    // 使用token管理器安全清除所有token
+    tokenManager.clearTokens();
+    
+    // 清除主密码相关的会话数据
+    import('../utils/encryption/crypto').then(({ KeyManager }) => {
+      KeyManager.clearSessionKeys();
+    });
 
-      this.token = null;
-      this.refreshToken = null;
-      this.user = null;
-      this.isAuthenticated = false;
-    },
+    this.token = null;
+    this.refreshToken = null;
+    this.user = null;
+    this.isAuthenticated = false;
+  },
 
     // 处理登录错误
     handleLoginError(error: any): void {
