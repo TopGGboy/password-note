@@ -1,197 +1,188 @@
 <template>
   <div class="categories-page">
-    <!-- 页面头部 -->
-    <header class="page-header">
+    <header class="page-header card">
       <div class="header-content">
-        <div class="header-breadcrumb">
-          <span class="breadcrumb-item">密码管理</span>
-          <span class="breadcrumb-separator">/</span>
-          <span class="breadcrumb-item active">分类管理</span>
-        </div>
-        <h1 class="page-title">分类管理</h1>
-        <p class="page-description">组织和管理您的密码分类，让密码管理更加有序</p>
-      </div>
-    </header>
-
-    <!-- 主要内容区域 -->
-    <main class="main-content">
-      <!-- 操作栏 -->
-      <div class="action-bar">
-        <div class="view-controls">
-          <button 
-            @click="viewMode = 'grid'" 
-            class="view-btn" 
-            :class="{ active: viewMode === 'grid' }"
-          >
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <rect x="3" y="3" width="7" height="7"/>
-              <rect x="14" y="3" width="7" height="7"/>
-              <rect x="14" y="14" width="7" height="7"/>
-              <rect x="3" y="14" width="7" height="7"/>
-            </svg>
-            网格视图
-          </button>
-          <button 
-            @click="viewMode = 'list'" 
-            class="view-btn" 
-            :class="{ active: viewMode === 'list' }"
-          >
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <line x1="8" y1="6" x2="21" y2="6"/>
-              <line x1="8" y1="12" x2="21" y2="12"/>
-              <line x1="8" y1="18" x2="21" y2="18"/>
-              <line x1="3" y1="6" x2="3.01" y2="6"/>
-              <line x1="3" y1="12" x2="3.01" y2="12"/>
-              <line x1="3" y1="18" x2="3.01" y2="18"/>
-            </svg>
-            列表视图
-          </button>
-        </div>
-        <button @click="showAddModal = true" class="primary-btn add-btn">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          添加分类
-        </button>
-      </div>
-
-      <!-- 统计卡片 -->
-      <section class="stats-section">
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon">
+        <div class="header-left">
+          <h1 class="page-title">
+            <div class="title-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2l5 0 2 3h9a2 2 0 0 1 2 2z"/>
               </svg>
             </div>
-            <div class="stat-content">
-              <h3 class="stat-title">总分类数</h3>
-              <p class="stat-value">{{ categoriesList.length }}</p>
+            分类管理
+          </h1>
+          <p class="page-subtitle">组织和管理您的密码分类，让密码管理更加有序</p>
+        </div>
+        <div class="header-actions">
+          <button @click="showAddModal = true" class="btn btn-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            添加分类
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="stats-section">
+      <div class="stat-card card">
+        <div class="stat-icon teal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2l5 0 2 3h9a2 2 0 0 1 2 2z"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-number">{{ categoriesList.length }}</div>
+          <div class="stat-label">总分类数</div>
+        </div>
+        <div class="stat-decoration"></div>
+      </div>
+      <div class="stat-card card">
+        <div class="stat-icon amber">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <circle cx="12" cy="16" r="1"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-number">{{ totalPasswordsCount }}</div>
+          <div class="stat-label">总密码数</div>
+        </div>
+        <div class="stat-decoration"></div>
+      </div>
+      <div class="stat-card card">
+        <div class="stat-icon sky">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12,6 12,12 16,14"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-number">{{ recentlyUpdated }}</div>
+          <div class="stat-label">最近更新</div>
+        </div>
+        <div class="stat-decoration"></div>
+      </div>
+    </div>
+
+    <div class="action-bar card">
+      <div class="view-controls">
+        <button @click="viewMode = 'grid'" class="view-btn" :class="{ active: viewMode === 'grid' }">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="3" width="7" height="7"/>
+            <rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/>
+          </svg>
+          网格
+        </button>
+        <button @click="viewMode = 'list'" class="view-btn" :class="{ active: viewMode === 'list' }">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <line x1="8" y1="6" x2="21" y2="6"/>
+            <line x1="8" y1="12" x2="21" y2="12"/>
+            <line x1="8" y1="18" x2="21" y2="18"/>
+            <line x1="3" y1="6" x2="3.01" y2="6"/>
+            <line x1="3" y1="12" x2="3.01" y2="12"/>
+            <line x1="3" y1="18" x2="3.01" y2="18"/>
+          </svg>
+          列表
+        </button>
+      </div>
+      <button @click="showAddModal = true" class="btn btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        添加分类
+      </button>
+    </div>
+
+    <div class="content-section card">
+      <div class="section-header">
+        <h2 class="section-title">所有分类</h2>
+        <div class="section-subtitle">{{ categoriesList.length }} 个分类</div>
+      </div>
+
+      <div v-if="loadingCategories" class="loading-state">
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+        </div>
+        <p class="loading-text">正在加载分类...</p>
+      </div>
+
+      <div v-else-if="categories.length === 0" class="empty-state">
+        <div class="empty-icon">📂</div>
+        <h3 class="empty-title">暂无分类</h3>
+        <p class="empty-description">创建您的第一个分类，开始有序管理密码</p>
+        <button @click="showAddModal = true" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          创建第一个分类
+        </button>
+      </div>
+
+      <div v-else :class="['categories-container', { 'list-view': viewMode === 'list' }]">
+        <div v-for="category in categories" :key="category.id" class="category-card" @click="viewCategory(category)">
+          <div class="category-header">
+            <div class="category-icon">{{ category.icon }}</div>
+            <div class="category-actions">
+              <button @click.stop="editCategory(category)" class="action-btn edit-btn">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+              <button @click.stop="handleDeleteCategory(category)" class="action-btn delete-btn">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <polyline points="3,6 5,6 21,6"/>
+                  <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
+                </svg>
+              </button>
             </div>
           </div>
           
-          <div class="stat-card">
-            <div class="stat-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <div class="category-content">
+            <h3 class="category-name">{{ category.name }}</h3>
+            <p class="category-description">{{ category.description || '暂无描述' }}</p>
+          </div>
+          
+          <div class="category-meta">
+            <div class="meta-item">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                 <circle cx="12" cy="16" r="1"/>
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
               </svg>
+              <span>{{ category.passwordCount }} 个密码</span>
             </div>
-            <div class="stat-content">
-              <h3 class="stat-title">总密码数</h3>
-              <p class="stat-value">{{ totalPasswordsCount }}</p>
-            </div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="stat-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <div class="meta-item">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <circle cx="12" cy="12" r="10"/>
                 <polyline points="12,6 12,12 16,14"/>
               </svg>
-            </div>
-            <div class="stat-content">
-              <h3 class="stat-title">最近更新</h3>
-              <p class="stat-value">{{ recentlyUpdated }}</p>
+              <span>{{ category.lastUpdated }}</span>
             </div>
           </div>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- 分类列表 -->
-      <section class="categories-section">
-        <div class="section-header">
-          <h2 class="section-title">所有分类</h2>
-          <div class="section-subtitle">{{ categoriesList.length }} 个分类</div>
-        </div>
-
-        <!-- 加载状态 -->
-        <div v-if="loadingCategories" class="loading-state">
-          <div class="loading-spinner">
-            <svg class="icon spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M21 12a9 9 0 11-6.219-8.56"/>
-            </svg>
-          </div>
-          <p class="loading-text">正在加载分类...</p>
-        </div>
-
-        <!-- 空状态 -->
-        <div v-else-if="categories.length === 0" class="empty-state">
-          <div class="empty-icon">📂</div>
-          <h3 class="empty-title">暂无分类</h3>
-          <p class="empty-description">创建您的第一个分类，开始有序管理密码</p>
-          <button @click="showAddModal = true" class="primary-btn empty-btn">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <line x1="12" y1="5" x2="12" y2="19"/>
-              <line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            创建第一个分类
-          </button>
-        </div>
-
-        <!-- 分类网格 -->
-        <div v-else :class="['categories-container', { 'list-view': viewMode === 'list' }]">
-          <div 
-            v-for="category in categories" 
-            :key="category.id" 
-            class="category-card"
-            @click="viewCategory(category)"
-          >
-            <div class="category-header">
-              <div class="category-icon">{{ category.icon }}</div>
-              <div class="category-actions">
-                <button @click.stop="editCategory(category)" class="action-btn edit-btn">
-                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                  </svg>
-                </button>
-                <button @click.stop="handleDeleteCategory(category)" class="action-btn delete-btn">
-                  <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <polyline points="3,6 5,6 21,6"/>
-                    <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-            
-            <div class="category-content">
-              <h3 class="category-name">{{ category.name }}</h3>
-              <p class="category-description">{{ category.description || '暂无描述' }}</p>
-            </div>
-            
-            <div class="category-meta">
-              <div class="meta-item">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <circle cx="12" cy="16" r="1"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-                <span>{{ category.passwordCount }} 个密码</span>
-              </div>
-              <div class="meta-item">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <circle cx="12" cy="12" r="10"/>
-                  <polyline points="12,6 12,12 16,14"/>
-                </svg>
-                <span>{{ category.lastUpdated }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <!-- 添加/编辑分类模态框 -->
     <Transition name="modal">
       <div v-if="showAddModal || showEditModal" class="modal-overlay" @click="closeModals">
         <div class="modal-content" @click.stop>
           <div class="modal-header">
-            <h3 class="modal-title">{{ showEditModal ? '编辑分类' : '添加分类' }}</h3>
-            <button @click="closeModals" class="modal-close">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <div class="header-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2l5 0 2 3h9a2 2 0 0 1 2 2z"/>
+              </svg>
+            </div>
+            <h3>{{ showEditModal ? '编辑分类' : '添加分类' }}</h3>
+            <button @click="closeModals" class="close-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <line x1="18" y1="6" x2="6" y2="18"/>
                 <line x1="6" y1="6" x2="18" y2="18"/>
               </svg>
@@ -199,77 +190,42 @@
           </div>
           
           <form @submit.prevent="handleSubmit" class="modal-body">
-            <!-- 分类名称 -->
             <div class="form-group">
               <label class="form-label">
                 分类名称 <span class="required">*</span>
               </label>
-              <input 
-                v-model="form.name" 
-                type="text" 
-                required 
-                class="form-input" 
-                placeholder="输入分类名称"
-                maxlength="20"
-              />
+              <input v-model="form.name" type="text" required class="form-input" placeholder="输入分类名称" maxlength="20" />
             </div>
 
-            <!-- 图标选择 -->
             <div class="form-group">
               <label class="form-label">图标</label>
               <div class="icon-selector">
-                <div 
-                  v-for="icon in availableIcons" 
-                  :key="icon" 
-                  class="icon-option"
-                  :class="{ selected: form.icon === icon }" 
-                  @click="form.icon = icon"
-                  :title="icon"
-                >
+                <div v-for="icon in availableIcons" :key="icon" class="icon-option" :class="{ selected: form.icon === icon }" @click="form.icon = icon">
                   {{ icon }}
                 </div>
               </div>
             </div>
 
-            <!-- 描述 -->
             <div class="form-group">
               <label class="form-label">描述</label>
-              <textarea 
-                v-model="form.description" 
-                class="form-textarea" 
-                rows="3" 
-                placeholder="添加分类描述（可选）..."
-                maxlength="100"
-              ></textarea>
+              <textarea v-model="form.description" class="form-textarea" rows="3" placeholder="添加分类描述（可选）..." maxlength="100"></textarea>
               <div class="char-count">{{ (form.description || '').length }}/100</div>
             </div>
 
-            <!-- 排序和默认设置 -->
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">
                   排序顺序
                   <span class="label-hint">（数字越小越靠前）</span>
                 </label>
-                <input 
-                  v-model.number="form.sortOrder" 
-                  type="number" 
-                  class="form-input" 
-                  placeholder="0"
-                  min="0"
-                  max="999"
-                />
+                <input v-model.number="form.sortOrder" type="number" class="form-input" placeholder="0" min="0" max="999" />
               </div>
               
               <div class="form-group">
                 <label class="form-label">设置</label>
                 <div class="toggle-group">
                   <label class="toggle-label">
-                    <input 
-                      type="checkbox" 
-                      v-model="form.isDefault"
-                      class="toggle-input"
-                    />
+                    <input type="checkbox" v-model="form.isDefault" class="toggle-input" />
                     <span class="toggle-slider"></span>
                     <span class="toggle-text">设为默认分类</span>
                   </label>
@@ -277,7 +233,6 @@
               </div>
             </div>
 
-            <!-- 预览 -->
             <div class="form-group">
               <label class="form-label">预览</label>
               <div class="category-preview">
@@ -292,13 +247,9 @@
             </div>
 
             <div class="modal-footer">
-              <button type="button" @click="closeModals" class="secondary-btn">
-                取消
-              </button>
-              <button type="submit" class="primary-btn" :disabled="loading || !form.name.trim()">
-                <svg v-if="loading" class="icon spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M21 12a9 9 0 11-6.219-8.56"/>
-                </svg>
+              <button type="button" @click="closeModals" class="btn btn-secondary">取消</button>
+              <button type="submit" class="btn btn-primary" :disabled="loading || !form.name.trim()">
+                <div v-if="loading" class="loading-spinner"></div>
                 {{ loading ? '保存中...' : (showEditModal ? '更新' : '添加') }}
               </button>
             </div>
@@ -307,7 +258,6 @@
       </div>
     </Transition>
 
-    <!-- 提示消息 -->
     <Transition name="toast">
       <div v-if="showToast" class="toast" :class="toastType">
         <svg v-if="toastType === 'success'" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -332,9 +282,7 @@ import { CATEGORY_ICONS, getDefaultCategoryIcon } from '../../utils/categoryUtil
 export default defineComponent({
   name: 'Categories',
   setup() {
-    // 使用分类管理的 composable
     const categoriesComposable = useCategories()
-
     return {
       ...categoriesComposable,
       availableIcons: CATEGORY_ICONS
@@ -346,11 +294,9 @@ export default defineComponent({
       showEditModal: false,
       editingCategory: null as Category | null,
       viewMode: 'grid' as 'grid' | 'list',
-      
       showToast: false,
       toastMessage: '',
       toastType: 'success' as 'success' | 'error',
-
       form: {
         name: '',
         icon: getDefaultCategoryIcon(),
@@ -361,15 +307,12 @@ export default defineComponent({
     }
   },
   computed: {
-    // 从 composable 获取分类列表
     categoriesList(): Category[] {
       return this.categories
     },
-    // 从 composable 获取加载状态
     loadingCategories(): boolean {
       return this.loading
     },
-    // 从 composable 获取总数
     totalPasswordsCount(): number {
       return this.totalPasswords
     },
@@ -384,13 +327,11 @@ export default defineComponent({
   },
   methods: {
     viewCategory(category: Category) {
-      // 跳转到该分类的密码列表
       this.$router.push({
         path: '/passwords',
         query: { categoryId: category.id.toString() }
       })
     },
-
     editCategory(category: Category) {
       this.editingCategory = category
       this.form = {
@@ -402,7 +343,6 @@ export default defineComponent({
       }
       this.showEditModal = true
     },
-
     async handleDeleteCategory(category: Category) {
       if (category.passwordCount > 0) {
         if (!confirm(`分类 "${category.name}" 中还有 ${category.passwordCount} 个密码。删除分类后，这些密码将移动到"未分类"。确定要删除吗？`)) {
@@ -413,7 +353,6 @@ export default defineComponent({
           return
         }
       }
-
       try {
         const result = await this.deleteCategory(category.id)
         if (result.success) {
@@ -426,15 +365,11 @@ export default defineComponent({
         this.showToastMessage('删除分类失败，请重试', 'error')
       }
     },
-
     async handleSubmit() {
       if (!this.form.name.trim()) return
-
       try {
         if (this.showEditModal && this.editingCategory) {
-          // 更新分类
           const result = await this.updateCategory(this.editingCategory.id, this.form)
-          
           if (result.success) {
             this.showToastMessage(result.message || '分类更新成功')
             this.closeModals()
@@ -442,9 +377,7 @@ export default defineComponent({
             this.showToastMessage(result.message || '更新分类失败', 'error')
           }
         } else {
-          // 使用 composable 创建分类
           const result = await this.createCategory(this.form)
-          
           if (result.success) {
             this.showToastMessage(result.message || '分类创建成功')
             this.closeModals()
@@ -458,7 +391,6 @@ export default defineComponent({
         this.showToastMessage(errorMessage, 'error')
       }
     },
-
     closeModals() {
       this.showAddModal = false
       this.showEditModal = false
@@ -471,20 +403,16 @@ export default defineComponent({
         isDefault: false
       }
     },
-
-    // 加载分类列表
     async handleLoadCategories() {
       const success = await this.loadCategories()
       if (!success && this.error) {
         this.showToastMessage(this.error, 'error')
       }
     },
-
     showToastMessage(message: string, type: 'success' | 'error' = 'success') {
       this.toastMessage = message
       this.toastType = type
       this.showToast = true
-      
       setTimeout(() => {
         this.showToast = false
       }, 3000)
@@ -494,26 +422,17 @@ export default defineComponent({
 </script>
 
 <style scoped>
-/* 全局样式重置 */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-/* 页面布局 */
 .categories-page {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   padding: 0;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-/* 页面头部 */
 .page-header {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-  color: white;
-  padding: 3rem 2rem;
-  text-align: center;
+  margin-bottom: var(--spacing-2xl);
+  padding: var(--spacing-2xl);
+  border: none;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(240, 253, 250, 0.9) 100%);
   position: relative;
   overflow: hidden;
 }
@@ -524,313 +443,358 @@ export default defineComponent({
   top: 0;
   left: 0;
   right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzPjxwYXR0ZXJuIGlkPSJwYXR0ZXJuIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiPjxwYXRoIGQ9Ik0gNDAgMCBMIDAgMCAwIDQwIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNwYXR0ZXJuKSIvPjwvc3ZnPg==');
-  opacity: 0.1;
+  height: 4px;
+  background: var(--gradient-border);
 }
 
 .header-content {
-  position: relative;
-  z-index: 1;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.header-breadcrumb {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1rem;
-  font-size: 0.875rem;
-  opacity: 0.9;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-xl);
 }
 
-.breadcrumb-item {
-  margin: 0 0.5rem;
-}
-
-.breadcrumb-item.active {
-  font-weight: 600;
-}
-
-.breadcrumb-separator {
-  opacity: 0.6;
+.header-left {
+  flex: 1;
 }
 
 .page-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--gray-900);
+  margin-bottom: var(--spacing-sm);
 }
 
-.page-description {
-  font-size: 1.125rem;
-  opacity: 0.9;
-  max-width: 600px;
-  margin: 0 auto;
+.title-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-xl);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 15px rgba(20, 184, 166, 0.35);
+  transition: all var(--transition-normal);
 }
 
-/* 主要内容 */
-.main-content {
-  max-width: 1200px;
-  margin: -3rem auto 2rem;
-  padding: 0 2rem;
+.title-icon:hover {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 6px 20px rgba(20, 184, 166, 0.45);
+}
+
+.title-icon svg {
+  width: 24px;
+  height: 24px;
+  color: white;
+  stroke-width: 2;
+}
+
+.page-subtitle {
+  color: var(--gray-600);
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+}
+
+.header-actions {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+.stats-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-2xl);
+}
+
+.stat-card {
+  padding: var(--spacing-2xl);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xl);
+  transition: all var(--transition-normal);
+  border: none;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
   position: relative;
-  z-index: 2;
+  overflow: hidden;
 }
 
-/* 操作栏 */
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--gradient-primary);
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform var(--transition-normal);
+}
+
+.stat-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 15px 35px rgba(20, 184, 166, 0.15);
+}
+
+.stat-card:hover::before {
+  transform: scaleY(1);
+}
+
+.stat-icon {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-2xl);
+  position: relative;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: all var(--transition-normal);
+}
+
+.stat-icon::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: var(--radius-2xl);
+  z-index: -1;
+}
+
+.stat-icon.teal {
+  background: linear-gradient(135deg, rgba(240, 253, 250, 0.9), rgba(204, 251, 241, 0.9));
+  color: var(--primary-700);
+}
+
+.stat-icon.teal::before {
+  background: var(--gradient-primary);
+}
+
+.stat-icon.amber {
+  background: linear-gradient(135deg, rgba(255, 251, 235, 0.9), rgba(254, 243, 199, 0.9));
+  color: var(--secondary-700);
+}
+
+.stat-icon.amber::before {
+  background: var(--gradient-secondary);
+}
+
+.stat-icon.sky {
+  background: linear-gradient(135deg, rgba(240, 249, 255, 0.9), rgba(224, 242, 254, 0.9));
+  color: var(--info-700);
+}
+
+.stat-icon.sky::before {
+  background: var(--gradient-info);
+}
+
+.stat-card:hover .stat-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.stat-icon svg {
+  width: 28px;
+  height: 28px;
+  stroke-width: 2;
+}
+
+.stat-info {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.stat-number {
+  font-size: var(--text-4xl);
+  font-weight: var(--font-black);
+  background: var(--gradient-text);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: var(--spacing-xs);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: var(--text-sm);
+  color: var(--gray-600);
+  font-weight: var(--font-medium);
+}
+
+.stat-decoration {
+  position: absolute;
+  right: -20px;
+  bottom: -20px;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  opacity: 0.1;
+  background: var(--gradient-primary);
+  transition: all var(--transition-normal);
+}
+
+.stat-card:hover .stat-decoration {
+  transform: scale(1.5);
+  opacity: 0.15;
+}
+
 .action-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  background: white;
-  padding: 1.5rem;
-  border-radius: 1rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  margin-bottom: var(--spacing-2xl);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .view-controls {
   display: flex;
-  gap: 0.5rem;
-  background: #f3f4f6;
-  padding: 0.25rem;
-  border-radius: 0.5rem;
+  gap: var(--spacing-sm);
+  background: var(--gray-100);
+  padding: 6px;
+  border-radius: var(--radius-full);
 }
 
 .view-btn {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-lg);
   border: none;
   background: transparent;
-  border-radius: 0.375rem;
+  border-radius: var(--radius-full);
   cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #6b7280;
-  transition: all 0.2s ease;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--gray-600);
+  transition: all var(--transition-fast);
 }
 
 .view-btn:hover {
-  color: #374151;
+  color: var(--gray-900);
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .view-btn.active {
-  background: white;
-  color: #6366f1;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  background: var(--gradient-primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
 }
 
-/* 按钮样式 */
-.primary-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
+.view-btn .icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+.content-section {
+  padding: var(--spacing-2xl);
   border: none;
-  background: linear-gradient(135deg, #6366f1, #4f46e5);
-  color: #5B21B6;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3);
-}
-
-.primary-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
-}
-
-.primary-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.secondary-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border: 1px solid #d1d5db;
-  background: white;
-  color: #374151;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.secondary-btn:hover {
-  background: #f3f4f6;
-  border-color: #9ca3af;
-}
-
-/* 统计卡片 */
-.stats-section {
-  margin-bottom: 2rem;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-}
-
-.stat-card {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 1rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-
-.stat-icon {
-  width: 4rem;
-  height: 4rem;
-  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
-  border-radius: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #6366f1;
-  flex-shrink: 0;
-}
-
-.stat-icon svg {
-  width: 1.5rem;
-  height: 1.5rem;
-}
-
-.stat-content {
-  flex: 1;
-}
-
-.stat-title {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #6b7280;
-  margin-bottom: 0.25rem;
-}
-
-.stat-value {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #111827;
-}
-
-/* 分类部分 */
-.categories-section {
-  background: white;
-  border-radius: 1rem;
-  padding: 2rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: var(--spacing-2xl);
 }
 
 .section-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #111827;
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  color: var(--gray-900);
 }
 
 .section-subtitle {
-  font-size: 0.875rem;
-  color: #6b7280;
+  font-size: var(--text-sm);
+  color: var(--gray-500);
+  font-weight: var(--font-medium);
 }
 
-/* 加载状态 */
 .loading-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4rem;
+  padding: var(--spacing-5xl);
   text-align: center;
 }
 
 .loading-spinner {
-  width: 3rem;
-  height: 3rem;
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-lg);
 }
 
-.loading-spinner .icon {
-  width: 100%;
-  height: 100%;
-  color: #6366f1;
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(20, 184, 166, 0.2);
+  border-top-color: var(--primary-500);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .loading-text {
-  color: #6b7280;
-  font-size: 1rem;
+  color: var(--gray-600);
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
 }
 
-/* 空状态 */
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4rem;
+  padding: var(--spacing-5xl);
   text-align: center;
+  background: var(--gradient-primary-soft);
+  border: 2px dashed var(--primary-300);
+  border-radius: var(--radius-2xl);
 }
 
 .empty-icon {
   font-size: 4rem;
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-xl);
+  opacity: 0.5;
 }
 
 .empty-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 0.5rem;
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  color: var(--gray-900);
+  margin-bottom: var(--spacing-sm);
 }
 
 .empty-description {
-  color: #6b7280;
-  margin-bottom: 2rem;
-  max-width: 300px;
+  color: var(--gray-600);
+  margin-bottom: var(--spacing-2xl);
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
 }
 
-/* 分类容器 */
 .categories-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
+  gap: var(--spacing-xl);
 }
 
 .categories-container.list-view {
   grid-template-columns: 1fr;
-  gap: 1rem;
+  gap: var(--spacing-md);
 }
 
-/* 分类卡片 */
 .category-card {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 1rem;
-  padding: 1.5rem;
-  transition: all 0.3s ease;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-2xl);
+  padding: var(--spacing-xl);
+  transition: all var(--transition-normal);
   cursor: pointer;
   position: relative;
   overflow: hidden;
@@ -843,40 +807,51 @@ export default defineComponent({
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #6366f1, #4f46e5);
+  background: var(--gradient-primary);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--transition-normal);
 }
 
 .category-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  border-color: #d1d5db;
+  transform: translateY(-6px);
+  box-shadow: 0 15px 35px rgba(20, 184, 166, 0.15);
+  border-color: var(--primary-300);
+}
+
+.category-card:hover::before {
+  transform: scaleX(1);
 }
 
 .category-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-lg);
 }
 
 .category-icon {
   font-size: 2rem;
   background: white;
-  width: 3.5rem;
-  height: 3.5rem;
-  border-radius: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-xl);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all var(--transition-normal);
+}
+
+.category-card:hover .category-icon {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 6px 16px rgba(20, 184, 166, 0.2);
 }
 
 .category-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--spacing-sm);
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition-fast);
 }
 
 .category-card:hover .category-actions {
@@ -884,17 +859,16 @@ export default defineComponent({
 }
 
 .action-btn {
-  width: 2rem;
-  height: 2rem;
+  width: 36px;
+  height: 36px;
   border: none;
   background: white;
-  border-radius: 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: var(--radius-lg);
+  display: grid;
+  place-items: center;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all var(--transition-fast);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .action-btn:hover {
@@ -902,221 +876,358 @@ export default defineComponent({
 }
 
 .edit-btn:hover {
-  background: #eff6ff;
-  color: #3b82f6;
+  background: var(--primary-50);
+  color: var(--primary-600);
 }
 
 .delete-btn:hover {
-  background: #fef2f2;
-  color: #ef4444;
+  background: var(--error-50);
+  color: var(--error-600);
+}
+
+.action-btn .icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
 }
 
 .category-content {
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-lg);
 }
 
 .category-name {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 0.5rem;
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--gray-900);
+  margin-bottom: var(--spacing-sm);
 }
 
 .category-description {
-  color: #6b7280;
-  font-size: 0.875rem;
-  line-height: 1.5;
+  color: var(--gray-500);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  font-weight: var(--font-medium);
 }
 
 .category-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 1rem;
-  border-top: 1px solid #e5e7eb;
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--gray-200);
 }
 
 .meta-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  color: #6b7280;
+  gap: var(--spacing-sm);
+  font-size: var(--text-xs);
+  color: var(--gray-500);
+  font-weight: var(--font-medium);
 }
 
 .meta-item .icon {
-  width: 1rem;
-  height: 1rem;
+  width: 14px;
+  height: 14px;
+  stroke-width: 2;
 }
 
-/* 模态框 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-xl);
+  border: none;
+  border-radius: var(--radius-xl);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left var(--transition-normal);
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.btn-primary {
+  background: var(--gradient-primary);
+  color: white;
+  box-shadow: 0 4px 15px rgba(20, 184, 166, 0.4);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(20, 184, 166, 0.5);
+}
+
+.btn-secondary {
+  background: var(--gray-100);
+  color: var(--gray-700);
+  border: 2px solid var(--gray-200);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--gray-200);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(4px);
+  z-index: 9999;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .modal-content {
-  background: white;
-  border-radius: 1rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: var(--radius-3xl);
   width: 90%;
-  max-width: 500px;
+  max-width: 520px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
+  animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+}
+
+.modal-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--gradient-border);
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .modal-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-xl) var(--spacing-2xl);
+  border-bottom: 1px solid var(--gray-200);
 }
 
-.modal-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #111827;
+.header-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-xl);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 15px rgba(20, 184, 166, 0.35);
 }
 
-.modal-close {
-  width: 2rem;
-  height: 2rem;
-  border: none;
-  background: none;
-  border-radius: 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.header-icon svg {
+  width: 24px;
+  height: 24px;
+  color: white;
+  stroke-width: 2;
+}
+
+.modal-header h3 {
+  flex: 1;
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  color: var(--gray-900);
+  margin: 0;
+}
+
+.close-btn {
+  background: var(--gray-100);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
   cursor: pointer;
-  transition: all 0.2s ease;
-  color: #6b7280;
+  color: var(--gray-500);
+  transition: all var(--transition-normal);
 }
 
-.modal-close:hover {
-  background: #f3f4f6;
-  color: #374151;
+.close-btn:hover {
+  background: var(--error-500);
+  border-color: var(--error-500);
+  color: white;
+  transform: scale(1.05);
+}
+
+.close-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
 }
 
 .modal-body {
-  padding: 1.5rem;
+  padding: var(--spacing-2xl);
 }
 
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  padding: 1.5rem;
-  border-top: 1px solid #e5e7eb;
-}
-
-/* 表单样式 */
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--spacing-xl);
 }
 
 .form-label {
   display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #374151;
-  font-size: 0.875rem;
+  margin-bottom: var(--spacing-sm);
+  font-weight: var(--font-semibold);
+  color: var(--gray-700);
+  font-size: var(--text-sm);
+}
+
+.required {
+  color: var(--error-500);
 }
 
 .label-hint {
-  font-weight: 400;
-  color: #6b7280;
-  font-size: 0.75rem;
-  margin-left: 0.5rem;
+  font-weight: var(--font-normal);
+  color: var(--gray-500);
+  font-size: var(--text-xs);
 }
 
 .form-input,
 .form-textarea {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  transition: border-color 0.2s ease;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-xl);
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+  transition: all var(--transition-normal);
+  box-sizing: border-box;
   background: white;
-  color: #111827;
+  color: var(--gray-800);
 }
 
 .form-input:focus,
 .form-textarea:focus {
   outline: none;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1);
+  transform: translateY(-1px);
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color: var(--gray-400);
+  font-weight: var(--font-normal);
 }
 
 .form-textarea {
   resize: vertical;
   min-height: 80px;
+  font-family: inherit;
+  line-height: 1.6;
 }
 
 .char-count {
-  font-size: 0.75rem;
-  color: #6b7280;
+  font-size: var(--text-xs);
+  color: var(--gray-500);
   text-align: right;
-  margin-top: 0.25rem;
+  margin-top: var(--spacing-xs);
 }
 
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: var(--spacing-lg);
 }
 
-/* 图标选择器 */
 .icon-selector {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
-  gap: 0.5rem;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--gray-50);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--gray-200);
 }
 
 .icon-option {
-  width: 3rem;
-  height: 3rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  display: grid;
+  place-items: center;
   cursor: pointer;
-  font-size: 1.25rem;
-  transition: all 0.2s ease;
+  font-size: var(--text-lg);
+  transition: all var(--transition-fast);
   background: white;
 }
 
 .icon-option:hover {
-  border-color: #d1d5db;
-  background: #f9fafb;
+  border-color: var(--primary-500);
+  background: var(--primary-50);
+  transform: scale(1.1);
 }
 
 .icon-option.selected {
-  border-color: #6366f1;
-  background: #eff6ff;
+  border-color: var(--primary-500);
+  background: var(--gradient-primary);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
 }
 
-/* 开关样式 */
 .toggle-group {
-  padding: 0.5rem 0;
+  padding: var(--spacing-sm) 0;
 }
 
 .toggle-label {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--spacing-md);
   cursor: pointer;
   user-select: none;
 }
@@ -1130,66 +1241,63 @@ export default defineComponent({
 
 .toggle-slider {
   position: relative;
-  width: 3.5rem;
-  height: 1.75rem;
-  background-color: #e5e7eb;
-  border-radius: 1rem;
-  transition: all 0.3s ease;
+  width: 48px;
+  height: 26px;
+  background-color: var(--gray-300);
+  border-radius: var(--radius-full);
+  transition: all var(--transition-normal);
 }
 
 .toggle-slider::before {
   content: '';
   position: absolute;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background-color: white;
-  top: 0.25rem;
-  left: 0.25rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  top: 3px;
+  left: 3px;
+  transition: all var(--transition-normal);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .toggle-input:checked + .toggle-slider {
-  background-color: #6366f1;
+  background-color: var(--primary-500);
 }
 
 .toggle-input:checked + .toggle-slider::before {
-  transform: translateX(1.75rem);
+  transform: translateX(22px);
 }
 
 .toggle-text {
-  font-size: 0.875rem;
-  color: #374151;
-  font-weight: 500;
+  font-size: var(--text-sm);
+  color: var(--gray-700);
+  font-weight: var(--font-medium);
 }
 
-/* 预览卡片 */
 .category-preview {
-  margin-top: 0.5rem;
+  margin-top: var(--spacing-sm);
 }
 
 .preview-card {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  border-radius: 0.75rem;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--gray-200);
+  background: var(--gray-50);
 }
 
 .preview-icon {
   font-size: 1.5rem;
   background: white;
-  width: 3rem;
-  height: 3rem;
-  border-radius: 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .preview-content {
@@ -1198,65 +1306,78 @@ export default defineComponent({
 }
 
 .preview-name {
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 0.25rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-weight: var(--font-bold);
+  color: var(--gray-900);
+  margin-bottom: var(--spacing-xs);
 }
 
 .preview-desc {
-  font-size: 0.875rem;
-  color: #6b7280;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: var(--text-sm);
+  color: var(--gray-500);
+  font-weight: var(--font-medium);
 }
 
-/* 提示消息 */
+.modal-footer {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xl) var(--spacing-2xl);
+  border-top: 1px solid var(--gray-200);
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+}
+
+.modal-footer .btn {
+  flex: 1;
+  justify-content: center;
+}
+
+.loading-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: var(--spacing-sm);
+}
+
 .toast {
   position: fixed;
-  top: 2rem;
-  right: 2rem;
+  top: var(--spacing-xl);
+  right: var(--spacing-xl);
   background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.75rem;
-  padding: 1rem 1.5rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  z-index: 1000;
-  min-width: 300px;
+  gap: var(--spacing-md);
+  z-index: 10000;
+  min-width: 280px;
 }
 
 .toast.success {
-  border-left: 4px solid #10b981;
+  border-left: 4px solid var(--success-500);
 }
 
 .toast.success .icon {
-  color: #10b981;
+  color: var(--success-500);
 }
 
 .toast.error {
-  border-left: 4px solid #ef4444;
+  border-left: 4px solid var(--error-500);
 }
 
 .toast.error .icon {
-  color: #ef4444;
+  color: var(--error-500);
 }
 
-/* 图标样式 */
-.icon {
-  width: 1.25rem;
-  height: 1.25rem;
+.toast .icon {
+  width: 20px;
+  height: 20px;
   stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
-/* 动画 */
 .modal-enter-active,
 .modal-leave-active {
   transition: all 0.3s ease;
@@ -1288,42 +1409,33 @@ export default defineComponent({
   transform: translateX(100%) translateY(-20px);
 }
 
-.spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* 响应式设计 */
 @media (max-width: 768px) {
-  .page-header {
-    padding: 2rem 1rem;
+  .header-content {
+    flex-direction: column;
+    gap: var(--spacing-lg);
   }
 
-  .page-title {
-    font-size: 2rem;
+  .header-actions {
+    width: 100%;
   }
 
-  .main-content {
-    padding: 0 1rem;
-    margin-top: -2rem;
+  .btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .stats-section {
+    grid-template-columns: 1fr;
   }
 
   .action-bar {
     flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
+    gap: var(--spacing-md);
   }
 
   .view-controls {
+    width: 100%;
     justify-content: center;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr;
   }
 
   .categories-container {
@@ -1340,39 +1452,37 @@ export default defineComponent({
 
   .modal-content {
     width: 95%;
-    margin: 1rem;
+    margin: var(--spacing-md);
+  }
+
+  .modal-footer {
+    flex-direction: column;
   }
 
   .toast {
-    right: 1rem;
-    left: 1rem;
+    left: var(--spacing-md);
+    right: var(--spacing-md);
     min-width: auto;
   }
 }
 
 @media (max-width: 480px) {
   .page-title {
-    font-size: 1.75rem;
-  }
-
-  .page-description {
-    font-size: 1rem;
-  }
-
-  .action-bar {
-    padding: 1rem;
-  }
-
-  .categories-section {
-    padding: 1rem;
-  }
-
-  .category-card {
-    padding: 1rem;
+    font-size: var(--text-2xl);
   }
 
   .icon-selector {
     grid-template-columns: repeat(5, 1fr);
+  }
+
+  .category-card {
+    padding: var(--spacing-lg);
+  }
+
+  .category-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 1.5rem;
   }
 }
 </style>

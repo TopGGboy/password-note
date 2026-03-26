@@ -1,15 +1,20 @@
 <template>
   <div class="auth-container">
     <div class="auth-background">
-      <div class="background-pattern"></div>
-      <div class="floating-elements">
-        <div class="floating-element" v-for="i in 6" :key="i"></div>
+      <div class="gradient-mesh"></div>
+      <div class="floating-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"></div>
+        <div class="shape shape-5"></div>
+        <div class="shape shape-6"></div>
       </div>
+      <div class="grid-pattern"></div>
     </div>
     
     <div class="auth-content">
       <div class="auth-card">
-        <!-- Logo 和品牌 -->
         <div class="brand-section">
           <div class="brand-logo">
             <div class="logo-icon">
@@ -21,10 +26,9 @@
             </div>
           </div>
           <h1 class="brand-title">密码管家</h1>
-          <p class="brand-subtitle">安全、简单、可靠的密码管理解决方案</p>
+          <p class="brand-subtitle">安全 · 简单 · 可靠的密码管理解决方案</p>
         </div>
 
-        <!-- 登录表单 -->
         <div class="form-section">
           <div class="form-header">
             <h2>欢迎回来</h2>
@@ -90,7 +94,6 @@
               </div>
             </div>
 
-            <!-- 验证码 -->
             <div class="form-group">
               <label for="captcha" class="form-label">
                 <svg class="label-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -123,7 +126,6 @@
               </div>
             </div>
 
-            <!-- 登录失败提示 -->
             <div v-if="failedAttempts > 0" class="warning-banner">
               <svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
@@ -138,7 +140,6 @@
               </div>
             </div>
 
-            <!-- 账户锁定提示 -->
             <div v-if="isLocked" class="error-banner">
               <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <circle cx="12" cy="12" r="10"/>
@@ -151,7 +152,6 @@
               </div>
             </div>
 
-            <!-- 错误信息 -->
             <div v-if="errorMessage" class="error-banner">
               <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <circle cx="12" cy="12" r="10"/>
@@ -191,7 +191,6 @@
       </div>
     </div>
 
-    <!-- 双因素认证弹窗 -->
     <div v-if="show2FA" class="modal-overlay" @click.self="cancel2FA">
       <div class="modal-card">
         <div class="modal-header">
@@ -234,7 +233,6 @@
       </div>
     </div>
 
-    <!-- 忘记密码弹窗 -->
     <div v-if="showForgotPassword" class="modal-overlay" @click.self="showForgotPassword = false">
       <div class="modal-card">
         <div class="modal-header">
@@ -310,26 +308,18 @@ export default defineComponent({
       showPassword: false,
       isLoading: false,
       errorMessage: '',
-
-      // 验证码相关
       captchaUrl: '',
-
-      // 登录失败控制
       failedAttempts: 0,
       maxAttempts: 5,
       isLocked: false,
-      lockoutDuration: 30, // 分钟
+      lockoutDuration: 30,
       lockoutTimeRemaining: 0,
-
-      // 双因素认证
       show2FA: false,
       twoFactorCode: '',
       maskedEmail: '',
-      originalEmail: '', // 存储原始邮箱用于API调用
+      originalEmail: '',
       sessionId: '',
       resendCooldown: 0,
-
-      // 忘记密码
       showForgotPassword: false,
       resetEmail: ''
     }
@@ -340,13 +330,10 @@ export default defineComponent({
     }
   },
   async mounted() {
-    // 初始化验证码
     this.refreshCaptcha()
-    // 检查锁定状态
     this.checkLockoutStatus()
   },
   methods: {
-    // 处理登录
     async handleLogin() {
       if (this.isLocked) return
 
@@ -354,12 +341,10 @@ export default defineComponent({
       this.errorMessage = ''
 
       try {
-        // 前端基本验证
         if (!this.validateForm()) {
           return
         }
 
-        // 确保有sessionId
         if (!this.sessionId) {
           await this.refreshCaptcha()
         }
@@ -369,7 +354,6 @@ export default defineComponent({
           return
         }
 
-        // 调用认证store登录
         const result = await this.authStore.login({
           username: this.loginForm.username,
           password: this.loginForm.password,
@@ -379,8 +363,6 @@ export default defineComponent({
 
         if (result.success) {
           if ((result as any).twoFactorEnabled) {
-            // 需要双因素认证，发送验证码
-
             try {
               const send2FAResult = await this.authStore.send2FACode(result.data?.email)
 
@@ -395,13 +377,10 @@ export default defineComponent({
               this.errorMessage = '发送验证码失败，请重试'
             }
           } else {
-            // 登录成功，跳转到home
             try {
-              // 确保状态已经更新
               await this.$nextTick()
               await this.router.push(ROUTES.HOME)
             } catch (error) {
-              // 使用window.location作为备选方案
               window.location.href = ROUTES.HOME
             }
           }
@@ -421,7 +400,6 @@ export default defineComponent({
           return
         }
 
-        // 使用认证store验证2FA
         const result = await this.authStore.verify2FA(this.originalEmail, this.twoFactorCode)
 
         if (result.success) {
@@ -429,13 +407,10 @@ export default defineComponent({
           this.twoFactorCode = ''
           this.errorMessage = ''
 
-          // 跳转到home
           try {
-             // 确保状态已更新
             await this.$nextTick()
             await this.router.push(ROUTES.HOME)
           } catch (error) {
-             // 使用window.location作为备选方案
             window.location.href = ROUTES.HOME
           }
         } else {
@@ -446,7 +421,6 @@ export default defineComponent({
       }
     },
 
-    // 表单验证
     validateForm() {
       if (!this.loginForm.username.trim()) {
         this.errorMessage = '请输入用户名或邮箱'
@@ -466,7 +440,6 @@ export default defineComponent({
       return true
     },
 
-    // 处理登录错误
     handleLoginError(error: any) {
       const errorData = error.response?.data
 
@@ -492,13 +465,10 @@ export default defineComponent({
       }
     },
 
-    // 刷新验证码
     async refreshCaptcha() {
       try {
-        // 调用API建立session并获取sessionId
         const response = await captchaAPI.preloadCaptcha()
 
-        // 从响应头获取sessionId，尝试多种可能的header名称
         const sessionId = response.headers['x-session-id'] ||
           response.headers['X-Session-Id']
 
@@ -511,7 +481,6 @@ export default defineComponent({
           console.error('无法获取sessionId')
         }
 
-        // 设置验证码图片URL
         this.captchaUrl = captchaAPI.getCaptchaImage()
         this.loginForm.captcha = ''
 
@@ -519,20 +488,15 @@ export default defineComponent({
         console.error('刷新验证码失败:', error)
         this.errorMessage = '获取验证码失败，请重试'
 
-        // 即使失败也生成一个sessionId和设置图片URL
         this.sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
         this.captchaUrl = captchaAPI.getCaptchaImage()
         this.loginForm.captcha = ''
       }
     },
 
-    // 检查锁定状态
     checkLockoutStatus() {
-      // 后端需要：检查当前用户是否被锁定
-      // 这里可以从localStorage或调用API获取锁定状态
     },
 
-    // 开始锁定倒计时
     startLockoutTimer() {
       const timer = setInterval(() => {
         this.lockoutTimeRemaining--
@@ -544,9 +508,7 @@ export default defineComponent({
       }, 1000)
     },
 
-    // 双因素认证相关方法
     validateTwoFactorCode() {
-      // 限制只能输入数字
       this.twoFactorCode = this.twoFactorCode.replace(/\D/g, '')
     },
 
@@ -556,11 +518,9 @@ export default defineComponent({
           return
         }
 
-        // 重新发送邮箱验证码
         const result = await this.authStore.send2FACode(this.originalEmail)
 
         if (result.success) {
-          // 开始倒计时
           this.resendCooldown = 60
           const timer = setInterval(() => {
             this.resendCooldown--
@@ -588,22 +548,9 @@ export default defineComponent({
       this.resendCooldown = 0
     },
 
-    // 发送重置邮件
     async sendResetEmail() {
-      // try {
-      //   // 使用认证store发送重置邮件
-      //   await this.authStore.forgotPassword(this.resetEmail)
-
-      //   alert('重置链接已发送到您的邮箱，请查收')
-      //   this.showForgotPassword = false
-      //   this.resetEmail = ''
-
-      // } catch (error) {
-      //   this.errorMessage = '发送失败，请检查邮箱地址'
-      // }
     },
 
-    // 邮箱脱敏处理
     maskEmail(email: string): string {
       if (!email || !email.includes('@')) {
         return email
@@ -622,7 +569,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-/* 使用全局主题变量 */
 .auth-container {
   min-height: 100vh;
   display: flex;
@@ -638,50 +584,133 @@ export default defineComponent({
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  background: linear-gradient(135deg, #0f766e 0%, #134e4a 50%, #115e59 100%);
   z-index: 1;
 }
 
-.background-pattern {
+.gradient-mesh {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(ellipse at 20% 30%, rgba(245, 158, 11, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(14, 165, 233, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 40% 80%, rgba(244, 63, 94, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 70%, rgba(16, 185, 129, 0.12) 0%, transparent 50%);
+  animation: meshMove 20s ease-in-out infinite;
+}
+
+@keyframes meshMove {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(-2%, 2%) scale(1.02); }
+  50% { transform: translate(1%, -1%) scale(0.98); }
+  75% { transform: translate(-1%, -2%) scale(1.01); }
+}
+
+.floating-shapes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+.shape {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.1;
+  animation: floatShape 15s ease-in-out infinite;
+}
+
+.shape-1 {
+  width: 300px;
+  height: 300px;
+  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  top: -100px;
+  left: -100px;
+  animation-delay: 0s;
+}
+
+.shape-2 {
+  width: 200px;
+  height: 200px;
+  background: linear-gradient(135deg, #0ea5e9, #38bdf8);
+  top: 20%;
+  right: -50px;
+  animation-delay: 2s;
+}
+
+.shape-3 {
+  width: 150px;
+  height: 150px;
+  background: linear-gradient(135deg, #f43f5e, #fb7185);
+  bottom: 30%;
+  left: 10%;
+  animation-delay: 4s;
+}
+
+.shape-4 {
+  width: 250px;
+  height: 250px;
+  background: linear-gradient(135deg, #10b981, #34d399);
+  bottom: -100px;
+  right: 20%;
+  animation-delay: 1s;
+}
+
+.shape-5 {
+  width: 180px;
+  height: 180px;
+  background: linear-gradient(135deg, #14b8a6, #2dd4bf);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation-delay: 3s;
+}
+
+.shape-6 {
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, #f97316, #fb923c);
+  top: 10%;
+  left: 60%;
+  animation-delay: 5s;
+}
+
+@keyframes floatShape {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(30px, -30px) rotate(90deg);
+  }
+  50% {
+    transform: translate(-20px, 20px) rotate(180deg);
+  }
+  75% {
+    transform: translate(10px, 40px) rotate(270deg);
+  }
+}
+
+.grid-pattern {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   background-image: 
-    radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
-  background-size: 100px 100px;
-  animation: float 20s ease-in-out infinite;
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: gridPulse 10s ease-in-out infinite;
 }
 
-.floating-elements {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-}
-
-.floating-element {
-  position: absolute;
-  width: 60px;
-  height: 60px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-  animation: float 6s ease-in-out infinite;
-}
-
-.floating-element:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
-.floating-element:nth-child(2) { top: 20%; right: 10%; animation-delay: 1s; }
-.floating-element:nth-child(3) { bottom: 30%; left: 20%; animation-delay: 2s; }
-.floating-element:nth-child(4) { bottom: 20%; right: 20%; animation-delay: 3s; }
-.floating-element:nth-child(5) { top: 50%; left: 5%; animation-delay: 4s; }
-.floating-element:nth-child(6) { top: 60%; right: 5%; animation-delay: 5s; }
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-20px) rotate(180deg); }
+@keyframes gridPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.8; }
 }
 
 .auth-content {
@@ -695,33 +724,75 @@ export default defineComponent({
 .auth-card {
   background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(20px);
-  border-radius: 20px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  padding: 40px;
+  border-radius: 24px;
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  padding: 48px 40px;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  max-width: 420px;
+  max-width: 440px;
   width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #14b8a6, #f59e0b, #0ea5e9);
+  animation: gradientShift 3s ease infinite;
+  background-size: 200% 100%;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .brand-section {
   text-align: center;
-  margin-bottom: var(--spacing-2xl);
+  margin-bottom: var(--spacing-3xl);
 }
 
 .brand-logo {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
 }
 
 .logo-icon {
   width: 80px;
   height: 80px;
   margin: 0 auto;
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  border-radius: var(--border-radius-xl);
+  background: linear-gradient(135deg, #14b8a6, #0d9488);
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 
+    0 10px 30px rgba(20, 184, 166, 0.3),
+    inset 0 -2px 10px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.logo-icon::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
 }
 
 .logo-icon svg {
@@ -729,45 +800,49 @@ export default defineComponent({
   height: 40px;
   color: white;
   stroke-width: 2;
+  position: relative;
+  z-index: 1;
 }
 
 .brand-title {
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--text-primary);
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--gray-900);
   margin-bottom: var(--spacing-sm);
+  letter-spacing: -0.5px;
 }
 
 .brand-subtitle {
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
+  color: var(--gray-500);
+  font-size: var(--text-sm);
+  font-weight: 500;
 }
 
 .form-section {
-  margin-top: var(--spacing-xl);
+  margin-top: var(--spacing-2xl);
 }
 
 .form-header {
   text-align: center;
-  margin-bottom: var(--spacing-xl);
+  margin-bottom: var(--spacing-2xl);
 }
 
 .form-header h2 {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-primary);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--gray-900);
   margin-bottom: var(--spacing-sm);
 }
 
 .form-header p {
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
+  color: var(--gray-500);
+  font-size: var(--text-sm);
 }
 
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-xl);
 }
 
 .form-group {
@@ -780,15 +855,15 @@ export default defineComponent({
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--text-primary);
-  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--gray-700);
+  font-size: var(--text-sm);
 }
 
 .label-icon {
   width: 16px;
   height: 16px;
-  color: var(--text-secondary);
+  color: var(--primary-500);
   stroke-width: 2;
 }
 
@@ -799,47 +874,50 @@ export default defineComponent({
 .form-input {
   width: 100%;
   padding: 14px 16px;
-  border: 2px solid #e5e7eb;
-  border-radius: 10px;
-  font-size: 16px;
+  border: 2px solid var(--gray-200);
+  border-radius: 12px;
+  font-size: 15px;
   transition: all 0.3s ease;
   background: white;
   box-sizing: border-box;
+  font-weight: 500;
 }
 
 .form-input:focus {
   outline: none;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1);
+  transform: translateY(-1px);
 }
 
 .form-input::placeholder {
-  color: #9ca3af;
+  color: var(--gray-400);
+  font-weight: 400;
 }
 
 .form-input:disabled {
-  background-color: var(--bg-secondary);
+  background-color: var(--gray-100);
   cursor: not-allowed;
   opacity: 0.6;
 }
 
 .password-toggle {
   position: absolute;
-  right: var(--spacing-md);
+  right: 14px;
   top: 50%;
   transform: translateY(-50%);
-  background: none;
+  background: var(--gray-100);
   border: none;
-  color: var(--text-secondary);
+  color: var(--gray-500);
   cursor: pointer;
-  padding: var(--spacing-sm);
-  border-radius: var(--border-radius-md);
+  padding: 8px;
+  border-radius: 8px;
   transition: all 0.2s ease;
 }
 
 .password-toggle:hover {
-  color: var(--primary-color);
-  background: var(--bg-secondary);
+  color: var(--primary-600);
+  background: var(--primary-50);
 }
 
 .password-toggle svg {
@@ -861,15 +939,16 @@ export default defineComponent({
 .captcha-image {
   position: relative;
   cursor: pointer;
-  border: 2px solid var(--border-color);
-  border-radius: var(--border-radius-lg);
+  border: 2px solid var(--gray-200);
+  border-radius: 12px;
   overflow: hidden;
   transition: all 0.3s ease;
   background: white;
 }
 
 .captcha-image:hover {
-  border-color: var(--primary-color);
+  border-color: var(--primary-500);
+  transform: scale(1.02);
 }
 
 .captcha-image img {
@@ -885,7 +964,7 @@ export default defineComponent({
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(20, 184, 166, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -898,8 +977,8 @@ export default defineComponent({
 }
 
 .refresh-overlay svg {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   color: white;
   stroke-width: 2;
 }
@@ -908,19 +987,19 @@ export default defineComponent({
   display: flex;
   align-items: flex-start;
   gap: var(--spacing-md);
-  padding: var(--spacing-md);
-  border-radius: var(--border-radius-lg);
-  margin: var(--spacing-md) 0;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: 12px;
+  margin: var(--spacing-sm) 0;
 }
 
 .warning-banner {
-  background: var(--warning-bg);
-  border: 1px solid var(--warning-border);
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+  border: 1px solid var(--warning-300);
 }
 
 .error-banner {
-  background: var(--error-bg);
-  border: 1px solid var(--error-border);
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  border: 1px solid var(--error-300);
 }
 
 .warning-icon, .error-icon {
@@ -932,11 +1011,11 @@ export default defineComponent({
 }
 
 .warning-icon {
-  color: var(--warning-color);
+  color: var(--warning-600);
 }
 
 .error-icon {
-  color: var(--error-color);
+  color: var(--error-600);
 }
 
 .warning-content, .error-content {
@@ -945,28 +1024,29 @@ export default defineComponent({
 
 .warning-content p, .error-content p {
   margin: 0;
-  font-size: var(--font-size-sm);
-  line-height: 1.4;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  font-weight: 500;
 }
 
 .warning-content p {
-  color: var(--warning-text);
+  color: var(--warning-800);
 }
 
 .error-content p {
-  color: var(--error-text);
+  color: var(--error-700);
 }
 
 .error-content h4 {
   margin: 0 0 var(--spacing-xs) 0;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--error-color);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--error-800);
 }
 
 .danger {
-  color: var(--error-color) !important;
-  font-weight: var(--font-weight-semibold) !important;
+  color: var(--error-600) !important;
+  font-weight: 700 !important;
 }
 
 .login-button {
@@ -979,19 +1059,37 @@ export default defineComponent({
   border: none;
   border-radius: 12px;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
-  min-height: 52px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  min-height: 54px;
+  background: linear-gradient(135deg, #14b8a6, #0d9488);
   color: white;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 15px rgba(20, 184, 166, 0.4);
   margin-top: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.login-button:hover:not(:disabled)::before {
+  left: 100%;
 }
 
 .login-button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 8px 25px rgba(20, 184, 166, 0.5);
+  background: linear-gradient(135deg, #0d9488, #0f766e);
 }
 
 .login-button:disabled {
@@ -1020,50 +1118,8 @@ export default defineComponent({
   100% { transform: rotate(360deg); }
 }
 
-.auth-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md) var(--spacing-xl);
-  border: none;
-  border-radius: var(--border-radius-lg);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  min-height: 48px;
-}
-
-.auth-button.primary {
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  color: white;
-  box-shadow: var(--shadow-md);
-}
-
-.auth-button.primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-}
-
-.auth-button.secondary {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-}
-
-.auth-button.secondary:hover:not(:disabled) {
-  background: var(--bg-tertiary);
-}
-
-.auth-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none !important;
-}
-
 .auth-footer {
-  margin-top: var(--spacing-xl);
+  margin-top: var(--spacing-2xl);
   text-align: center;
 }
 
@@ -1077,78 +1133,113 @@ export default defineComponent({
 .link-button {
   background: none;
   border: none;
-  color: var(--primary-color);
-  font-size: var(--font-size-sm);
+  color: var(--gray-600);
+  font-size: var(--text-sm);
   cursor: pointer;
   text-decoration: none;
-  padding: var(--spacing-sm);
-  border-radius: var(--border-radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: 8px;
   transition: all 0.2s ease;
+  font-weight: 500;
 }
 
 .link-button:hover {
-  background: var(--bg-secondary);
-  text-decoration: underline;
+  background: var(--gray-100);
+  color: var(--primary-600);
 }
 
 .link-button.primary {
-  font-weight: var(--font-weight-medium);
+  color: var(--primary-600);
+  font-weight: 600;
 }
 
-/* 模态框样式 */
+.link-button.primary:hover {
+  background: var(--primary-50);
+  color: var(--primary-700);
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: var(--spacing-lg);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .modal-card {
   background: white;
-  border-radius: var(--border-radius-xl);
-  box-shadow: var(--shadow-xl);
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   width: 100%;
   max-width: 400px;
   max-height: 90vh;
   overflow-y: auto;
+  animation: scaleIn 0.3s ease;
+  position: relative;
+}
+
+.modal-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #14b8a6, #f59e0b);
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-lg);
-  border-bottom: 1px solid var(--border-color);
+  padding: var(--spacing-xl) var(--spacing-2xl) var(--spacing-lg);
+  border-bottom: 1px solid var(--gray-200);
 }
 
 .modal-header h3 {
   margin: 0;
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--gray-900);
 }
 
 .modal-close {
-  background: none;
+  background: var(--gray-100);
   border: none;
-  color: var(--text-secondary);
+  color: var(--gray-500);
   cursor: pointer;
-  padding: var(--spacing-sm);
-  border-radius: var(--border-radius-md);
+  padding: 8px;
+  border-radius: 8px;
   transition: all 0.2s ease;
 }
 
 .modal-close:hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  background: var(--gray-200);
+  color: var(--gray-700);
 }
 
 .modal-close svg {
@@ -1158,19 +1249,20 @@ export default defineComponent({
 }
 
 .modal-body {
-  padding: var(--spacing-xl);
+  padding: var(--spacing-2xl);
   text-align: center;
 }
 
 .verification-icon, .reset-icon {
   width: 60px;
   height: 60px;
-  margin: 0 auto var(--spacing-lg);
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  margin: 0 auto var(--spacing-xl);
+  background: linear-gradient(135deg, #14b8a6, #0d9488);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 8px 20px rgba(20, 184, 166, 0.3);
 }
 
 .verification-icon svg, .reset-icon svg {
@@ -1181,9 +1273,10 @@ export default defineComponent({
 }
 
 .modal-body p {
-  margin-bottom: var(--spacing-lg);
-  color: var(--text-secondary);
-  line-height: 1.5;
+  margin-bottom: var(--spacing-xl);
+  color: var(--gray-600);
+  line-height: 1.6;
+  font-size: var(--text-sm);
 }
 
 .verification-input {
@@ -1193,32 +1286,69 @@ export default defineComponent({
 .code-input {
   width: 100%;
   padding: var(--spacing-lg);
-  border: 2px solid var(--border-color);
-  border-radius: var(--border-radius-lg);
-  font-size: var(--font-size-xl);
+  border: 2px solid var(--gray-200);
+  border-radius: 12px;
+  font-size: 20px;
   text-align: center;
   letter-spacing: 0.5em;
-  font-weight: var(--font-weight-medium);
+  font-weight: 600;
   transition: all 0.3s ease;
 }
 
 .code-input:focus {
   outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1);
 }
 
 .modal-actions {
   display: flex;
   gap: var(--spacing-md);
-  padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-xl);
+  padding: var(--spacing-lg) var(--spacing-2xl) var(--spacing-2xl);
 }
 
-.modal-actions .auth-button {
+.auth-button {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-xl);
+  border: none;
+  border-radius: 10px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 48px;
 }
 
-/* 响应式设计 */
+.auth-button.primary {
+  background: linear-gradient(135deg, #14b8a6, #0d9488);
+  color: white;
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+}
+
+.auth-button.primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(20, 184, 166, 0.4);
+}
+
+.auth-button.secondary {
+  background: var(--gray-100);
+  color: var(--gray-700);
+}
+
+.auth-button.secondary:hover:not(:disabled) {
+  background: var(--gray-200);
+}
+
+.auth-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
 @media (max-width: 640px) {
   .auth-content {
     padding: var(--spacing-md);
@@ -1226,6 +1356,7 @@ export default defineComponent({
   
   .auth-card {
     padding: var(--spacing-xl);
+    border-radius: 20px;
   }
   
   .captcha-group {
@@ -1243,6 +1374,20 @@ export default defineComponent({
   
   .modal-actions {
     flex-direction: column;
+  }
+  
+  .brand-title {
+    font-size: 24px;
+  }
+  
+  .logo-icon {
+    width: 64px;
+    height: 64px;
+  }
+  
+  .logo-icon svg {
+    width: 32px;
+    height: 32px;
   }
 }
 </style>

@@ -1,15 +1,16 @@
 <template>
   <div class="passwords-page">
-    <!-- 页面头部 -->
     <div class="page-header card">
       <div class="header-content">
         <div class="header-left">
           <h1 class="page-title">
-            <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <circle cx="12" cy="16" r="1"/>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
+            <div class="title-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <circle cx="12" cy="16" r="1"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </div>
             密码管理
           </h1>
           <p class="page-subtitle">安全管理您的所有账号密码</p>
@@ -34,10 +35,9 @@
       </div>
     </div>
 
-    <!-- 统计信息 -->
     <div class="stats-section">
       <div class="stat-card card">
-        <div class="stat-icon">
+        <div class="stat-icon teal">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
             <circle cx="12" cy="16" r="1"/>
@@ -48,9 +48,10 @@
           <div class="stat-number">{{ total }}</div>
           <div class="stat-label">总密码数</div>
         </div>
+        <div class="stat-decoration"></div>
       </div>
       <div class="stat-card card">
-        <div class="stat-icon">
+        <div class="stat-icon amber">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
           </svg>
@@ -59,9 +60,10 @@
           <div class="stat-number">{{ favoriteCount }}</div>
           <div class="stat-label">收藏密码</div>
         </div>
+        <div class="stat-decoration"></div>
       </div>
       <div class="stat-card card">
-        <div class="stat-icon">
+        <div class="stat-icon sky">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
           </svg>
@@ -70,10 +72,10 @@
           <div class="stat-number">{{ categoriesCount }}</div>
           <div class="stat-label">分类数量</div>
         </div>
+        <div class="stat-decoration"></div>
       </div>
     </div>
 
-    <!-- 密码条目列表 -->
     <div class="content-section card">
       <PasswordEntriesList 
         @add-password="showAddModal = true" 
@@ -82,14 +84,12 @@
       />
     </div>
 
-    <!-- 添加密码弹窗 -->
     <AddPasswordModal 
       v-if="showAddModal" 
       @close="showAddModal = false" 
       @success="handleAddSuccess" 
     />
 
-    <!-- 密码详情弹窗 -->
     <PasswordEntryDetail 
       v-if="showDetailModal && selectedEntry" 
       :entry="selectedEntry" 
@@ -97,7 +97,6 @@
       @edit="handleEditFromDetail" 
     />
 
-    <!-- 编辑密码弹窗 -->
     <EditPasswordModal 
       v-if="showEditModal && selectedEntry" 
       :entry="selectedEntry" 
@@ -105,22 +104,13 @@
       @success="handleEditSuccess" 
     />
 
-    <!-- 加载遮罩 -->
     <div v-if="loading && entries.length === 0" class="loading-overlay">
       <div class="loading-spinner">
-        <div class="spinner">
-          <svg viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="31.416" stroke-dashoffset="31.416">
-              <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416" repeatCount="indefinite"/>
-              <animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416" repeatCount="indefinite"/>
-            </circle>
-          </svg>
-        </div>
+        <div class="spinner"></div>
         <p>加载中...</p>
       </div>
     </div>
 
-    <!-- 错误提示 -->
     <div v-if="error" class="error-message">
       <div class="error-content card">
         <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -161,10 +151,8 @@ export default defineComponent({
     EditPasswordModal,
   },
   setup() {
-    // 认证状态
     const { userId, isAuthenticated, initialize } = useAuth()
 
-    // 密码条目管理
     const {
       loading,
       error,
@@ -175,26 +163,21 @@ export default defineComponent({
       refresh
     } = usePasswordEntries()
 
-    // 本地状态
     const showAddModal = ref(false)
     const showDetailModal = ref(false)
     const showEditModal = ref(false)
     const selectedEntry = ref<DecryptedPasswordEntry | null>(null)
     const categories = ref<Category[]>([])
 
-    // 计算属性
     const favoriteCount = computed(() => {
-      // 如果API返回了totalFavorites，直接使用
       if (totalFavorites.value > 0) {
         return totalFavorites.value
       }
-      // 否则使用前端过滤计算
       return entries.value.filter(entry => entry.favorite).length
     })
 
     const categoriesCount = computed(() => categories.value.length)
 
-    // 方法
     const refreshEntries = async () => {
       try {
         await refresh()
@@ -233,7 +216,6 @@ export default defineComponent({
       error.value = null
     }
 
-    // 加载分类数据
     const loadCategories = async () => {
       if (!userId.value || isNaN(Number(userId.value))) {
         console.warn('用户ID无效，跳过加载分类')
@@ -250,7 +232,6 @@ export default defineComponent({
       }
     }
 
-    // 监听登录状态变化
     watch(isAuthenticated, (newValue) => {
       if (newValue) {
         fetchEntries()
@@ -258,32 +239,24 @@ export default defineComponent({
       }
     })
 
-    // 添加简单的 toast 函数
     const showToast = (message: string, type: string) => {
-      // 使用现有的 error 状态显示错误信息
       if (type === 'error') {
         error.value = message
-        // 3秒后自动清除错误信息
         setTimeout(() => {
           error.value = null
         }, 3000)
       }
     }
 
-    // 组件挂载时初始化
     onMounted(async () => {
-      // 先检查认证状态
       if (!isAuthenticated.value) {
-        // 尝试初始化认证状态
         await initialize()
-        // 再次检查认证状态
         if (!isAuthenticated.value) {
           console.warn('用户未认证，跳过数据加载')
           return
         }
       }
 
-      // 等待用户ID可用
       if (!userId.value) {
         console.warn('用户ID不可用，跳过数据加载')
         return
@@ -297,7 +270,6 @@ export default defineComponent({
       } catch (error) {
         console.error('初始化数据加载失败:', error)
         
-        // 根据错误类型提供不同的处理
         let errorMessage = '数据加载失败，请刷新页面重试'
         if (error instanceof Error) {
           if (error.message.includes('解密失败') || error.message.includes('密钥')) {
@@ -312,7 +284,6 @@ export default defineComponent({
     })
 
     return {
-      // 数据
       loading,
       error,
       entries,
@@ -321,12 +292,8 @@ export default defineComponent({
       showDetailModal,
       showEditModal,
       selectedEntry,
-
-      // 计算属性
       favoriteCount,
       categoriesCount,
-
-      // 方法
       refreshEntries,
       handleViewEntry,
       handleEditEntry,
@@ -346,11 +313,23 @@ export default defineComponent({
   margin: 0 auto;
 }
 
-/* 页面头部 */
 .page-header {
   margin-bottom: var(--spacing-2xl);
   padding: var(--spacing-2xl);
   border: none;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(240, 253, 250, 0.9) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--gradient-border);
 }
 
 .header-content {
@@ -370,20 +349,37 @@ export default defineComponent({
   gap: var(--spacing-md);
   font-size: var(--text-3xl);
   font-weight: var(--font-bold);
-  color: var(--secondary-900);
+  color: var(--gray-900);
   margin-bottom: var(--spacing-sm);
 }
 
 .title-icon {
-  width: 32px;
-  height: 32px;
-  color: var(--primary-600);
+  width: 48px;
+  height: 48px;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-xl);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 15px rgba(20, 184, 166, 0.35);
+  transition: all var(--transition-normal);
+}
+
+.title-icon:hover {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 6px 20px rgba(20, 184, 166, 0.45);
+}
+
+.title-icon svg {
+  width: 24px;
+  height: 24px;
+  color: white;
   stroke-width: 2;
 }
 
 .page-subtitle {
-  color: var(--secondary-600);
+  color: var(--gray-600);
   font-size: var(--text-base);
+  font-weight: var(--font-medium);
 }
 
 .header-actions {
@@ -391,10 +387,9 @@ export default defineComponent({
   gap: var(--spacing-md);
 }
 
-/* 统计信息 */
 .stats-section {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--spacing-xl);
   margin-bottom: var(--spacing-2xl);
 }
@@ -404,65 +399,147 @@ export default defineComponent({
   display: flex;
   align-items: center;
   gap: var(--spacing-xl);
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
   border: none;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--gradient-primary);
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform var(--transition-normal);
 }
 
 .stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
+  transform: translateY(-6px);
+  box-shadow: 0 15px 35px rgba(20, 184, 166, 0.15);
+}
+
+.stat-card:hover::before {
+  transform: scaleY(1);
 }
 
 .stat-icon {
-  width: 60px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
-  border-radius: var(--radius-xl);
-  color: white;
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-2xl);
+  position: relative;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: all var(--transition-normal);
+}
+
+.stat-icon::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: var(--radius-2xl);
+  z-index: -1;
+}
+
+.stat-icon.teal {
+  background: linear-gradient(135deg, rgba(240, 253, 250, 0.9), rgba(204, 251, 241, 0.9));
+  color: var(--primary-700);
+}
+
+.stat-icon.teal::before {
+  background: var(--gradient-primary);
+}
+
+.stat-icon.amber {
+  background: linear-gradient(135deg, rgba(255, 251, 235, 0.9), rgba(254, 243, 199, 0.9));
+  color: var(--secondary-700);
+}
+
+.stat-icon.amber::before {
+  background: var(--gradient-secondary);
+}
+
+.stat-icon.sky {
+  background: linear-gradient(135deg, rgba(240, 249, 255, 0.9), rgba(224, 242, 254, 0.9));
+  color: var(--info-700);
+}
+
+.stat-icon.sky::before {
+  background: var(--gradient-info);
+}
+
+.stat-card:hover .stat-icon {
+  transform: scale(1.1) rotate(5deg);
 }
 
 .stat-icon svg {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   stroke-width: 2;
 }
 
 .stat-info {
   flex: 1;
+  position: relative;
+  z-index: 1;
 }
 
 .stat-number {
-  font-size: var(--text-3xl);
-  font-weight: var(--font-bold);
-  color: var(--secondary-900);
+  font-size: var(--text-4xl);
+  font-weight: var(--font-black);
+  background: var(--gradient-text);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   margin-bottom: var(--spacing-xs);
+  line-height: 1;
 }
 
 .stat-label {
   font-size: var(--text-sm);
-  color: var(--secondary-600);
+  color: var(--gray-600);
   font-weight: var(--font-medium);
 }
 
-/* 内容区域 */
+.stat-decoration {
+  position: absolute;
+  right: -20px;
+  bottom: -20px;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  opacity: 0.1;
+  background: var(--gradient-primary);
+  transition: all var(--transition-normal);
+}
+
+.stat-card:hover .stat-decoration {
+  transform: scale(1.5);
+  opacity: 0.15;
+}
+
 .content-section {
   padding: 0;
   border: none;
   min-height: 400px;
+  background: rgba(255, 255, 255, 0.9);
 }
 
-/* 加载状态 */
 .loading-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -484,21 +561,22 @@ export default defineComponent({
 .spinner {
   width: 40px;
   height: 40px;
+  border: 3px solid rgba(20, 184, 166, 0.2);
+  border-top-color: var(--primary-500);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
-.spinner svg {
-  width: 100%;
-  height: 100%;
-  color: var(--primary-600);
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .loading-spinner p {
   margin: 0;
-  color: var(--secondary-600);
+  color: var(--gray-600);
   font-weight: var(--font-medium);
 }
 
-/* 错误提示 */
 .error-message {
   position: fixed;
   top: var(--spacing-xl);
@@ -512,7 +590,7 @@ export default defineComponent({
   align-items: center;
   gap: var(--spacing-md);
   padding: var(--spacing-lg) var(--spacing-xl);
-  background: var(--error-50);
+  background: linear-gradient(135deg, var(--error-50), var(--error-100));
   color: var(--error-700);
   border: 1px solid var(--error-200);
   max-width: 400px;
@@ -554,19 +632,35 @@ export default defineComponent({
   stroke-width: 2;
 }
 
-/* 按钮样式 */
 .btn {
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-md) var(--spacing-xl);
   border: none;
-  border-radius: var(--radius-lg);
-  font-size: var(--text-base);
-  font-weight: var(--font-medium);
+  border-radius: var(--radius-xl);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
   text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left var(--transition-normal);
+}
+
+.btn:hover::before {
+  left: 100%;
 }
 
 .btn:disabled {
@@ -576,26 +670,26 @@ export default defineComponent({
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
+  background: var(--gradient-primary);
   color: white;
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 4px 15px rgba(20, 184, 166, 0.4);
 }
 
 .btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-  background: linear-gradient(135deg, var(--primary-600), var(--primary-800));
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(20, 184, 166, 0.5);
 }
 
 .btn-secondary {
   background: var(--secondary-100);
   color: var(--secondary-800);
-  border: 1px solid var(--secondary-200);
+  border: 2px solid var(--secondary-200);
 }
 
 .btn-secondary:hover:not(:disabled) {
   background: var(--secondary-200);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-icon {
@@ -604,9 +698,7 @@ export default defineComponent({
   height: 36px;
 }
 
-.btn-primary svg, 
-.btn-secondary svg,
-.btn-icon svg {
+.btn svg {
   width: 18px;
   height: 18px;
   stroke-width: 2;
@@ -623,7 +715,6 @@ export default defineComponent({
   }
 }
 
-/* 响应式设计 */
 @media (max-width: 768px) {
   .passwords-page {
     padding: var(--spacing-lg);
