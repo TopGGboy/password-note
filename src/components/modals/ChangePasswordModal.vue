@@ -360,7 +360,7 @@ export default defineComponent({
 
 .submit-btn {
   background: #3182ce;
-  color: white;
+  color: #5B21B6;
   border: 1px solid #3182ce;
 }
 

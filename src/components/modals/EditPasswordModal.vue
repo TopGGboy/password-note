@@ -110,21 +110,21 @@
             </div>
           </div>
         </div>
+        
+        <div class="modal-actions">
+          <button type="button" @click="$emit('close')" class="cancel-btn">
+            <span>取消</span>
+          </button>
+          <button 
+            type="submit" 
+            class="submit-btn"
+            :disabled="loading"
+          >
+            <span v-if="loading">保存中...</span>
+            <span v-else>{{ isEdit ? '更新' : '添加' }}</span>
+          </button>
+        </div>
       </form>
-
-      <div class="modal-actions">
-        <button type="button" @click="$emit('close')" class="cancel-btn">
-          <span>取消</span>
-        </button>
-        <button 
-          type="submit" 
-          class="submit-btn"
-          :disabled="loading"
-        >
-          <span v-if="loading">保存中...</span>
-          <span v-else>{{ isEdit ? '更新' : '添加' }}</span>
-        </button>
-      </div>
     </div>
   </div>
 </template>
@@ -582,7 +582,7 @@ export default defineComponent({
 
 .submit-btn {
   background: var(--primary-color);
-  color: white;
+  color: #5B21B6;
   border: 1px solid var(--primary-color);
 }
 

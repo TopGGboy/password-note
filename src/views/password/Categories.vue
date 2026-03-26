@@ -632,7 +632,7 @@ export default defineComponent({
   padding: 0.75rem 1.5rem;
   border: none;
   background: linear-gradient(135deg, #6366f1, #4f46e5);
-  color: white;
+  color: #5B21B6;
   border-radius: 0.5rem;
   font-weight: 600;
   cursor: pointer;

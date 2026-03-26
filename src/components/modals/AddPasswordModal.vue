@@ -199,7 +199,7 @@ export default defineComponent({
     isFormValid(): boolean {
       return !!(
         this.form.title.trim() &&
-        this.form.categoryId !== '' && // 修复验证逻辑
+        this.form.categoryId && // 修复验证逻辑，允许数字类型的categoryId
         this.form.username.trim() &&
         this.form.password.trim()
       )
@@ -1022,7 +1022,7 @@ export default defineComponent({
   cursor: pointer;
   transition: all var(--transition-normal);
   background: var(--primary-color);
-  color: white;
+  color: #5B21B6;
   border: 1px solid var(--primary-color);
   box-shadow: var(--shadow-sm);
   display: flex;
