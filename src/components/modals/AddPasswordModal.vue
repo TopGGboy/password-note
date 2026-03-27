@@ -534,12 +534,10 @@ export default defineComponent({
   background: rgba(15, 23, 42, 0.7);
   backdrop-filter: blur(8px);
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   z-index: 9999;
-  padding: 60px 20px 20px;
-  animation: fadeIn 0.3s ease-out;
-  overflow: auto;
+  animation: fadeIn 0.3s ease;
 }
 
 @keyframes fadeIn {
@@ -549,15 +547,17 @@ export default defineComponent({
 
 .modal-container {
   background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  border-radius: 24px;
-  width: 100%;
-  max-width: 600px;
-  max-height: 90vh;
-  overflow: hidden;
-  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
+  border-radius: var(--radius-3xl);
+  width: 90%;
+  max-width: 520px;
+  max-height: 85vh;
+  height: 60%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
   animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-sizing: border-box;
   position: relative;
+  overflow: hidden;
 }
 
 .modal-container::before {
@@ -1090,7 +1090,7 @@ export default defineComponent({
 
 @media (max-width: 768px) {
   .modal-overlay {
-    padding: 40px 16px 16px;
+    padding: var(--spacing-md);
   }
 
   .modal-container {

@@ -1,6 +1,6 @@
 <template>
   <div class="passwords-page">
-    <div class="page-header card">
+    <header class="page-header card">
       <div class="header-content">
         <div class="header-left">
           <h1 class="page-title">
@@ -33,7 +33,7 @@
           </button>
         </div>
       </div>
-    </div>
+    </header>
 
     <div class="stats-section">
       <div class="stat-card card">
@@ -77,32 +77,43 @@
     </div>
 
     <div class="content-section card">
-      <PasswordEntriesList 
+    <PasswordEntriesList 
+        :entries="entries"
+        :categories="categories"
+        :loading="loading"
         @add-password="showAddModal = true" 
         @view-entry="handleViewEntry"
         @edit-entry="handleEditEntry" 
+        @delete-entry="handleDeleteEntry"
+        @refresh="refreshEntries"
       />
     </div>
 
-    <AddPasswordModal 
-      v-if="showAddModal" 
-      @close="showAddModal = false" 
-      @success="handleAddSuccess" 
-    />
+    <Transition name="modal">
+      <AddPasswordModal 
+        v-if="showAddModal" 
+        @close="showAddModal = false" 
+        @success="handleAddSuccess" 
+      />
+    </Transition>
 
-    <PasswordEntryDetail 
-      v-if="showDetailModal && selectedEntry" 
-      :entry="selectedEntry" 
-      @close="showDetailModal = false"
-      @edit="handleEditFromDetail" 
-    />
+    <Transition name="modal">
+      <PasswordEntryDetail 
+        v-if="showDetailModal && selectedEntry" 
+        :entry="selectedEntry" 
+        @close="showDetailModal = false"
+        @edit="handleEditFromDetail" 
+      />
+    </Transition>
 
-    <EditPasswordModal 
-      v-if="showEditModal && selectedEntry" 
-      :entry="selectedEntry" 
-      @close="showEditModal = false"
-      @success="handleEditSuccess" 
-    />
+    <Transition name="modal">
+        <EditPasswordModal 
+          v-if="showEditModal && selectedEntry" 
+          :entry="selectedEntry" 
+          @close="showEditModal = false"
+          @success="handleEditSuccess" 
+       />
+    </Transition>
 
     <div v-if="loading && entries.length === 0" class="loading-overlay">
       <div class="loading-spinner">
@@ -160,7 +171,8 @@ export default defineComponent({
       total,
       totalFavorites,
       fetchEntries,
-      refresh
+      refresh,
+      deleteEntry
     } = usePasswordEntries()
 
     const showAddModal = ref(false)
@@ -210,6 +222,14 @@ export default defineComponent({
       showEditModal.value = false
       selectedEntry.value = null
       refreshEntries()
+    }
+
+    const handleDeleteEntry = async (entry: DecryptedPasswordEntry) => {
+      try {
+        await deleteEntry(entry.id)
+      } catch (err) {
+        console.error('删除密码条目失败:', err)
+      }
     }
 
     const clearError = () => {
@@ -294,12 +314,14 @@ export default defineComponent({
       selectedEntry,
       favoriteCount,
       categoriesCount,
+      categories,
       refreshEntries,
       handleViewEntry,
       handleEditEntry,
       handleEditFromDetail,
       handleAddSuccess,
       handleEditSuccess,
+      handleDeleteEntry,
       clearError
     }
   }
@@ -526,9 +548,8 @@ export default defineComponent({
 }
 
 .content-section {
-  padding: 0;
+  padding: var(--spacing-2xl);
   border: none;
-  min-height: 400px;
   background: rgba(255, 255, 255, 0.9);
 }
 
@@ -702,6 +723,21 @@ export default defineComponent({
   width: 18px;
   height: 18px;
   stroke-width: 2;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease;
 }
 
 @keyframes slideIn {

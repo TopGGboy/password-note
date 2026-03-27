@@ -248,34 +248,61 @@ export default defineComponent({
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(8px);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 9999;
-  padding: 20px;
-  animation: fadeIn 0.3s ease;
-  overflow: auto;
+  padding: 80px 20px 20px;
+  animation: fadeIn 0.3s ease-out;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .password-entry-detail {
-  background: #ffffff;
-  border-radius: var(--radius-2xl);
-  box-shadow: var(--shadow-2xl);
-  overflow: hidden;
-  max-width: 650px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 24px;
   width: 100%;
+  max-width: 600px;
   max-height: 90vh;
-  border: 1px solid var(--border-color);
-  animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  overflow: hidden;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
+  animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   box-sizing: border-box;
-  overflow-y: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
-@keyframes slideUp {
+.password-entry-detail::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--gradient-border);
+  animation: gradientShift 3s ease infinite;
+  background-size: 200% 100%;
+}
+
+.detail-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  -webkit-overflow-scrolling: touch;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
   from {
     opacity: 0;
-    transform: translateY(30px) scale(0.95);
+    transform: translateY(20px) scale(0.95);
   }
   to {
     opacity: 1;
@@ -283,15 +310,10 @@ export default defineComponent({
   }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .detail-header {
@@ -419,23 +441,18 @@ export default defineComponent({
   box-shadow: var(--shadow-md);
 }
 
-.detail-content {
-  padding: 24px;
-}
-
 .info-section {
-  margin-bottom: 32px;
+  margin-bottom: 24px;
   padding: 20px;
   background: var(--bg-primary);
   border-radius: var(--radius-xl);
   border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-sm);
   transition: all 0.3s ease;
 }
 
 .info-section:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .info-section:last-child {
@@ -443,16 +460,27 @@ export default defineComponent({
 }
 
 .info-section h3 {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
-  margin: 0 0 16px 0;
-  padding-bottom: 12px;
-  border-bottom: 2px solid var(--border-color);
+  margin: 0 0 14px 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
   background: linear-gradient(90deg, var(--primary-500), var(--secondary-700));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-section h3::before {
+  content: '';
+  width: 4px;
+  height: 18px;
+  background: linear-gradient(180deg, var(--primary-500), var(--secondary-700));
+  border-radius: 2px;
 }
 
 .info-grid {
@@ -463,26 +491,29 @@ export default defineComponent({
 .info-item {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .info-item label {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-secondary);
   transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .value-with-copy {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 14px 18px;
+  padding: 10px 14px;
   background: var(--bg-secondary);
   border: 2px solid var(--border-color);
   border-radius: var(--radius-lg);
   transition: all 0.3s ease;
   box-shadow: var(--shadow-sm);
+  min-height: 48px;
 }
 
 .value-with-copy:hover {
@@ -499,6 +530,9 @@ export default defineComponent({
   text-overflow: ellipsis;
   white-space: nowrap;
   font-weight: 500;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
 }
 
 .password-value.hidden {
@@ -521,6 +555,7 @@ export default defineComponent({
   justify-content: center;
   flex-shrink: 0;
   box-shadow: var(--shadow-sm);
+  align-self: center;
 }
 
 .copy-btn:hover,
@@ -574,21 +609,24 @@ export default defineComponent({
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 16px;
 }
 
 .stat-item {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 18px;
+  gap: 8px;
+  padding: 16px;
   background: var(--bg-secondary);
   border: 2px solid var(--border-color);
   border-radius: var(--radius-lg);
   text-align: center;
   box-shadow: var(--shadow-sm);
   transition: all 0.3s ease;
+  min-width: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .stat-item:hover {
@@ -603,12 +641,16 @@ export default defineComponent({
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  line-height: 1.4;
 }
 
 .stat-value {
-  font-size: 18px;
+  font-size: 16px;
   color: var(--text-primary);
   font-weight: 700;
+  line-height: 1.4;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
   background: linear-gradient(135deg, var(--primary-500), var(--secondary-700));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -731,10 +773,21 @@ export default defineComponent({
 }
 
 @media (max-width: 768px) {
+  .modal-overlay {
+    padding: 12px;
+    align-items: flex-start;
+  }
+
+  .password-entry-detail {
+    max-height: calc(100vh - 24px);
+    margin: 12px auto;
+  }
+
   .detail-header {
     flex-direction: column;
     align-items: stretch;
     gap: 16px;
+    padding: 20px;
   }
 
   .header-actions {
@@ -749,20 +802,37 @@ export default defineComponent({
   }
 
   .entry-title {
-    font-size: 24px;
+    font-size: 22px;
     text-align: center;
+  }
+
+  .entry-url {
+    text-align: center;
+  }
+
+  .detail-content {
+    padding: 16px;
   }
 
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .stat-item {
+    padding: 12px;
   }
 
   .detail-actions {
     flex-direction: column;
+    padding: 16px;
+    gap: 10px;
   }
 
   .action-btn {
     min-width: auto;
+    width: 100%;
+    padding: 12px 16px;
   }
 
   .strength-indicator {
@@ -774,13 +844,55 @@ export default defineComponent({
   .strength-text {
     text-align: center;
   }
-  
+
   .info-section {
     padding: 16px;
+    margin-bottom: 20px;
   }
-  
+
   .info-section h3 {
-    font-size: 18px;
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+
+  .value-with-copy {
+    padding: 10px 12px;
+  }
+
+  .value {
+    font-size: 14px;
+  }
+
+  .copy-btn,
+  .toggle-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .entry-icon {
+    font-size: 40px;
+    width: 52px;
+    height: 52px;
+  }
+
+  .entry-title {
+    font-size: 20px;
+  }
+
+  .header-actions {
+    gap: 6px;
+  }
+
+  .header-actions button {
+    width: 38px;
+    height: 38px;
   }
 }
 </style>
