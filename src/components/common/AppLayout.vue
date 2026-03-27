@@ -58,7 +58,7 @@
       </div>
     </header>
 
-    <section v-if="$route.path === '/dashboard'" class="home">
+    <section v-if="$router.currentRoute.value.path === '/dashboard'" class="home">
       <div class="hero">
         <div class="hero-content">
           <h1>你的私人密码库</h1>

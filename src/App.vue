@@ -4,8 +4,7 @@
     <router-view />
 
 
-    
-
+  
     <!-- 主密码模态框 -->
     <MasterPasswordModal v-if="showMasterPasswordModal" :is-setup="!hasMasterPassword"
       @success="handleMasterPasswordSuccess" @close="handleMasterPasswordClose" />
@@ -15,7 +14,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import AppLayout from './components/common/AppLayout.vue'
 
 import MasterPasswordModal from './components/modals/MasterPasswordModal.vue'
 import { KeyManager } from './utils/encryption/crypto'
