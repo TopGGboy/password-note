@@ -102,7 +102,8 @@
         v-if="showDetailModal && selectedEntry" 
         :entry="selectedEntry" 
         @close="showDetailModal = false"
-        @edit="handleEditFromDetail" 
+        @edit="handleEditFromDetail"
+        @delete="handleDeleteSuccess"
       />
     </Transition>
 
@@ -224,6 +225,12 @@ export default defineComponent({
       refreshEntries()
     }
 
+    const handleDeleteSuccess = () => {
+      showDetailModal.value = false
+      selectedEntry.value = null
+      refreshEntries()
+    }
+
     const handleDeleteEntry = async (entry: DecryptedPasswordEntry) => {
       try {
         await deleteEntry(entry.id)
@@ -321,6 +328,7 @@ export default defineComponent({
       handleEditFromDetail,
       handleAddSuccess,
       handleEditSuccess,
+      handleDeleteSuccess,
       handleDeleteEntry,
       clearError
     }

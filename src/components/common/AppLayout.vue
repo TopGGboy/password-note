@@ -78,8 +78,33 @@
           </div>
         </div>
         <div class="hero-visual" aria-hidden="true">
-          <div class="lock"></div>
-          <div class="shine"></div>
+          <div class="lock-container">
+            <div class="pulse-ring"></div>
+            <div class="pulse-ring delay-1"></div>
+            <div class="pulse-ring delay-2"></div>
+            <div class="lock">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" class="lock-icon">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <circle cx="12" cy="16" r="1"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <div class="lock-glow"></div>
+            </div>
+            <div class="floating-particles">
+              <div class="particle p1"></div>
+              <div class="particle p2"></div>
+              <div class="particle p3"></div>
+              <div class="particle p4"></div>
+              <div class="particle p5"></div>
+              <div class="particle p6"></div>
+            </div>
+            <div class="orbit-ring">
+              <div class="orbit-dot"></div>
+            </div>
+            <div class="orbit-ring reverse">
+              <div class="orbit-dot"></div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -736,22 +761,192 @@ onMounted(() => {
   100% { background-position: 200% 50%; }
 }
 
-.hero-visual .lock {
+.lock-container {
   position: absolute;
-  inset: 32px;
-  border-radius: var(--radius-xl);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 253, 250, 0.9));
-  box-shadow: inset 0 0 0 1px var(--gray-200), var(--shadow-xl);
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 80px;
   z-index: 1;
-  animation: bounce 2s infinite;
+}
+
+.hero-visual .lock {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: var(--radius-2xl);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(240, 253, 250, 0.95));
+  box-shadow: 
+    0 20px 60px rgba(20, 184, 166, 0.3),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.8),
+    inset 0 -4px 12px rgba(20, 184, 166, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  animation: floatLock 4s ease-in-out infinite;
+  backdrop-filter: blur(20px);
 }
 
 .app-shell.dark .hero-visual .lock {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.9));
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.95));
+  box-shadow: 
+    0 20px 60px rgba(13, 148, 136, 0.4),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 -4px 12px rgba(13, 148, 136, 0.2);
+}
+
+@keyframes floatLock {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-12px) rotate(2deg); }
+  50% { transform: translateY(-8px) rotate(0deg); }
+  75% { transform: translateY(-15px) rotate(-2deg); }
+}
+
+.lock-icon {
+  width: 56px;
+  height: 56px;
+  color: var(--primary-600);
+  stroke-width: 2;
+  filter: drop-shadow(0 4px 8px rgba(20, 184, 166, 0.3));
+  transition: all var(--transition-normal);
+  animation: pulseIcon 3s ease-in-out infinite;
+}
+
+.app-shell.dark .lock-icon {
+  color: var(--primary-400);
+}
+
+@keyframes pulseIcon {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.9; }
+}
+
+.lock-glow {
+  position: absolute;
+  inset: -20px;
+  background: radial-gradient(circle, rgba(20, 184, 166, 0.3) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: glowPulse 3s ease-in-out infinite;
+  z-index: -1;
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.1); }
+}
+
+.pulse-ring {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  border: 2px solid rgba(20, 184, 166, 0.4);
+  animation: pulseRing 3s ease-out infinite;
+  z-index: 5;
+}
+
+.pulse-ring.delay-1 {
+  animation-delay: 1s;
+}
+
+.pulse-ring.delay-2 {
+  animation-delay: 2s;
+}
+
+@keyframes pulseRing {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+    border-width: 2px;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+    border-width: 0.5px;
+  }
+}
+
+.floating-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.particle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  box-shadow: 0 0 10px rgba(20, 184, 166, 0.5);
+  animation: floatParticle 6s ease-in-out infinite;
+}
+
+.particle.p1 { top: 20%; left: 15%; animation-delay: 0s; }
+.particle.p2 { top: 30%; right: 20%; animation-delay: 1s; }
+.particle.p3 { bottom: 25%; left: 25%; animation-delay: 2s; }
+.particle.p4 { bottom: 35%; right: 15%; animation-delay: 3s; }
+.particle.p5 { top: 50%; left: 10%; animation-delay: 4s; }
+.particle.p6 { top: 60%; right: 10%; animation-delay: 5s; }
+
+@keyframes floatParticle {
+  0%, 100% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0.7;
+  }
+  25% {
+    transform: translateY(-20px) translateX(10px) scale(1.2);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-10px) translateX(-5px) scale(0.9);
+    opacity: 0.8;
+  }
+  75% {
+    transform: translateY(-25px) translateX(5px) scale(1.1);
+    opacity: 0.9;
+  }
+}
+
+.orbit-ring {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border: 1px dashed rgba(20, 184, 166, 0.3);
+  border-radius: 50%;
+  animation: orbitRotate 12s linear infinite;
+  z-index: 4;
+}
+
+.orbit-ring.reverse {
+  animation: orbitRotate 15s linear infinite reverse;
+  width: 240px;
+  height: 240px;
+}
+
+@keyframes orbitRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.orbit-dot {
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  background: var(--gradient-primary);
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(20, 184, 166, 0.6);
+  animation: orbitDotGlow 2s ease-in-out infinite;
+}
+
+@keyframes orbitDotGlow {
+  0%, 100% { box-shadow: 0 0 12px rgba(20, 184, 166, 0.6); }
+  50% { box-shadow: 0 0 20px rgba(20, 184, 166, 0.9); }
 }
 
 .hero-visual .shine {
@@ -1216,7 +1411,33 @@ onMounted(() => {
   }
   
   .hero-visual .lock {
-    font-size: 60px;
+    width: 90px;
+    height: 90px;
+  }
+  
+  .lock-icon {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .pulse-ring {
+    width: 140px;
+    height: 140px;
+  }
+  
+  .orbit-ring {
+    width: 160px;
+    height: 160px;
+  }
+  
+  .orbit-ring.reverse {
+    width: 190px;
+    height: 190px;
+  }
+  
+  .particle {
+    width: 6px;
+    height: 6px;
   }
   
   .home {

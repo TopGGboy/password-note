@@ -1,0 +1,20 @@
+node_modules
+npm-debug.log
+.DS_Store
+.git
+.gitignore
+.env
+.env.local
+.env.*.local
+/dist
+
+# IDE files
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# OS files
+Thumbs.db
+.DS_Store

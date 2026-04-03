@@ -11,10 +11,11 @@ import { tokenManager } from "./auth/tokenManager";
  * 优化后的HTTP客户端
  * 简化token处理逻辑，统一错误处理
  */
+const baseURL = "";
 
 // 创建axios实例
 const http: AxiosInstance = axios.create({
-  baseURL: process.env.VUE_APP_API_BASE_URL || "http://localhost:8080",
+  baseURL: "",
   timeout: 10000,
   withCredentials: true,
   headers: {
@@ -28,6 +29,7 @@ const PUBLIC_ENDPOINTS = [
   API_ENDPOINTS.USER.REGISTER,
   API_ENDPOINTS.USER.REFRESH,
   API_ENDPOINTS.CAPTCHA.IMAGE,
+  API_ENDPOINTS.EMAIL.SEND2FACODE,
   "/captcha",
   "/api/user/forgot-password",
   "/api/user/reset-password",
@@ -226,7 +228,7 @@ async function handleUnauthorizedError(config: any, error: any): Promise<any> {
  * 创建不带拦截器的axios实例（用于特殊场景）
  */
 export const rawHttp = axios.create({
-  baseURL: process.env.VUE_APP_API_BASE_URL || "http://localhost:8080",
+  baseURL: "",
   timeout: 10000,
   withCredentials: true,
 });

@@ -133,15 +133,34 @@
         </button>
       </div>
     </div>
+
+    <!-- 删除确认弹窗 -->
+    <ConfirmDialog
+      v-model:visible="showDeleteConfirm"
+      title="确认删除"
+      :message="`确定要删除密码条目「${entry.title}」吗？`"
+      details="此操作不可撤销，删除后将无法恢复该密码条目。"
+      confirm-text="确认删除"
+      cancel-text="取消"
+      type="danger"
+      :loading="deleteLoading"
+      @confirm="confirmDelete"
+      @cancel="showDeleteConfirm = false"
+    />
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, ref, computed, PropType } from 'vue'
 import type { DecryptedPasswordEntry } from '../../composables/usePasswordEntries'
+import { usePasswordEntries } from '../../composables/usePasswordEntries'
+import ConfirmDialog from '../common/ConfirmDialog.vue'
 
 export default defineComponent({
   name: 'PasswordEntryDetail',
+  components: {
+    ConfirmDialog
+  },
   props: {
     entry: {
       type: Object as PropType<DecryptedPasswordEntry>,
@@ -151,6 +170,9 @@ export default defineComponent({
   emits: ['close', 'edit', 'delete', 'toggle-favorite', 'record-usage'],
   setup(props, { emit }) {
     const showPassword = ref(false)
+    const showDeleteConfirm = ref(false)
+    const deleteLoading = ref(false)
+    const { deleteEntry } = usePasswordEntries()
 
     // 密码强度计算
     const strengthLevel = computed(() => {
@@ -203,8 +225,23 @@ export default defineComponent({
 
     // 删除条目
     const handleDelete = () => {
-      if (confirm(`确定要删除密码条目"${props.entry.title}"吗？此操作不可撤销。`)) {
+      showDeleteConfirm.value = true
+    }
+
+    // 确认删除
+    const confirmDelete = async () => {
+      try {
+        deleteLoading.value = true
+        await deleteEntry(props.entry.id)
+        showToast('密码条目已删除', 'success')
         emit('delete')
+        emit('close')
+      } catch (error: any) {
+        console.error('删除失败:', error)
+        showToast(error.message || '删除失败', 'error')
+      } finally {
+        deleteLoading.value = false
+        showDeleteConfirm.value = false
       }
     }
 
@@ -228,6 +265,8 @@ export default defineComponent({
 
     return {
       showPassword,
+      showDeleteConfirm,
+      deleteLoading,
       strengthLevel,
       strengthText,
       copyToClipboard,
@@ -235,6 +274,7 @@ export default defineComponent({
       openUrl,
       handleToggleFavorite,
       handleDelete,
+      confirmDelete,
       formatDate
     }
   }

@@ -290,31 +290,36 @@ export default defineComponent({
   right: 0;
   z-index: 1000;
   margin-top: 8px;
-  background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
-  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(12px);
+  border: 2px solid var(--border-color);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-2xl);
-  max-height: 240px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  max-height: 280px;
   overflow: hidden;
   transition: all 0.3s ease;
 }
 
 .options-container {
-  max-height: 240px;
+  max-height: 280px;
   overflow-y: auto;
+  overflow-x: hidden;
   transition: all 0.3s ease;
+  padding: 4px 0;
 }
 
 .category-option {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 18px;
+  gap: 10px;
+  padding: 12px 16px;
   cursor: pointer;
   transition: all 0.3s ease;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   position: relative;
   overflow: hidden;
+  background: rgba(255, 255, 255, 0.95);
+  white-space: nowrap;
 }
 
 .category-option:last-child {
@@ -339,15 +344,16 @@ export default defineComponent({
 
 .category-option:hover,
 .category-option.is-highlighted {
-  background: linear-gradient(90deg, var(--primary-50), transparent);
-  border-color: var(--primary-200);
-  transform: translateX(5px);
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.12), rgba(59, 130, 246, 0.08));
+  border-color: rgba(59, 130, 246, 0.2);
+  transform: translateX(3px);
 }
 
 .category-option.is-selected {
   background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
   color: white;
   border-color: var(--primary-500);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .category-option.is-selected::before {
@@ -357,30 +363,32 @@ export default defineComponent({
 .category-option.is-selected:hover {
   background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
   border-color: var(--primary-600);
-  transform: translateX(5px);
+  transform: translateX(3px);
 }
 
 .category-option .category-icon {
-  font-size: 18px;
+  font-size: 16px;
   transition: all 0.3s ease;
   flex-shrink: 0;
 }
 
 .category-option.is-selected .category-icon {
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 .category-option .category-name {
   flex: 1;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   transition: all 0.3s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .selected-indicator {
   color: white;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 14px;
   transition: all 0.3s ease;
   flex-shrink: 0;
 }
@@ -392,6 +400,7 @@ export default defineComponent({
   padding: 32px 16px;
   color: var(--text-secondary);
   transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.95);
 }
 
 .empty-icon {
@@ -451,29 +460,28 @@ export default defineComponent({
 }
 
 .options-container::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 .options-container::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+  background: transparent;
   border-radius: var(--radius-full);
-  margin: 8px;
+  margin: 12px 4px;
 }
 
 .options-container::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, var(--primary-500), var(--primary-600));
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.3), rgba(59, 130, 246, 0.5));
   border-radius: var(--radius-full);
   transition: all 0.3s ease;
-  border: 2px solid var(--bg-secondary);
+  border: none;
 }
 
 .options-container::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, var(--primary-600), var(--primary-700));
-  transform: scale(1.1);
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.5), rgba(59, 130, 246, 0.7));
 }
 
 .options-container::-webkit-scrollbar-thumb:active {
-  background: linear-gradient(180deg, var(--primary-700), var(--primary-800));
+  background: linear-gradient(180deg, var(--primary-500), var(--primary-600));
 }
 
 @media (max-width: 768px) {
@@ -483,15 +491,20 @@ export default defineComponent({
   }
   
   .category-option {
-    padding: 12px 14px;
+    padding: 10px 14px;
+    gap: 8px;
   }
   
   .category-options {
-    max-height: 200px;
+    max-height: 240px;
+  }
+
+  .options-container {
+    max-height: 240px;
   }
   
   .category-icon {
-    font-size: 18px;
+    font-size: 16px;
   }
   
   .category-name {
