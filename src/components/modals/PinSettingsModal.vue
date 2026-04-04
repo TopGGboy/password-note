@@ -161,7 +161,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { pinManager } from '../../utils/auth/pinManager'
 
 const emit = defineEmits<{
@@ -169,7 +169,7 @@ const emit = defineEmits<{
   (e: 'success'): void
 }>()
 
-const hasPin = ref(pinManager.hasPin())
+const hasPin = ref(false)
 
 const currentPin = ref('')
 const newPin = ref('')
@@ -182,6 +182,14 @@ const errorMessage = ref('')
 const showRemoveConfirm = ref(false)
 const removeConfirmPin = ref('')
 const removeError = ref('')
+
+onMounted(() => {
+  const userId = localStorage.getItem('userId')
+  if (userId) {
+    pinManager.setCurrentUser(parseInt(userId))
+    hasPin.value = pinManager.hasPin()
+  }
+})
 
 const pinStrength = computed(() => {
   const len = newPin.value.length

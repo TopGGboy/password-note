@@ -331,7 +331,7 @@ const isEditingProfile = ref(false)
 const showChangePasswordModal = ref(false)
 const showPinSettingsModal = ref(false)
 const isLoading = ref(false)
-const hasPin = ref(pinManager.hasPin())
+const hasPin = ref(false)
 
 const tabs = [
   { id: 'profile', label: '个人信息', icon: '👤' },
@@ -397,6 +397,12 @@ const formatDate = (dateString: string) => {
 }
 
 onMounted(async () => {
+  const userId = localStorage.getItem('userId')
+  if (userId) {
+    pinManager.setCurrentUser(parseInt(userId))
+    hasPin.value = pinManager.hasPin()
+  }
+  
   try {
     const response = await userAPI.getUserInfo()
     const userInfo = response.data
