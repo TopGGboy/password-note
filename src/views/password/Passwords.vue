@@ -16,14 +16,14 @@
           <p class="page-subtitle">安全管理您的所有账号密码</p>
         </div>
         <div class="header-actions">
-          <button @click="showAddModal = true" class="btn btn-primary">
+          <button @click="showAddModal = true" class="btn btn-primary" :disabled="isLocked">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <line x1="12" y1="5" x2="12" y2="19"/>
               <line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
             添加密码
           </button>
-          <button @click="refreshEntries" class="btn btn-secondary" :disabled="loading">
+          <button @click="refreshEntries" class="btn btn-secondary" :disabled="loading || isLocked">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <polyline points="23 4 23 10 17 10"/>
               <polyline points="1 20 1 14 7 14"/>
@@ -45,7 +45,7 @@
           </svg>
         </div>
         <div class="stat-info">
-          <div class="stat-number">{{ total }}</div>
+          <div class="stat-number">{{ isLocked ? '--' : total }}</div>
           <div class="stat-label">总密码数</div>
         </div>
         <div class="stat-decoration"></div>
@@ -57,7 +57,7 @@
           </svg>
         </div>
         <div class="stat-info">
-          <div class="stat-number">{{ favoriteCount }}</div>
+          <div class="stat-number">{{ isLocked ? '--' : favoriteCount }}</div>
           <div class="stat-label">收藏密码</div>
         </div>
         <div class="stat-decoration"></div>
@@ -69,7 +69,7 @@
           </svg>
         </div>
         <div class="stat-info">
-          <div class="stat-number">{{ categoriesCount }}</div>
+          <div class="stat-number">{{ isLocked ? '--' : categoriesCount }}</div>
           <div class="stat-label">分类数量</div>
         </div>
         <div class="stat-decoration"></div>
@@ -77,7 +77,9 @@
     </div>
 
     <div class="content-section card">
-    <PasswordEntriesList 
+      <LockedOverlay v-if="isLocked" @unlock="showPinModal = true" />
+      <PasswordEntriesList 
+        v-else
         :entries="entries"
         :categories="categories"
         :loading="loading"
@@ -88,6 +90,13 @@
         @refresh="refreshEntries"
       />
     </div>
+
+    <PinModal
+      v-if="showPinModal"
+      :is-setup="false"
+      @success="handlePinSuccess"
+      @close="showPinModal = false"
+    />
 
     <Transition name="modal">
       <AddPasswordModal 
@@ -116,7 +125,7 @@
        />
     </Transition>
 
-    <div v-if="loading && entries.length === 0" class="loading-overlay">
+    <div v-if="loading && entries.length === 0 && !isLocked" class="loading-overlay">
       <div class="loading-spinner">
         <div class="spinner"></div>
         <p>加载中...</p>
@@ -147,10 +156,13 @@ import { defineComponent, ref, computed, onMounted, watch } from 'vue'
 import { usePasswordEntries } from '../../composables/usePasswordEntries'
 import { useAuth } from '../../composables/useAuth'
 import { categoriesAPI } from '../../services/api'
+import { pinManager } from '../../utils/auth/pinManager'
 import PasswordEntriesList from '../../components/password/PasswordEntriesList.vue'
 import PasswordEntryDetail from '../../components/password/PasswordEntryDetail.vue'
 import AddPasswordModal from '../../components/modals/AddPasswordModal.vue'
 import EditPasswordModal from '../../components/modals/EditPasswordModal.vue'
+import LockedOverlay from '../../components/common/LockedOverlay.vue'
+import PinModal from '../../components/modals/PinModal.vue'
 import type { DecryptedPasswordEntry } from '../../composables/usePasswordEntries'
 import type { Category } from '../../types/api'
 
@@ -161,6 +173,8 @@ export default defineComponent({
     PasswordEntryDetail,
     AddPasswordModal,
     EditPasswordModal,
+    LockedOverlay,
+    PinModal,
   },
   setup() {
     const { userId, isAuthenticated, initialize } = useAuth()
@@ -179,8 +193,14 @@ export default defineComponent({
     const showAddModal = ref(false)
     const showDetailModal = ref(false)
     const showEditModal = ref(false)
+    const showPinModal = ref(false)
     const selectedEntry = ref<DecryptedPasswordEntry | null>(null)
     const categories = ref<Category[]>([])
+
+    const hasPin = ref(pinManager.hasPin())
+    const isVerified = ref(pinManager.isVerified())
+
+    const isLocked = computed(() => hasPin.value && !isVerified.value)
 
     const favoriteCount = computed(() => {
       if (totalFavorites.value > 0) {
@@ -190,6 +210,12 @@ export default defineComponent({
     })
 
     const categoriesCount = computed(() => categories.value.length)
+
+    const handlePinSuccess = () => {
+      isVerified.value = true
+      showPinModal.value = false
+      fetchEntries()
+    }
 
     const refreshEntries = async () => {
       try {
@@ -260,7 +286,7 @@ export default defineComponent({
     }
 
     watch(isAuthenticated, (newValue) => {
-      if (newValue) {
+      if (newValue && !isLocked.value) {
         fetchEntries()
         loadCategories()
       }
@@ -276,6 +302,13 @@ export default defineComponent({
     }
 
     onMounted(async () => {
+      hasPin.value = pinManager.hasPin()
+      isVerified.value = pinManager.isVerified()
+
+      if (isLocked.value) {
+        return
+      }
+
       if (!isAuthenticated.value) {
         await initialize()
         if (!isAuthenticated.value) {
@@ -288,6 +321,10 @@ export default defineComponent({
         console.warn('用户ID不可用，跳过数据加载')
         return
       }
+
+      pinManager.setCurrentUser(userId.value)
+      hasPin.value = pinManager.hasPin()
+      isVerified.value = pinManager.isVerified()
 
       try {
         await Promise.all([
@@ -318,10 +355,14 @@ export default defineComponent({
       showAddModal,
       showDetailModal,
       showEditModal,
+      showPinModal,
       selectedEntry,
       favoriteCount,
       categoriesCount,
       categories,
+      isLocked,
+      hasPin,
+      isVerified,
       refreshEntries,
       handleViewEntry,
       handleEditEntry,
@@ -330,7 +371,8 @@ export default defineComponent({
       handleEditSuccess,
       handleDeleteSuccess,
       handleDeleteEntry,
-      clearError
+      clearError,
+      handlePinSuccess
     }
   }
 })
@@ -559,6 +601,7 @@ export default defineComponent({
   padding: var(--spacing-2xl);
   border: none;
   background: rgba(255, 255, 255, 0.9);
+  min-height: 400px;
 }
 
 .loading-overlay {
@@ -789,7 +832,7 @@ export default defineComponent({
   }
 
   .content-section {
-    padding: 0;
+    padding: var(--spacing-lg);
   }
 
   .error-message {

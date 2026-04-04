@@ -122,6 +122,19 @@
           <button class="btn btn-primary" @click="showChangePasswordModal = true">修改密码</button>
         </div>
 
+        <div class="security-card card">
+          <div class="card-icon amber">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+            </svg>
+          </div>
+          <div class="card-content">
+            <h3 class="card-title">{{ hasPin ? '修改 PIN 码' : '设置 PIN 码' }}</h3>
+            <p class="card-desc">{{ hasPin ? 'PIN 码用于保护密码库访问' : '设置 PIN 码保护您的密码数据' }}</p>
+          </div>
+          <button class="btn btn-primary" @click="showPinSettingsModal = true">{{ hasPin ? '修改 PIN 码' : '设置 PIN 码' }}</button>
+        </div>
+
 
 
         <div class="security-status card">
@@ -138,6 +151,20 @@
                 <div class="stat-label">账户状态</div>
               </div>
               <div class="stat-indicator safe"></div>
+            </div>
+            <div class="security-stat">
+              <div class="stat-icon amber">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <circle cx="12" cy="16" r="1"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </div>
+              <div class="stat-info">
+                <div class="stat-value">{{ hasPin ? '已设置' : '未设置' }}</div>
+                <div class="stat-label">PIN 码</div>
+              </div>
+              <div class="stat-indicator" :class="hasPin ? 'safe' : 'warning'"></div>
             </div>
             <div class="security-stat">
               <div class="stat-icon sky">
@@ -286,6 +313,7 @@
     </div>
 
     <ChangePasswordModal v-if="showChangePasswordModal" @close="showChangePasswordModal = false" @success="handleChangePasswordSuccess" />
+    <PinSettingsModal v-if="showPinSettingsModal" @close="showPinSettingsModal = false" @success="handlePinSettingsSuccess" />
   </div>
 </template>
 
@@ -293,13 +321,17 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../../store/auth'
 import ChangePasswordModal from '../../components/modals/ChangePasswordModal.vue'
+import PinSettingsModal from '../../components/modals/PinSettingsModal.vue'
 import { userAPI } from '../../services/api/user'
+import { pinManager } from '../../utils/auth/pinManager'
 
 const authStore = useAuthStore()
 const activeTab = ref('profile')
 const isEditingProfile = ref(false)
 const showChangePasswordModal = ref(false)
+const showPinSettingsModal = ref(false)
 const isLoading = ref(false)
+const hasPin = ref(pinManager.hasPin())
 
 const tabs = [
   { id: 'profile', label: '个人信息', icon: '👤' },
@@ -345,6 +377,11 @@ const saveProfile = async () => {
 const handleChangePasswordSuccess = () => {
   showChangePasswordModal.value = false
   alert('密码修改成功！')
+}
+
+const handlePinSettingsSuccess = () => {
+  showPinSettingsModal.value = false
+  hasPin.value = pinManager.hasPin()
 }
 
 const formatDate = (dateString: string) => {

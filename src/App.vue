@@ -5,13 +5,17 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { pinManager } from './utils/auth/pinManager'
 
 const route = useRoute()
 
 onMounted(() => {
   console.log('应用已启动')
+})
+
+onUnmounted(() => {
 })
 </script>
 

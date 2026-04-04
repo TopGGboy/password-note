@@ -8,6 +8,7 @@ import {
   RegisterResponse,
 } from "../types/api";
 import { tokenManager } from "../utils/auth/tokenManager";
+import { pinManager } from "../utils/auth/pinManager";
 import { STORAGE_KEYS } from "../constants/constants";
 
 interface User {
@@ -285,6 +286,9 @@ export const useAuthStore = defineStore("auth", {
         localStorage.setItem("email", user.email);
       }
 
+      // 设置 PIN 管理器的当前用户
+      pinManager.setCurrentUser(user.id);
+
       // 触发自定义事件，通知其他组件认证状态已更新
       window.dispatchEvent(
         new CustomEvent("auth-state-changed", {
@@ -383,6 +387,9 @@ export const useAuthStore = defineStore("auth", {
 
     // 清除认证信息
   clearAuth(): void {
+    // 清除 PIN 管理器的当前用户
+    pinManager.setCurrentUser(null);
+    
     // 使用token管理器安全清除所有token
     tokenManager.clearTokens();
 
