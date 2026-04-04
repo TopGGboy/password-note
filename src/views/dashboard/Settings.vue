@@ -122,18 +122,7 @@
           <button class="btn btn-primary" @click="showChangePasswordModal = true">修改密码</button>
         </div>
 
-        <div class="security-card card">
-          <div class="card-icon amber">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
-            </svg>
-          </div>
-          <div class="card-content">
-            <h3 class="card-title">修改主密码</h3>
-            <p class="card-desc">主密码用于加密和保护你的所有密码数据</p>
-          </div>
-          <button class="btn btn-primary" @click="showChangeMasterPasswordModal = true">修改主密码</button>
-        </div>
+
 
         <div class="security-status card">
           <h3 class="info-title">安全状态</h3>
@@ -149,18 +138,6 @@
                 <div class="stat-label">账户状态</div>
               </div>
               <div class="stat-indicator safe"></div>
-            </div>
-            <div class="security-stat">
-              <div class="stat-icon amber">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
-                </svg>
-              </div>
-              <div class="stat-info">
-                <div class="stat-value">{{ hasMasterPassword ? '已设置' : '未设置' }}</div>
-                <div class="stat-label">主密码</div>
-              </div>
-              <div class="stat-indicator" :class="hasMasterPassword ? 'safe' : 'warning'"></div>
             </div>
             <div class="security-stat">
               <div class="stat-icon sky">
@@ -309,7 +286,6 @@
     </div>
 
     <ChangePasswordModal v-if="showChangePasswordModal" @close="showChangePasswordModal = false" @success="handleChangePasswordSuccess" />
-    <ChangeMasterPasswordModal v-if="showChangeMasterPasswordModal" @close="showChangeMasterPasswordModal = false" @success="handleChangeMasterPasswordSuccess" />
   </div>
 </template>
 
@@ -317,15 +293,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../../store/auth'
 import ChangePasswordModal from '../../components/modals/ChangePasswordModal.vue'
-import ChangeMasterPasswordModal from '../../components/modals/ChangeMasterPasswordModal.vue'
-import { KeyManager } from '../../utils/encryption/crypto'
 import { userAPI } from '../../services/api/user'
 
 const authStore = useAuthStore()
 const activeTab = ref('profile')
 const isEditingProfile = ref(false)
 const showChangePasswordModal = ref(false)
-const showChangeMasterPasswordModal = ref(false)
 const isLoading = ref(false)
 
 const tabs = [
@@ -351,8 +324,6 @@ const accountInfo = ref({
   lastLoginAt: user.value?.lastLoginAt || new Date().toISOString()
 })
 
-const hasMasterPassword = ref(false)
-
 const saveProfile = async () => {
   isLoading.value = true
   try {
@@ -376,10 +347,6 @@ const handleChangePasswordSuccess = () => {
   alert('密码修改成功！')
 }
 
-const handleChangeMasterPasswordSuccess = () => {
-  showChangeMasterPasswordModal.value = false
-}
-
 const formatDate = (dateString: string) => {
   if (!dateString) return '未知'
   const date = new Date(dateString)
@@ -393,8 +360,6 @@ const formatDate = (dateString: string) => {
 }
 
 onMounted(async () => {
-  hasMasterPassword.value = KeyManager.hasMasterPassword()
-  
   try {
     const response = await userAPI.getUserInfo()
     const userInfo = response.data

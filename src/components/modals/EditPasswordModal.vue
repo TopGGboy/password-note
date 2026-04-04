@@ -195,7 +195,6 @@
 <script lang="ts">
 import { defineComponent, PropType, onMounted } from 'vue'
 import type { DecryptedPasswordEntry } from '../../composables/usePasswordEntries'
-import { DataEncryptionService, KeyManager } from '../../utils/encryption/crypto'
 import { passwordEntriesAPI, categoriesAPI } from '../../services/api'
 import type { CreatePasswordEntryRequest } from '../../types/api'
 import type { Category } from '../../types/api'
@@ -279,25 +278,12 @@ export default defineComponent({
     async handleSubmit() {
       this.loading = true
       try {
-        if (!KeyManager.hasKey()) {
-          alert('未找到加密密钥，请先输入主密码')
-          this.$emit('close')
-          return
-        }
-
-        const encryptedData = DataEncryptionService.encryptPasswordEntry({
-          username: this.form.username || '',
-          password: this.form.password || '',
-          notes: this.form.notes || '',
-          customFields: []
-        })
-
         const requestData: Partial<CreatePasswordEntryRequest> = {
           title: this.form.title,
           url: this.form.url || undefined,
-          usernameEncrypted: encryptedData.usernameEncrypted,
-          passwordEncrypted: encryptedData.passwordEncrypted,
-          notesEncrypted: encryptedData.notesEncrypted,
+          usernameEncrypted: this.form.username || '',
+          passwordEncrypted: this.form.password || '',
+          notesEncrypted: this.form.notes || '',
           categoryId: this.form.categoryId || undefined,
           customFields: {}
         }

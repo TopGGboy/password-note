@@ -190,7 +190,6 @@
 import { defineComponent } from 'vue'
 import { passwordEntriesAPI, categoriesAPI } from '../../services/api'
 import type { CreatePasswordEntryRequest, Category } from '../../types/api'
-import { DataEncryptionService, KeyManager } from '../../utils/encryption/crypto'
 import { STORAGE_KEYS } from '../../constants/constants'
 import CategorySelector from '../common/CategorySelector.vue'
 
@@ -376,29 +375,14 @@ export default defineComponent({
     },
 
     async savePassword() {
-      if (!KeyManager.hasKey()) {
-        this.$emit('requireMasterPassword')
-        throw new Error('未找到加密密钥，请先设置主密码')
-      }
-
       try {
-        const encryptedData = DataEncryptionService.encryptPasswordEntry({
-          username: this.form.username,
-          password: this.form.password,
-          notes: this.form.notes || '',
-          customFields: this.form.tags.map(tag => ({
-            name: 'tag',
-            value: tag
-          }))
-        })
-
         const requestData: CreatePasswordEntryRequest = {
           categoryId: typeof this.form.categoryId === 'number' ? this.form.categoryId : undefined,
           title: this.form.title,
-          usernameEncrypted: encryptedData.usernameEncrypted,
-          passwordEncrypted: encryptedData.passwordEncrypted,
+          usernameEncrypted: this.form.username,
+          passwordEncrypted: this.form.password,
           url: this.form.url || undefined,
-          notesEncrypted: encryptedData.notesEncrypted,
+          notesEncrypted: this.form.notes || '',
           customFields: {
             tags: this.form.tags,
             icon: this.form.icon

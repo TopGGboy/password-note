@@ -385,11 +385,6 @@ export const useAuthStore = defineStore("auth", {
   clearAuth(): void {
     // 使用token管理器安全清除所有token
     tokenManager.clearTokens();
-    
-    // 清除主密码相关的会话数据
-    import('../utils/encryption/crypto').then(({ KeyManager }) => {
-      KeyManager.clearSessionKeys();
-    });
 
     this.token = null;
     this.refreshToken = null;
