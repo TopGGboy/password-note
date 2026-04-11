@@ -376,7 +376,6 @@ const saveProfile = async () => {
 
 const handleChangePasswordSuccess = () => {
   showChangePasswordModal.value = false
-  alert('密码修改成功！')
 }
 
 const handlePinSettingsSuccess = () => {

@@ -231,8 +231,10 @@ export interface UserInfoResponse {
 
 // 修改密码请求参数
 export interface ChangePasswordRequest {
-  currentPassword: string
+  oldPassword?: string
   newPassword: string
+  emailCode?: string
+  verifyType: 'PASSWORD' | 'EMAIL'
 }
 
 // 重置密码请求参数

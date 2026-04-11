@@ -42,6 +42,11 @@ export const userAPI = {
     return http.post(API_ENDPOINTS.USER.REGISTER, data);
   },
 
+  // 修改密码
+  changePassword: (data: ChangePasswordRequest): Promise<ApiResponse<null>> => {
+    return http.post(API_ENDPOINTS.USER.CHANGE_PASSWORD, data);
+  },
+
   // 忘记密码
   forgotPassword: (data: ForgotPasswordRequest) => {
     return http.post("/api/auth/forgot-password", data);
@@ -60,10 +65,5 @@ export const userAPI = {
   // 获取当前用户详细信息（新接口）
   getUserInfo: (): Promise<ApiResponse<UserInfoResponse>> => {
     return http.get(API_ENDPOINTS.USER.INFO);
-  },
-
-  // 修改密码
-  changePassword: (data: ChangePasswordRequest): Promise<ApiResponse<null>> => {
-    return http.post("/api/auth/change-password", data);
   },
 };
