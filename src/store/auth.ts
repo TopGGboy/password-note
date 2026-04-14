@@ -94,7 +94,7 @@ export const useAuthStore = defineStore("auth", {
     // 登录
     async login(
       credentials: LoginRequest
-    ): Promise<{ success: boolean; twoFactorEnabled?: boolean; data?: any }> {
+    ): Promise<{ success: boolean; twoFactorEnabled?: boolean; data?: any; message?: string }> {
       try {
         const response: ApiResponse<LoginResponse> = await userAPI.login(
           credentials
@@ -135,7 +135,7 @@ export const useAuthStore = defineStore("auth", {
           return { success: true };
         }
 
-        return { success: false };
+        return { success: false, message: response.msg || '登录失败' };
       } catch (error) {
         this.handleLoginError(error);
         throw error;

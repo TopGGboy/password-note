@@ -384,6 +384,10 @@ export default defineComponent({
               window.location.href = ROUTES.HOME
             }
           }
+        } else {
+          this.errorMessage = result.message || '登录失败，请稍后重试'
+          this.failedAttempts++
+          this.refreshCaptcha()
         }
 
       } catch (error) {
