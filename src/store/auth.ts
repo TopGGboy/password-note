@@ -17,6 +17,7 @@ interface User {
   email?: string;
   token: string;
   twoFactorEnabled?: boolean;
+  avatarUrl?: string;
 }
 
 interface AuthState {
@@ -39,12 +40,14 @@ export const useAuthStore = defineStore("auth", {
     let user: User | null = null;
     if (token && username) {
       const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+      const avatarUrl = localStorage.getItem("avatarUrl");
       user = {
         id: userId ? parseInt(userId, 10) : 0,
         username,
         email: localStorage.getItem("email") || undefined,
         token,
         twoFactorEnabled: false,
+        avatarUrl: avatarUrl || undefined,
       };
     }
 
@@ -409,6 +412,18 @@ export const useAuthStore = defineStore("auth", {
       this.loginAttempts = 0;
       this.isLocked = false;
       this.lockoutEndTime = null;
+    },
+
+    // 设置头像URL
+    setAvatarUrl(avatarUrl: string | null): void {
+      if (this.user) {
+        this.user.avatarUrl = avatarUrl || undefined;
+        if (avatarUrl) {
+          localStorage.setItem("avatarUrl", avatarUrl);
+        } else {
+          localStorage.removeItem("avatarUrl");
+        }
+      }
     },
   },
 });

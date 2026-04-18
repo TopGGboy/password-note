@@ -224,9 +224,15 @@ export interface UserInfoResponse {
   twoFactorEnabled: boolean
   isLocked: boolean
   emailVerified: boolean
+  avatarUrl?: string
   lastLoginAt?: string
   createdAt: string
   updatedAt: string
+}
+
+// 头像上传响应
+export interface AvatarUploadResponse {
+  avatarUrl: string
 }
 
 // 修改密码请求参数

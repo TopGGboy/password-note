@@ -7,10 +7,13 @@ export const API_ENDPOINTS = {
     REGISTER: "/api/user/register", // 注册
     REFRESH: "/api/user/refresh", // 刷新token
     LOGOUT: "/api/user/logout", // 登出
-    CHANGE_PASSWORD: "/api/user/change-password",
+    CHANGE_PASSWORD: "/api/user/change-password",    // 修改密码
+    AVATAR_UPLOAD: "/api/user/avatar/upload",   // 上传头像
+    DELETE_AVATAR: "/api/user/avatar",
+    INFO: "/api/user/info", // 获取用户详细信息
+
 
     ME: "/api/user/me",
-    INFO: "/api/user/info", // 获取用户详细信息
     FORGOT_PASSWORD: "/api/user/forgot-password",
     RESET_PASSWORD: "/api/user/reset-password",
   },

@@ -33,10 +33,38 @@
 
         <div class="profile-card card">
           <div class="profile-avatar">
-            <div class="avatar" :data-initials="userInitials">{{ userInitials }}</div>
-            <button class="btn btn-primary" @click="isEditingProfile = !isEditingProfile">
-              {{ isEditingProfile ? '取消' : '编辑' }}
-            </button>
+            <div class="avatar-wrapper">
+              <img 
+                v-if="displayAvatarUrl && !avatarError" 
+                :src="displayAvatarUrl" 
+                alt="用户头像" 
+                class="avatar-image"
+                @load="avatarLoading = false"
+                @error="avatarError = true; avatarLoading = false"
+              />
+              <div v-else class="avatar" :data-initials="userInitials">{{ userInitials }}</div>
+              <div v-if="avatarLoading" class="avatar-loading">
+                <div class="loading-spinner"></div>
+              </div>
+              <div class="avatar-overlay" @click="triggerFileInput">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+                <span>更换头像</span>
+              </div>
+            </div>
+            <input ref="fileInput" type="file" accept="image/*" @change="handleFileChange" style="display: none" />
+            <div class="avatar-actions">
+              <button class="btn btn-primary" @click="triggerFileInput" :disabled="isUploadingAvatar">
+                <div v-if="isUploadingAvatar" class="loading-spinner"></div>
+                {{ isUploadingAvatar ? '上传中...' : '上传头像' }}
+              </button>
+              <button v-if="avatarUrl" class="btn btn-secondary" @click="handleDeleteAvatar" :disabled="isDeletingAvatar">
+                <div v-if="isDeletingAvatar" class="loading-spinner"></div>
+                {{ isDeletingAvatar ? '删除中...' : '删除头像' }}
+              </button>
+            </div>
           </div>
 
           <form class="profile-form" @submit.prevent="saveProfile">
@@ -314,6 +342,28 @@
 
     <ChangePasswordModal v-if="showChangePasswordModal" @close="showChangePasswordModal = false" @success="handleChangePasswordSuccess" />
     <PinSettingsModal v-if="showPinSettingsModal" @close="showPinSettingsModal = false" @success="handlePinSettingsSuccess" />
+    
+    <ConfirmDialog
+      :visible="showDeleteConfirm"
+      title="删除头像"
+      message="确定要删除头像吗？删除后将恢复为默认头像。"
+      confirmText="删除"
+      cancelText="取消"
+      type="danger"
+      :loading="isDeletingAvatar"
+      @confirm="confirmDeleteAvatar"
+      @cancel="showDeleteConfirm = false"
+    />
+    
+    <Notification
+      v-for="notification in notifications"
+      :key="notification.id"
+      :title="notification.title"
+      :message="notification.message"
+      :type="notification.type"
+      :duration="notification.duration"
+      @close="removeNotification(notification.id)"
+    />
   </div>
 </template>
 
@@ -322,16 +372,31 @@ import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../../store/auth'
 import ChangePasswordModal from '../../components/modals/ChangePasswordModal.vue'
 import PinSettingsModal from '../../components/modals/PinSettingsModal.vue'
+import Notification from '../../components/common/Notification.vue'
+import ConfirmDialog from '../../components/common/ConfirmDialog.vue'
 import { userAPI } from '../../services/api/user'
 import { pinManager } from '../../utils/auth/pinManager'
+import { useNotification } from '../../composables/useNotification'
 
 const authStore = useAuthStore()
+const { notifications, success, error, remove: removeNotification } = useNotification()
 const activeTab = ref('profile')
 const isEditingProfile = ref(false)
 const showChangePasswordModal = ref(false)
 const showPinSettingsModal = ref(false)
+const showDeleteConfirm = ref(false)
 const isLoading = ref(false)
 const hasPin = ref(false)
+const fileInput = ref<HTMLInputElement | null>(null)
+const isUploadingAvatar = ref(false)
+const isDeletingAvatar = ref(false)
+const avatarUrl = ref<string | null>(null)
+const avatarLoading = ref(false)
+const avatarError = ref(false)
+
+const displayAvatarUrl = computed(() => {
+  return avatarUrl.value
+})
 
 const tabs = [
   { id: 'profile', label: '个人信息', icon: '👤' },
@@ -365,10 +430,10 @@ const saveProfile = async () => {
       Object.assign(user.value, profileForm.value)
     }
     isEditingProfile.value = false
-    alert('个人信息保存成功！')
+    success('保存成功', '个人信息已更新')
   } catch (error) {
     console.error('保存个人信息失败:', error)
-    alert('保存失败，请重试')
+    error('保存失败', '请重试')
   } finally {
     isLoading.value = false
   }
@@ -395,6 +460,78 @@ const formatDate = (dateString: string) => {
   })
 }
 
+const triggerFileInput = () => {
+  fileInput.value?.click()
+}
+
+const handleFileChange = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  const maxSize = 5 * 1024 * 1024
+  if (file.size > maxSize) {
+    error('文件过大', '图片大小不能超过5MB')
+    return
+  }
+
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+  if (!allowedTypes.includes(file.type)) {
+    error('格式不支持', '只支持 JPG、PNG、GIF、WEBP 格式的图片')
+    return
+  }
+
+  isUploadingAvatar.value = true
+  avatarLoading.value = true
+  avatarError.value = false
+  try {
+    const response = await userAPI.uploadAvatar(file)
+    if (response.code === 1 && response.data?.avatarUrl) {
+      const uploadedAvatarUrl = response.data.avatarUrl
+      avatarUrl.value = uploadedAvatarUrl
+      authStore.setAvatarUrl(uploadedAvatarUrl)
+      success('上传成功', '头像已更新')
+    } else {
+      avatarLoading.value = false
+      error('上传失败', response.msg || '请重试')
+    }
+  } catch (error: any) {
+    console.error('上传头像失败:', error)
+    avatarLoading.value = false
+    error('上传失败', error.response?.data?.msg || '请重试')
+  } finally {
+    isUploadingAvatar.value = false
+    if (target) {
+      target.value = ''
+    }
+  }
+}
+
+const handleDeleteAvatar = () => {
+  showDeleteConfirm.value = true
+}
+
+const confirmDeleteAvatar = async () => {
+  isDeletingAvatar.value = true
+  try {
+    const response = await userAPI.deleteAvatar()
+    if (response.code === 1) {
+      avatarUrl.value = null
+      avatarError.value = false
+      authStore.setAvatarUrl(null)
+      showDeleteConfirm.value = false
+      success('删除成功', '头像已移除')
+    } else {
+      error('删除失败', response.msg || '请重试')
+    }
+  } catch (error: any) {
+    console.error('删除头像失败:', error)
+    error('删除失败', error.response?.data?.msg || '请重试')
+  } finally {
+    isDeletingAvatar.value = false
+  }
+}
+
 onMounted(async () => {
   const userId = localStorage.getItem('userId')
   if (userId) {
@@ -412,6 +549,10 @@ onMounted(async () => {
     accountInfo.value = {
       createdAt: userInfo.createdAt || new Date().toISOString(),
       lastLoginAt: userInfo.lastLoginAt || userInfo.createdAt || new Date().toISOString()
+    }
+    if (userInfo.avatarUrl) {
+      avatarUrl.value = userInfo.avatarUrl
+      authStore.setAvatarUrl(userInfo.avatarUrl)
     }
   } catch (error) {
     console.error('获取用户详细信息失败:', error)
@@ -609,6 +750,83 @@ onMounted(async () => {
 
 .profile-avatar {
   margin-bottom: var(--spacing-2xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.avatar-wrapper {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  cursor: pointer;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  box-shadow: 0 8px 25px rgba(20, 184, 166, 0.4);
+  transition: all var(--transition-normal);
+}
+
+.avatar-wrapper:hover .avatar-image {
+  transform: scale(1.05);
+}
+
+.avatar-wrapper:hover .avatar-overlay {
+  opacity: 1;
+}
+
+.avatar-loading {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-full);
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-loading .loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+}
+
+.avatar-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-full);
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  opacity: 0;
+  transition: all var(--transition-normal);
+  color: white;
+}
+
+.avatar-overlay svg {
+  width: 24px;
+  height: 24px;
+  stroke-width: 2;
+}
+
+.avatar-overlay span {
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+}
+
+.avatar-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: center;
 }
 
 .avatar {

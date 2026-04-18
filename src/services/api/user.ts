@@ -10,7 +10,8 @@ import type {
   UserInfoResponse,
   ChangePasswordRequest,
   ResetPasswordRequest,
-  ForgotPasswordRequest
+  ForgotPasswordRequest,
+  AvatarUploadResponse,
 } from "../../types/api";
 
 // 用户相关API
@@ -65,5 +66,20 @@ export const userAPI = {
   // 获取当前用户详细信息（新接口）
   getUserInfo: (): Promise<ApiResponse<UserInfoResponse>> => {
     return http.get(API_ENDPOINTS.USER.INFO);
+  },
+
+  // 上传头像
+  uploadAvatar: (file: File): Promise<ApiResponse<AvatarUploadResponse>> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return http.post(API_ENDPOINTS.USER.AVATAR_UPLOAD, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
+  // 删除头像
+  deleteAvatar: (): Promise<ApiResponse<null>> => {
+    return http.delete(API_ENDPOINTS.USER.DELETE_AVATAR);
   },
 };

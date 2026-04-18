@@ -51,7 +51,10 @@
         </button>
 
         <div class="user" :title="username">
-          <div class="avatar">{{ userInitials }}</div>
+          <div class="avatar">
+            <img v-if="displayAvatarUrl" :src="displayAvatarUrl" alt="用户头像" class="avatar-image" />
+            <span v-else>{{ userInitials }}</span>
+          </div>
           <span class="user-name hide-sm">{{ username }}</span>
           <button class="btn btn-danger outline hide-sm" @click="handleLogout">退出</button>
         </div>
@@ -210,6 +213,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../store/auth'
+import { userAPI } from '../../services/api/user'
 import AddPasswordModal from '../modals/AddPasswordModal.vue'
 
 const router = useRouter()
@@ -220,6 +224,10 @@ const isDarkMode = ref(false)
 
 const username = computed(() => authStore.user?.username || '用户')
 const userInitials = computed(() => username.value.charAt(0).toUpperCase())
+const avatarUrl = computed(() => authStore.user?.avatarUrl || null)
+const displayAvatarUrl = computed(() => {
+  return avatarUrl.value
+})
 
 const toggleTheme = () => {
   isDarkMode.value = !isDarkMode.value
@@ -245,11 +253,22 @@ const goSearch = () => {
   router.push('/passwords')
 }
 
-onMounted(() => {
+onMounted(async () => {
   const savedTheme = localStorage.getItem('theme')
   if (savedTheme) {
     isDarkMode.value = savedTheme === 'dark'
     document.documentElement.setAttribute('data-theme', savedTheme)
+  }
+  
+  if (authStore.user) {
+    try {
+      const response = await userAPI.getUserInfo()
+      if (response.code === 1 && response.data.avatarUrl) {
+        authStore.setAvatarUrl(response.data.avatarUrl)
+      }
+    } catch (error) {
+      console.error('获取用户头像失败:', error)
+    }
   }
 })
 </script>
@@ -499,6 +518,19 @@ onMounted(() => {
   font-size: var(--text-base);
   box-shadow: 0 4px 12px rgba(20, 184, 166, 0.35);
   transition: all var(--transition-fast);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.avatar:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(20, 184, 166, 0.5);
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .user:hover .avatar {
