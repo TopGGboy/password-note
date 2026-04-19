@@ -148,6 +148,16 @@
         </button>
       </div>
     </div>
+
+    <Notification
+      v-for="notification in notifications"
+      :key="notification.id"
+      :title="notification.title"
+      :message="notification.message"
+      :type="notification.type"
+      :duration="notification.duration"
+      @close="removeNotification(notification.id)"
+    />
   </div>
 </template>
 
@@ -155,6 +165,7 @@
 import { defineComponent, ref, computed, onMounted, watch } from 'vue'
 import { usePasswordEntries } from '../../composables/usePasswordEntries'
 import { useAuth } from '../../composables/useAuth'
+import { useNotification } from '../../composables/useNotification'
 import { categoriesAPI } from '../../services/api'
 import { pinManager } from '../../utils/auth/pinManager'
 import PasswordEntriesList from '../../components/password/PasswordEntriesList.vue'
@@ -163,6 +174,7 @@ import AddPasswordModal from '../../components/modals/AddPasswordModal.vue'
 import EditPasswordModal from '../../components/modals/EditPasswordModal.vue'
 import LockedOverlay from '../../components/common/LockedOverlay.vue'
 import PinModal from '../../components/modals/PinModal.vue'
+import Notification from '../../components/common/Notification.vue'
 import type { DecryptedPasswordEntry } from '../../composables/usePasswordEntries'
 import type { Category } from '../../types/api'
 
@@ -175,9 +187,11 @@ export default defineComponent({
     EditPasswordModal,
     LockedOverlay,
     PinModal,
+    Notification,
   },
   setup() {
     const { userId, isAuthenticated, initialize } = useAuth()
+    const { notifications, success, error: notifyError, remove: removeNotification } = useNotification()
 
     const {
       loading,
@@ -242,12 +256,14 @@ export default defineComponent({
 
     const handleAddSuccess = () => {
       showAddModal.value = false
+      success('添加成功', '密码条目已添加')
       refreshEntries()
     }
 
     const handleEditSuccess = () => {
       showEditModal.value = false
       selectedEntry.value = null
+      success('更新成功', '密码条目已更新')
       refreshEntries()
     }
 
@@ -363,6 +379,7 @@ export default defineComponent({
       isLocked,
       hasPin,
       isVerified,
+      notifications,
       refreshEntries,
       handleViewEntry,
       handleEditEntry,
@@ -372,7 +389,8 @@ export default defineComponent({
       handleDeleteSuccess,
       handleDeleteEntry,
       clearError,
-      handlePinSuccess
+      handlePinSuccess,
+      removeNotification
     }
   }
 })

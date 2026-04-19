@@ -193,7 +193,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType, onMounted } from 'vue'
+import { defineComponent, PropType } from 'vue'
 import type { DecryptedPasswordEntry } from '../../composables/usePasswordEntries'
 import { passwordEntriesAPI, categoriesAPI } from '../../services/api'
 import type { CreatePasswordEntryRequest } from '../../types/api'

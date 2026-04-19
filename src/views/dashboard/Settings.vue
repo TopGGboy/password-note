@@ -441,11 +441,13 @@ const saveProfile = async () => {
 
 const handleChangePasswordSuccess = () => {
   showChangePasswordModal.value = false
+  success('密码修改成功', '您的登录密码已更新')
 }
 
 const handlePinSettingsSuccess = () => {
   showPinSettingsModal.value = false
   hasPin.value = pinManager.hasPin()
+  success('PIN 设置成功', hasPin.value ? '已启用 PIN 保护' : '已关闭 PIN 保护')
 }
 
 const formatDate = (dateString: string) => {
