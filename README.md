@@ -19,6 +19,10 @@
 
 Password Note 是一个注重安全性和用户体验的密码管理应用。采用前后端分离架构，前端使用 Vue 3 Composition API 和 TypeScript 构建，实现了企业级的安全认证机制和数据加密方案。
 
+> 🎯 **这是一个完整的前后端分离项目**
+> - 📦 **前端项目**（当前仓库）：Vue 3 + TypeScript + Pinia
+> - 🔗 **后端项目**：[password_note_server](https://github.com/TopGGboy/password_note_server) - Spring Boot 3 + MyBatis Plus + MySQL + Redis
+
 ### 🎯 设计理念
 
 - **安全优先**: 采用 AES-256-CBC 加密算法，多层安全防护机制
@@ -26,20 +30,23 @@ Password Note 是一个注重安全性和用户体验的密码管理应用。采
 - **用户体验**: 响应式设计，流畅的交互体验，完善的状态管理
 - **工程化**: TypeScript 强类型约束，模块化开发，代码质量保障
 
----
+***
 
 ## 📸 界面展示
 
 ### 登录界面
+
 ![登录界面](./docs/login.png)
 
 ### 主界面
+
 ![主界面](./docs/main.png)
 
 ### PIN 码锁定
+
 ![PIN码锁定](./docs/pin.png)
 
----
+***
 
 ## ✨ 功能特性
 
@@ -733,54 +740,44 @@ npm run test:coverage
 
 ***
 
-## 📝 开发规范
-
-### Git 提交规范
-
-```
-feat: 新功能
-fix: 修复 Bug
-docs: 文档更新
-style: 代码格式调整
-refactor: 代码重构
-test: 测试相关
-chore: 构建/工具链相关
-```
-
-### 代码规范
-
-- 遵循 ESLint 规则
-- 使用 TypeScript 强类型
-- 组件命名采用 PascalCase
-- 文件命名采用 kebab-case
-- 函数命名采用 camelCase
-
-***
-
-## 🤝 贡献指南
-
-欢迎提交 Issue 和 Pull Request！
-
-1. Fork 本仓库
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'feat: Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 提交 Pull Request
-
-***
-
-## 📄 许可证
-
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
-
-***
-
 ## 👨‍💻 作者
 
 **Your Name**
 
-- GitHub: [@yourusername](https://github.com/yourusername)
-- Email: <your.email@example.com>
+- GitHub: [@TopGGboy](https://github.com/TopGGboy)
+- Email: topggboy\@163.com
+
+***
+
+## 🔗 相关项目
+
+### 后端服务
+
+本项目是一个完整的前后端分离应用，后端服务采用 Spring Boot 3 构建：
+
+**[password_note_server](https://github.com/TopGGboy/password_note_server)**
+
+#### 后端技术栈
+
+| 技术 | 说明 |
+|------|------|
+| **Spring Boot 3.1.5** | 核心开发框架 |
+| **Java 17** | LTS 版本 |
+| **MyBatis Plus 3.5.3** | 持久层框架 |
+| **MySQL 8.0** | 关系型数据库 |
+| **Redis 7** | 缓存和会话管理 |
+| **Spring Security** | 安全框架 |
+| **JWT** | 双 Token 认证机制 |
+| **MinIO** | 对象存储服务 |
+
+#### 后端特性
+
+- 🔐 **双 Token 机制** - Access Token + Refresh Token
+- 🛡️ **BCrypt 加密** - 密码加盐哈希加密
+- 🚫 **登录失败锁定** - 连续失败 5 次锁定账户 30 分钟
+- 🔒 **Token 黑名单** - 支持主动登出与 Token 失效
+- 📊 **数据隔离** - 用户只能访问自己的密码数据
+- 🎫 **图形验证码** - 防止暴力破解
 
 ***
 
